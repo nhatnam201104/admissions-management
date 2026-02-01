@@ -1,0 +1,40 @@
+package com.example.managementadmissionwf.ui.panel;
+
+import javax.swing.*;
+import java.awt.*;
+
+/**
+ * StatisticPanel - Temporary placeholder for Statistics & Reports
+ * Shows demo UI only (large title JLabel)
+ */
+public class StatisticPanel extends JPanel {
+    
+    public StatisticPanel() {
+        initComponents();
+    }
+    
+    private void initComponents() {
+        setLayout(new BorderLayout());
+        setBackground(Color.WHITE);
+        
+        // Title label
+        JLabel titleLabel = new JLabel("Screen: Statistics & Reports", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 32));
+        titleLabel.setForeground(new Color(44, 62, 80));
+        
+        // Subtitle
+        JLabel subtitleLabel = new JLabel("<html><center>This panel will contain:<br>• Statistical charts and graphs<br>• Admission rate reports<br>• Score distribution analysis<br>• Export and print reports</center></html>", SwingConstants.CENTER);
+        subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        subtitleLabel.setForeground(new Color(127, 140, 141));
+        
+        // Panel for centering
+        JPanel centerPanel = new JPanel(new BorderLayout(0, 20));
+        centerPanel.setBackground(Color.WHITE);
+        centerPanel.setBorder(BorderFactory.createEmptyBorder(50, 50, 50, 50));
+        
+        centerPanel.add(titleLabel, BorderLayout.NORTH);
+        centerPanel.add(subtitleLabel, BorderLayout.CENTER);
+        
+        add(centerPanel, BorderLayout.CENTER);
+    }
+}

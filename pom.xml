@@ -10,6 +10,7 @@
     </parent>
     <groupId>com.example</groupId>
     <artifactId>management-admission-wf</artifactId>
+    
     <version>0.0.1-SNAPSHOT</version>
     <name>management-admission-wf</name>
     <description>management-admission-wf</description>
@@ -28,6 +29,7 @@
     </scm>
     <properties>
         <java.version>21</java.version>
+        <maven.compiler.release>21</maven.compiler.release>
     </properties>
     <dependencies>
         <!-- Spring Data JPA for database operations -->
@@ -35,7 +37,13 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
-        
+
+        <!-- Spring Security for password encoding (JWT integration deferred per requirements) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
         <!-- MapStruct for Entity <-> DTO mapping -->
         <dependency>
             <groupId>org.mapstruct</groupId>
@@ -48,7 +56,7 @@
             <version>1.6.0</version>
             <scope>provided</scope>
         </dependency>
-        
+
         <!-- Validation -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -111,6 +119,9 @@
                             <version>0.2.0</version>
                         </path>
                     </annotationProcessorPaths>
+                    <source>21</source>
+                    <target>21</target>
+                    <compilerArgs>--enable-preview</compilerArgs>
                 </configuration>
             </plugin>
             <plugin>
@@ -125,6 +136,7 @@
                     </excludes>
                 </configuration>
             </plugin>
+
         </plugins>
     </build>
 
