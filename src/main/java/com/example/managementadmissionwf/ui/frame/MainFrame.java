@@ -4,6 +4,7 @@ import com.example.managementadmissionwf.dto.User.UserDTO;
 import com.example.managementadmissionwf.ui.util.UIConstants;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,6 +37,19 @@ public class MainFrame extends JFrame {
     private JButton menuAdmission;
     private JButton menuStatistic;
     private UserDTO user;
+    
+    // Injected panels
+    @Autowired(required = false)
+    private com.example.managementadmissionwf.ui.panel.candidate.CandidatePanel candidatePanel;
+    
+    @Autowired(required = false)
+    private com.example.managementadmissionwf.ui.panel.score.ScorePanel scorePanel;
+
+    /**
+     * Default constructor for Spring Bean
+     */
+    public MainFrame() {
+    }
 
     public MainFrame(UserDTO user) {
         this.user = user;
@@ -46,7 +60,7 @@ public class MainFrame extends JFrame {
     /**
      * Initialize components - NetBeans GUI Builder will generate this
      */
-    private void initComponents() {
+    public void initComponents() {
         // Root panel
         rootPanel = new JPanel();
         rootPanel.setLayout(new BorderLayout(0, 0));
@@ -76,18 +90,18 @@ public class MainFrame extends JFrame {
         userSection.add(usernameLabel);
         userSection.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
 
-
         // Menu panel - Use BoxLayout Y-axis for vertical stacking
         menuPanel = new JPanel();
         menuPanel.setLayout(new BoxLayout(menuPanel, BoxLayout.Y_AXIS));
         menuPanel.setBackground(new Color(44, 62, 80));
         menuPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 0, 10));
         menuPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
         // Create menu buttons
-        menuCandidate = createMenuButton("Candidate ", "users");
+        menuCandidate = createMenuButton("Candidate", "users");
         menuScore = createMenuButton("Candidate Score", "score");
-        menuWish = createMenuButton("Wish / Preference ", "listCheck");
-        menuMajor = createMenuButton("Major List ", "book");
+        menuWish = createMenuButton("Wish / Preference", "listCheck");
+        menuMajor = createMenuButton("Major List", "book");
         menuThreshold = createMenuButton("Admission Threshold Score", "trendingUp");
         menuSubjectGroup = createMenuButton("Subject Combination List", "layers");
         menuAdmission = createMenuButton("Admission Result List", "checkCircle");
@@ -111,6 +125,9 @@ public class MainFrame extends JFrame {
             menuPanel.add(Box.createVerticalStrut(5));
             menuPanel.add(menuStatistic);
         }
+
+        // Add menu button action listeners
+        setupMenuListeners();
 
         // Add components to sidebar
         sidebarPanel.add(userSection);
@@ -174,14 +191,99 @@ public class MainFrame extends JFrame {
     }
 
     /**
+     * Setup menu button action listeners
+     */
+    private void setupMenuListeners() {
+        menuCandidate.addActionListener(e -> {
+            if (candidatePanel != null) {
+                setContent(candidatePanel);
+                highlightMenuButton(menuCandidate);
+            }
+        });
+        
+        menuScore.addActionListener(e -> {
+            if (scorePanel != null) {
+                setContent(scorePanel);
+                highlightMenuButton(menuScore);
+            }
+        });
+        
+        menuWish.addActionListener(e -> {
+            // TODO: Implement WishPanel
+            highlightMenuButton(menuWish);
+            showPlaceholderPanel("Wish / Preference Management");
+        });
+        
+        menuMajor.addActionListener(e -> {
+            // TODO: Implement MajorPanel
+            highlightMenuButton(menuMajor);
+            showPlaceholderPanel("Major List Management");
+        });
+        
+        menuThreshold.addActionListener(e -> {
+            // TODO: Implement ThresholdPanel
+            highlightMenuButton(menuThreshold);
+            showPlaceholderPanel("Admission Threshold Score Management");
+        });
+        
+        menuSubjectGroup.addActionListener(e -> {
+            // TODO: Implement SubjectGroupPanel
+            highlightMenuButton(menuSubjectGroup);
+            showPlaceholderPanel("Subject Combination List Management");
+        });
+        
+        if (user.getRole().toString().equalsIgnoreCase("admin")) {
+            menuAdmission.addActionListener(e -> {
+                // TODO: Implement AdmissionPanel
+                highlightMenuButton(menuAdmission);
+                showPlaceholderPanel("Admission Result List Management");
+            });
+            
+            menuStatistic.addActionListener(e -> {
+                // TODO: Implement StatisticPanel
+                highlightMenuButton(menuStatistic);
+                showPlaceholderPanel("Statistics & Reports");
+            });
+        }
+    }
+    
+    /**
+     * Show placeholder panel for unimplemented features
+     */
+    private void showPlaceholderPanel(String featureName) {
+        JPanel placeholder = new JPanel(new BorderLayout());
+        placeholder.setBackground(Color.WHITE);
+        
+        JLabel message = new JLabel(
+            "<html><div style='text-align: center;'>" +
+            "<h2>" + featureName + "</h2>" +
+            "<p>Tính năng này đang được phát triển.</p>" +
+            "<p>Vui lòng quay lại sau.</p>" +
+            "</div></html>",
+            SwingConstants.CENTER
+        );
+        message.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        message.setForeground(new Color(127, 140, 141));
+        
+        placeholder.add(message, BorderLayout.CENTER);
+        setContent(placeholder);
+    }
+
+    /**
      * Setup frame properties
      */
-    private void setupFrame() {
+    public void setupFrame() {
         setTitle("Admission Management System");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(UIConstants.FRAME_WIDTH, UIConstants.FRAME_HEIGHT);
         setLocationRelativeTo(null);
         setMinimumSize(new Dimension(1000, 700));
+        
+        // Initialize with default panel
+        if (candidatePanel != null) {
+            setContent(candidatePanel);
+            highlightMenuButton(menuCandidate);
+        }
     }
 
     /**
@@ -200,7 +302,7 @@ public class MainFrame extends JFrame {
         contentPanel.revalidate();
         contentPanel.repaint();
 
-        // Also revalidate/repaint the root panel to ensure full refresh
+        // Also revalidate/repaint root panel to ensure full refresh
         rootPanel.revalidate();
         rootPanel.repaint();
     }

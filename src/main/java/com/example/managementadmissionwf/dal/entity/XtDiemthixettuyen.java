@@ -38,7 +38,7 @@ public class XtDiemthixettuyen {
     String dPhuongthuc; // phương thức xét tuyển
     
     // Điểm các môn
-    @Column(name = "TO")
+    @Column(name = "TOAN")
     Double to; // Toán
     
     @Column(name = "LI")

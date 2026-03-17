@@ -230,7 +230,7 @@ public class RightLoginPanel extends JPanel {
         // Detailed validation is in DTO layer
         if (username.isEmpty() || password.isEmpty()) {
             JOptionPane.showMessageDialog(this,
-                    "Please fill out all the fields!",
+                    "Please fill out all of fields!",
                     "Validation Error",
                     JOptionPane.ERROR_MESSAGE);
             return;
@@ -244,7 +244,14 @@ public class RightLoginPanel extends JPanel {
         LoginResponseDTO response = authService.login(loginDTO);
 
         if (response.isSuccess() && response.getUser() != null) {
-            MainFrame mainFrame = new MainFrame(response.getUser());
+            // Get MainFrame from Spring context and set user
+            MainFrame mainFrame = ApplicationContextHolder.getBean(MainFrame.class);
+            mainFrame.setUser(response.getUser());
+            
+            // Initialize MainFrame components
+            mainFrame.initComponents();
+            mainFrame.setupFrame();
+            
             Navigation navController = new Navigation(mainFrame);
             mainFrame.setVisible(true);
 
@@ -269,7 +276,7 @@ public class RightLoginPanel extends JPanel {
     }
 
     /**
-     * Handle forgot password link click - Placeholder for business logic`
+     * Handle forgot password link click - Placeholder for business logic
      */
     private void handleForgotPassword() {
         // TODO: Implement forgot password logic

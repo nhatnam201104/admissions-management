@@ -29,6 +29,7 @@ The application uses a modern technology stack combining Spring Boot for backend
 ## ✨ Features
 
 ### Core Functionality
+
 - **User Authentication**: Secure login system with role-based access control
 - **Candidate Management**: Add, edit, and manage candidate information
 - **Score Management**: Track and manage candidate subject scores
@@ -40,6 +41,7 @@ The application uses a modern technology stack combining Spring Boot for backend
 - **Statistics & Reports**: Generate comprehensive admission statistics
 
 ### User Roles
+
 - **STUDENT**: View personal information, scores, and aspirations
 - **MANAGER**: Manage candidates, scores, majors, and thresholds
 - **ADMIN**: Full access including admission processing and statistics
@@ -47,6 +49,7 @@ The application uses a modern technology stack combining Spring Boot for backend
 ## 🛠 Technology Stack
 
 ### Backend
+
 - **Java 21**: Modern Java with preview features enabled
 - **Spring Boot 4.0.2**: Application framework
 - **Spring Data JPA**: Database operations with Hibernate ORM
@@ -57,11 +60,13 @@ The application uses a modern technology stack combining Spring Boot for backend
 - **Bean Validation (Jakarta Validation)**: Input validation
 
 ### Frontend
+
 - **Java Swing**: Desktop GUI framework
 - **Swing Components**: Custom styled buttons, text fields, panels
 - **MVC Pattern**: Separation of UI, business logic, and data
 
 ### Build Tools
+
 - **Maven**: Dependency management and build automation
 - **Maven Compiler Plugin**: Java 21 compilation with preview features
 
@@ -92,6 +97,7 @@ The application follows a layered architecture pattern:
 ```
 
 ### Key Design Patterns
+
 - **MVC (Model-View-Controller)**: Separates concerns between data, UI, and logic
 - **Repository Pattern**: Abstracts database operations
 - **DTO Pattern**: Data transfer objects for layer communication
@@ -203,12 +209,14 @@ admissions-management/
 ## 👥 User Roles
 
 ### STUDENT
+
 - View personal profile
 - Check subject scores
 - Review submitted aspirations
 - View admission results
 
 ### MANAGER
+
 - Manage candidate information
 - Enter and update scores
 - Configure majors and subject combinations
@@ -216,6 +224,7 @@ admissions-management/
 - View admission lists
 
 ### ADMIN
+
 - All MANAGER privileges
 - Process admission results
 - Generate statistics and reports
@@ -228,6 +237,7 @@ The database follows the Vietnamese University Admission System (xettuyen2026) d
 ### 1. MASTER DATA (DỮ LIỆU DANH MỤC)
 
 #### xt_nganh (Ngành đào tạo)
+
 - `idnganh`: Primary key
 - `manganh`: Mã ngành (unique)
 - `tennganh`: Tên ngành
@@ -246,6 +256,7 @@ The database follows the Vietnamese University Admission System (xettuyen2026) d
 - `createdAt`, `updatedAt`: Timestamps
 
 #### xt_tohop_monthi (Tổ hợp môn)
+
 - `id`: Primary key
 - `matohop`: Mã tổ hợp (A00, D01...)
 - `mon1`: Môn 1 (TO, LI, HO, etc.)
@@ -255,6 +266,7 @@ The database follows the Vietnamese University Admission System (xettuyen2026) d
 - `createdAt`, `updatedAt`: Timestamps
 
 #### xt_nganh_tohop (Mapping Ngành ↔ Tổ hợp)
+
 - `id`: Primary key
 - `manganh`: Mã ngành (FK to xt_nganh)
 - `matohop`: Mã tổ hợp (FK to xt_tohop_monthi)
@@ -269,6 +281,7 @@ The database follows the Vietnamese University Admission System (xettuyen2026) d
 ### 2. CANDIDATE DATA (DỮ LIỆU THÍ SINH)
 
 #### xt_thisinhxettuyen25 (Thông tin thí sinh)
+
 - `id`: Primary key
 - `cccd`: CCCD (unique) - Primary identity
 - `sobaodanh`: Số báo danh (unique)
@@ -285,6 +298,7 @@ The database follows the Vietnamese University Admission System (xettuyen2026) d
 - `createdAt`, `updatedAt`: Timestamps
 
 #### xt_diemthixettuyen (Điểm thi thí sinh)
+
 - `id`: Primary key
 - `cccd`: CCCD (unique) - FK to xt_thisinhxettuyen25
 - `sobaodanh`: SBD (unique)
@@ -295,6 +309,7 @@ The database follows the Vietnamese University Admission System (xettuyen2026) d
 - `createdAt`, `updatedAt`: Timestamps
 
 #### xt_diemcongxettuyen (Điểm cộng thêm)
+
 - `id`: Primary key
 - `cccd`: CCCD (unique) - FK to xt_thisinhxettuyen25
 - `diemCC`: Điểm chứng chỉ (IELTS, SAT, etc.)
@@ -305,6 +320,7 @@ The database follows the Vietnamese University Admission System (xettuyen2026) d
 ### 3. ADMISSION PROCESSING (XỬ LÝ XÉT TUYỂN)
 
 #### xt_nguyenvongxettuyen (Nguyện vọng xét tuyển)
+
 - `id`: Primary key
 - `nn_cccd`: CCCD thí sinh (FK to xt_thisinhxettuyen25)
 - `nv_manganh`: Mã ngành (FK to xt_nganh)
@@ -317,6 +333,7 @@ The database follows the Vietnamese University Admission System (xettuyen2026) d
 - `createdAt`, `updatedAt`: Timestamps
 
 #### xt_bangquydoi (Bảng quy đổi điểm)
+
 - `id`: Primary key
 - `d_phuongthuc`: Phương thức xét tuyển (THPT, DGNL, VSAT)
 - `d_tohop`: Tổ hợp (A00, D01, etc.)
@@ -330,6 +347,7 @@ The database follows the Vietnamese University Admission System (xettuyen2026) d
 ### Legacy Entities (Preserved for compatibility)
 
 #### Users
+
 - `id`: Primary key
 - `fullname`: User's full name
 - `email`: Email address (unique)
@@ -339,6 +357,7 @@ The database follows the Vietnamese University Admission System (xettuyen2026) d
 - `createdAt`, `updatedAt`: Timestamps
 
 #### Students (Legacy - use xt_thisinhxettuyen25 instead)
+
 - `id`: Primary key
 - `user_id`: Foreign key to Users
 - `address`: Student address
@@ -351,12 +370,14 @@ The database follows the Vietnamese University Admission System (xettuyen2026) d
 ## 💻 Development
 
 ### Code Style
+
 - Follow Java naming conventions
 - Use Lombok annotations to reduce boilerplate
 - Implement proper exception handling
 - Write clear, self-documenting code
 
 ### Adding New Features
+
 1. Create/update JPA entities in `dal/entity/`
 2. Create/update repositories in `dal/repository/`
 3. Create/update DTOs in `dto/`
@@ -366,6 +387,7 @@ The database follows the Vietnamese University Admission System (xettuyen2026) d
 7. Add navigation in `ui/component/Navigation.java`
 
 ### Hot Reload
+
 The application includes Spring DevTools for hot reloading during development:
 
 ```xml
@@ -390,6 +412,7 @@ Run tests using Maven:
 ```
 
 ### Test Dependencies
+
 - `spring-boot-starter-security-test`: Security testing
 - `spring-boot-starter-validation-test`: Validation testing
 - `spring-boot-starter-security-oauth2-authorization-server-test`: OAuth2 testing
@@ -409,6 +432,7 @@ This project is licensed under the MIT License.
 ## 📞 Support
 
 For support and questions:
+
 - Open an issue on GitHub
 - Contact the development team
 
@@ -428,7 +452,6 @@ For support and questions:
 ## 📚 Additional Documentation
 
 - See [ARCHITECTURE.md](markdown/architecture.md) for detailed technical architecture
-- See [MIGRATION_GUIDE.md](markdown/MIGRATION_GUIDE.md) for database migration from legacy entities
 - See [dbDesign.md](markdown/dbDesign.md) for database design requirements
 - See inline code comments for implementation details
 
@@ -437,6 +460,7 @@ For support and questions:
 The system is transitioning from legacy entities to new Xt* entities following Vietnamese Ministry of Education standards:
 
 **Deprecated Entities** (will be removed):
+
 - `Students` → Use `XtThisinhxettuyen25`
 - `Major` → Use `XtNganh`
 - `MajorDetail` → Use `XtNganhTohop`
@@ -446,6 +470,7 @@ The system is transitioning from legacy entities to new Xt* entities following V
 - `Aspiration` → Use `XtNguyenvongxettuyen`
 
 **Kept Entities**:
+
 - `Users` - Authentication and user management
 - `RoleUser` - Role definitions
 
