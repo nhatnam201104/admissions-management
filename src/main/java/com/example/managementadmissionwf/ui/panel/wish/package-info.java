@@ -1,0 +1,1 @@
+package com.example.managementadmissionwf.ui.panel.wish;

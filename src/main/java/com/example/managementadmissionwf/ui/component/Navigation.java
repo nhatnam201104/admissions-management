@@ -2,6 +2,7 @@ package com.example.managementadmissionwf.ui.component;
 
 import com.example.managementadmissionwf.ui.frame.MainFrame;
 import com.example.managementadmissionwf.ui.panel.*;
+import com.example.managementadmissionwf.ui.panel.wish.WishPanel;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
