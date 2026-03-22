@@ -1,9 +1,12 @@
 package com.example.managementadmissionwf.ui.frame;
 
 import com.example.managementadmissionwf.dto.User.UserDTO;
+
+import com.example.managementadmissionwf.ui.panel.MajorPanel;
 import com.example.managementadmissionwf.ui.util.UIConstants;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.swing.*;
@@ -14,6 +17,7 @@ import java.util.Objects;
  * MainFrame - Overall layout with sidebar and content panel
  * NetBeans GUI Builder compatible (.form file required)
  */
+@Slf4j
 @Getter
 @Setter
 public class MainFrame extends JFrame {
@@ -37,11 +41,11 @@ public class MainFrame extends JFrame {
     private JButton menuAdmission;
     private JButton menuStatistic;
     private UserDTO user;
-    
+
     // Injected panels
     @Autowired(required = false)
     private com.example.managementadmissionwf.ui.panel.candidate.CandidatePanel candidatePanel;
-    
+
     @Autowired(required = false)
     private com.example.managementadmissionwf.ui.panel.score.ScorePanel scorePanel;
 
@@ -50,6 +54,9 @@ public class MainFrame extends JFrame {
     /**
      * Default constructor for Spring Bean
      */
+    @Autowired(required = false)
+    private MajorPanel majorPanel;
+
     public MainFrame() {
     }
 
@@ -98,7 +105,7 @@ public class MainFrame extends JFrame {
         menuPanel.setBackground(new Color(44, 62, 80));
         menuPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 0, 10));
         menuPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         // Create menu buttons
         menuCandidate = createMenuButton("Candidate", "users");
         menuScore = createMenuButton("Candidate Score", "score");
@@ -202,38 +209,40 @@ public class MainFrame extends JFrame {
                 highlightMenuButton(menuCandidate);
             }
         });
-        
+
         menuScore.addActionListener(e -> {
             if (scorePanel != null) {
                 setContent(scorePanel);
                 highlightMenuButton(menuScore);
             }
         });
-        
+
         menuWish.addActionListener(e -> {
             // TODO: Implement WishPanel
             highlightMenuButton(menuWish);
             showPlaceholderPanel("Wish / Preference Management");
         });
-        
+
         menuMajor.addActionListener(e -> {
             // TODO: Implement MajorPanel
             highlightMenuButton(menuMajor);
-            showPlaceholderPanel("Major List Management");
+            if (majorPanel != null) {
+                setContent(majorPanel);
+            }
         });
-        
+
         menuThreshold.addActionListener(e -> {
             // TODO: Implement ThresholdPanel
             highlightMenuButton(menuThreshold);
             showPlaceholderPanel("Admission Threshold Score Management");
         });
-        
+
         menuSubjectGroup.addActionListener(e -> {
             // TODO: Implement SubjectGroupPanel
             highlightMenuButton(menuSubjectGroup);
             showPlaceholderPanel("Subject Combination List Management");
         });
-        
+
         if (user.getRole().toString().equalsIgnoreCase("admin")) {
             menuAdmission.addActionListener(e -> {
                 if (admissionPanel != null) {
@@ -241,7 +250,7 @@ public class MainFrame extends JFrame {
                     highlightMenuButton(menuAdmission);
                 }
             });
-            
+
             menuStatistic.addActionListener(e -> {
                 // TODO: Implement StatisticPanel
                 highlightMenuButton(menuStatistic);
@@ -249,25 +258,24 @@ public class MainFrame extends JFrame {
             });
         }
     }
-    
+
     /**
      * Show placeholder panel for unimplemented features
      */
     private void showPlaceholderPanel(String featureName) {
         JPanel placeholder = new JPanel(new BorderLayout());
         placeholder.setBackground(Color.WHITE);
-        
+
         JLabel message = new JLabel(
-            "<html><div style='text-align: center;'>" +
-            "<h2>" + featureName + "</h2>" +
-            "<p>Tính năng này đang được phát triển.</p>" +
-            "<p>Vui lòng quay lại sau.</p>" +
-            "</div></html>",
-            SwingConstants.CENTER
-        );
+                "<html><div style='text-align: center;'>" +
+                        "<h2>" + featureName + "</h2>" +
+                        "<p>Tính năng này đang được phát triển.</p>" +
+                        "<p>Vui lòng quay lại sau.</p>" +
+                        "</div></html>",
+                SwingConstants.CENTER);
         message.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         message.setForeground(new Color(127, 140, 141));
-        
+
         placeholder.add(message, BorderLayout.CENTER);
         setContent(placeholder);
     }
@@ -281,7 +289,7 @@ public class MainFrame extends JFrame {
         setSize(UIConstants.FRAME_WIDTH, UIConstants.FRAME_HEIGHT);
         setLocationRelativeTo(null);
         setMinimumSize(new Dimension(1000, 700));
-        
+
         // Initialize with default panel
         if (candidatePanel != null) {
             setContent(candidatePanel);

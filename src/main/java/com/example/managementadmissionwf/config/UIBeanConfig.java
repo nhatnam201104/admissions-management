@@ -1,5 +1,6 @@
 package com.example.managementadmissionwf.config;
 
+import com.example.managementadmissionwf.ui.component.Navigation;
 import com.example.managementadmissionwf.ui.frame.MainFrame;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,4 +22,6 @@ public class UIBeanConfig {
     public MainFrame mainFrame() {
         return new MainFrame();
     }
+
+
 }

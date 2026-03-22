@@ -1,12 +1,18 @@
 package com.example.managementadmissionwf.ui.panel;
 
+import jakarta.annotation.PostConstruct;
+
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
+
+import org.springframework.stereotype.Component;
+
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
+@Component
 public class MajorPanel extends JPanel {
 
     private final Color PRIMARY = new Color(33, 150, 243);
@@ -23,10 +29,12 @@ public class MajorPanel extends JPanel {
     private JTable majorTable;
     private JTable subjectGroupTable;
 
+
     public MajorPanel() {
         initComponents();
     }
 
+    @PostConstruct
     private void initComponents() {
         setLayout(new BorderLayout(10, 10));
         setBackground(BG);
@@ -108,7 +116,7 @@ public class MajorPanel extends JPanel {
 
         cbMethod.setPreferredSize(new Dimension(140, 32));
         cbMethod.setMaximumSize(new Dimension(140, 32));
-        cbMethod.setAlignmentX(Component.LEFT_ALIGNMENT);
+        cbMethod.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
 
         methodWrapper.add(Box.createVerticalGlue());
         methodWrapper.add(Box.createVerticalStrut(3));

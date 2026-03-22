@@ -2,6 +2,8 @@ package com.example.managementadmissionwf.ui.component;
 
 import com.example.managementadmissionwf.ui.frame.MainFrame;
 import com.example.managementadmissionwf.ui.panel.*;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -10,35 +12,30 @@ import java.awt.event.ActionListener;
  * NavigationController - Handles menu click events and manages panel navigation
  * NO UI layout code - pure controller logic
  */
+@NoArgsConstructor(force = true)
+@RequiredArgsConstructor
 public class Navigation {
 
-    private final MainFrame mainFrame;
+    private MainFrame mainFrame;
 
     // Content panels
-    private CandidatePanel candidatePanel;
-    private ScorePanel scorePanel;
-    private WishPanel wishPanel;
-    private MajorPanel majorPanel;
-    private ThresholdPanel thresholdPanel;
-    private SubjectGroupPanel subjectGroupPanel;
-    private AdmissionPanel admissionPanel;
-    private StatisticPanel statisticPanel;
+    private final CandidatePanel candidatePanel;
+    private final ScorePanel scorePanel;
+    private final WishPanel wishPanel;
+    private final MajorPanel majorPanel;
+    private final ThresholdPanel thresholdPanel;
+    private final SubjectGroupPanel subjectGroupPanel;
+    private final AdmissionPanel admissionPanel;
+    private final StatisticPanel statisticPanel;
 
-    public Navigation(MainFrame mainFrame) {
+    public void init(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
-        initializePanels();
         setupMenuListeners();
 
         // Show default panel
         showCandidatePanel();
     }
 
-    /**
-     * Initialize all content panels (lazy loading pattern)
-     */
-    private void initializePanels() {
-        // Panels are created on first use
-    }
 
     /**
      * Setup menu button click listeners
@@ -105,10 +102,9 @@ public class Navigation {
      * Show Candidate Management panel
      */
     private void showCandidatePanel() {
-        if (candidatePanel == null) {
-            candidatePanel = new CandidatePanel();
+        if (candidatePanel != null) {
+            mainFrame.setContent(candidatePanel);
         }
-        mainFrame.setContent(candidatePanel);
         mainFrame.highlightMenuButton(mainFrame.getMenuCandidate());
     }
 
@@ -116,10 +112,10 @@ public class Navigation {
      * Show Candidate Score Management panel
      */
     private void showScorePanel() {
-        if (scorePanel == null) {
-            scorePanel = new ScorePanel();
+        if (scorePanel != null) {
+
+            mainFrame.setContent(scorePanel);
         }
-        mainFrame.setContent(scorePanel);
         mainFrame.highlightMenuButton(mainFrame.getMenuScore());
     }
 
@@ -127,10 +123,9 @@ public class Navigation {
      * Show Wish / Preference Management panel
      */
     private void showWishPanel() {
-        if (wishPanel == null) {
-            wishPanel = new WishPanel();
+        if (wishPanel != null) {
+            mainFrame.setContent(wishPanel);
         }
-        mainFrame.setContent(wishPanel);
         mainFrame.highlightMenuButton(mainFrame.getMenuWish());
     }
 
@@ -138,10 +133,9 @@ public class Navigation {
      * Show Major List Management panel
      */
     private void showMajorPanel() {
-        if (majorPanel == null) {
-            majorPanel = new MajorPanel();
+        if (majorPanel != null) {
+            mainFrame.setContent(majorPanel);
         }
-        mainFrame.setContent(majorPanel);
         mainFrame.highlightMenuButton(mainFrame.getMenuMajor());
     }
 
@@ -149,10 +143,9 @@ public class Navigation {
      * Show Admission Threshold Score Management panel
      */
     private void showThresholdPanel() {
-        if (thresholdPanel == null) {
-            thresholdPanel = new ThresholdPanel();
+        if (thresholdPanel != null) {
+            mainFrame.setContent(thresholdPanel);
         }
-        mainFrame.setContent(thresholdPanel);
         mainFrame.highlightMenuButton(mainFrame.getMenuThreshold());
     }
 
@@ -160,10 +153,9 @@ public class Navigation {
      * Show Subject Combination List panel
      */
     private void showSubjectGroupPanel() {
-        if (subjectGroupPanel == null) {
-            subjectGroupPanel = new SubjectGroupPanel();
+        if (subjectGroupPanel != null) {
+            mainFrame.setContent(subjectGroupPanel);
         }
-        mainFrame.setContent(subjectGroupPanel);
         mainFrame.highlightMenuButton(mainFrame.getMenuSubjectGroup());
     }
 
@@ -171,10 +163,9 @@ public class Navigation {
      * Show Admission Result List panel
      */
     private void showAdmissionPanel() {
-        if (admissionPanel == null) {
-            admissionPanel = new AdmissionPanel();
+        if (admissionPanel != null) {
+            mainFrame.setContent(admissionPanel);
         }
-        mainFrame.setContent(admissionPanel);
         mainFrame.highlightMenuButton(mainFrame.getMenuAdmission());
     }
 
@@ -182,10 +173,9 @@ public class Navigation {
      * Show Statistics & Reports panel
      */
     private void showStatisticPanel() {
-        if (statisticPanel == null) {
-            statisticPanel = new StatisticPanel();
+        if (statisticPanel != null) {
+            mainFrame.setContent(statisticPanel);
         }
-        mainFrame.setContent(statisticPanel);
         mainFrame.highlightMenuButton(mainFrame.getMenuStatistic());
     }
 }
