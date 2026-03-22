@@ -45,6 +45,8 @@ public class MainFrame extends JFrame {
     @Autowired(required = false)
     private com.example.managementadmissionwf.ui.panel.score.ScorePanel scorePanel;
 
+    @Autowired(required = false)
+    private com.example.managementadmissionwf.ui.panel.admission.AdmissionPanel admissionPanel;
     /**
      * Default constructor for Spring Bean
      */
@@ -234,9 +236,10 @@ public class MainFrame extends JFrame {
         
         if (user.getRole().toString().equalsIgnoreCase("admin")) {
             menuAdmission.addActionListener(e -> {
-                // TODO: Implement AdmissionPanel
-                highlightMenuButton(menuAdmission);
-                showPlaceholderPanel("Admission Result List Management");
+                if (admissionPanel != null) {
+                    setContent(admissionPanel);
+                    highlightMenuButton(menuAdmission);
+                }
             });
             
             menuStatistic.addActionListener(e -> {
