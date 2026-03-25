@@ -1,4 +1,4 @@
-package com.example.managementadmissionwf.ui.panel;
+package com.example.managementadmissionwf.ui.panel.major;
 
 import jakarta.annotation.PostConstruct;
 
@@ -27,7 +27,6 @@ public class MajorPanel extends JPanel {
     private final Font FONT_BOLD = new Font("Segoe UI", Font.BOLD, 14);
 
     private JTable majorTable;
-    private JTable subjectGroupTable;
 
 
     public MajorPanel() {
@@ -132,12 +131,10 @@ public class MajorPanel extends JPanel {
         JButton btnAdd = new JButton("Thêm ngành", createIcon("/icons/add.png", 16, 16));
         JButton btnEdit = new JButton("Sửa", createIcon("/icons/edit.png", 16, 16));
         JButton btnDelete = new JButton("Xóa", createIcon("/icons/delete.png", 16, 16));
-        JButton btnAddGroup = new JButton("Thêm tổ hợp", createIcon("/icons/add.png", 16, 16));
 
         right.add(styleButton(btnAdd, SUCCESS));
         right.add(styleButton(btnEdit, PRIMARY));
         right.add(styleButton(btnDelete, DANGER));
-        right.add(styleButton(btnAddGroup, PRIMARY_DARK));
 
         panel.add(left, BorderLayout.WEST);
         panel.add(right, BorderLayout.EAST);
@@ -197,27 +194,7 @@ public class MajorPanel extends JPanel {
         majorPanel.add(header, BorderLayout.NORTH);
         majorPanel.add(majorScroll, BorderLayout.CENTER);
 
-        String[] groupCols = {"Tổ hợp", "Môn 1", "Môn 2", "Môn 3"};
-        Object[][] groupData = {
-                {"A00", "Toán", "Vật lý", "Hóa học"},
-                {"A01", "Toán", "Vật lý", "Tiếng Anh"},
-                {"D01", "Toán", "Ngữ văn", "Tiếng Anh"},
-                {"D07", "Toán", "Hóa học", "Tiếng Anh"},
-                {"B00", "Toán", "Hóa học", "Sinh học"},
-                {"C00", "Ngữ văn", "Lịch sử", "Địa lý"},
-                {"D14", "Ngữ văn", "Lịch sử", "Tiếng Anh"}
-        };
-
-        subjectGroupTable = createTable(groupData, groupCols);
-        JScrollPane groupScroll = new JScrollPane(subjectGroupTable);
-        groupScroll.setBorder(createBorder("Tổ hợp xét tuyển"));
-
-        JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, majorPanel, groupScroll);
-        split.setDividerLocation(280);
-        split.setDividerSize(6);
-        split.setBorder(null);
-
-        return split;
+        return majorPanel;
     }
 
     private JButton styleButton(JButton btn, Color bgColor) {
@@ -274,13 +251,5 @@ public class MajorPanel extends JPanel {
         header.setPreferredSize(new Dimension(100, 40));
 
         return table;
-    }
-
-    private TitledBorder createBorder(String title) {
-        TitledBorder border = BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(BORDER), title);
-        border.setTitleFont(FONT_BOLD);
-        border.setTitleColor(PRIMARY_DARK);
-        return border;
     }
 }

@@ -1,9 +1,19 @@
 package com.example.managementadmissionwf.ui.component;
 
 import com.example.managementadmissionwf.ui.frame.MainFrame;
-import com.example.managementadmissionwf.ui.panel.*;
+import com.example.managementadmissionwf.ui.panel.candidate.CandidatePanel;
+import com.example.managementadmissionwf.ui.panel.major.MajorPanel;
+import com.example.managementadmissionwf.ui.panel.score.ScorePanel;
+import com.example.managementadmissionwf.ui.panel.subjectgroup.SubjectGroupPanel;
+import com.example.managementadmissionwf.ui.panel.admission.AdmissionPanel;
+import com.example.managementadmissionwf.ui.panel.ThresholdPanel;
+import com.example.managementadmissionwf.ui.panel.StatisticPanel;
+import com.example.managementadmissionwf.ui.panel.UserManagementPanel;
+import com.example.managementadmissionwf.ui.panel.BonusScorePanel;
+import com.example.managementadmissionwf.ui.panel.ConversionTablePanel;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -21,12 +31,14 @@ public class Navigation {
     // Content panels
     private final CandidatePanel candidatePanel;
     private final ScorePanel scorePanel;
-    private final WishPanel wishPanel;
     private final MajorPanel majorPanel;
-    private final ThresholdPanel thresholdPanel;
     private final SubjectGroupPanel subjectGroupPanel;
+    private final BonusScorePanel bonusScorePanel;
+    private final ConversionTablePanel conversionTablePanel;
+    private final UserManagementPanel userManagementPanel;
     private final AdmissionPanel admissionPanel;
     private final StatisticPanel statisticPanel;
+
 
     public void init(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
@@ -55,13 +67,6 @@ public class Navigation {
             }
         });
 
-        mainFrame.getMenuWish().addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                showWishPanel();
-            }
-        });
-
         mainFrame.getMenuMajor().addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -69,17 +74,33 @@ public class Navigation {
             }
         });
 
-        mainFrame.getMenuThreshold().addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                showThresholdPanel();
-            }
-        });
-
         mainFrame.getMenuSubjectGroup().addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 showSubjectGroupPanel();
+            }
+        });
+
+
+
+        mainFrame.getMenuBonusScore().addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                showBonusScorePanel();
+            }
+        });
+
+        mainFrame.getMenuConversionTable().addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                showConversionTablePanel();
+            }
+        });
+
+        mainFrame.getMenuUserManagement().addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                showUserManagementPanel();
             }
         });
 
@@ -113,20 +134,9 @@ public class Navigation {
      */
     private void showScorePanel() {
         if (scorePanel != null) {
-
             mainFrame.setContent(scorePanel);
         }
         mainFrame.highlightMenuButton(mainFrame.getMenuScore());
-    }
-
-    /**
-     * Show Wish / Preference Management panel
-     */
-    private void showWishPanel() {
-        if (wishPanel != null) {
-            mainFrame.setContent(wishPanel);
-        }
-        mainFrame.highlightMenuButton(mainFrame.getMenuWish());
     }
 
     /**
@@ -140,16 +150,6 @@ public class Navigation {
     }
 
     /**
-     * Show Admission Threshold Score Management panel
-     */
-    private void showThresholdPanel() {
-        if (thresholdPanel != null) {
-            mainFrame.setContent(thresholdPanel);
-        }
-        mainFrame.highlightMenuButton(mainFrame.getMenuThreshold());
-    }
-
-    /**
      * Show Subject Combination List panel
      */
     private void showSubjectGroupPanel() {
@@ -157,6 +157,41 @@ public class Navigation {
             mainFrame.setContent(subjectGroupPanel);
         }
         mainFrame.highlightMenuButton(mainFrame.getMenuSubjectGroup());
+    }
+
+    /**
+     * Show Admission Threshold Score Management panel
+     */
+
+
+    /**
+     * Show Bonus Score Management panel
+     */
+    private void showBonusScorePanel() {
+        if (bonusScorePanel != null) {
+            mainFrame.setContent(bonusScorePanel);
+        }
+        mainFrame.highlightMenuButton(mainFrame.getMenuBonusScore());
+    }
+
+    /**
+     * Show Conversion Table Management panel
+     */
+    private void showConversionTablePanel() {
+        if (conversionTablePanel != null) {
+            mainFrame.setContent(conversionTablePanel);
+        }
+        mainFrame.highlightMenuButton(mainFrame.getMenuConversionTable());
+    }
+
+    /**
+     * Show User Management panel
+     */
+    private void showUserManagementPanel() {
+        if (userManagementPanel != null) {
+            mainFrame.setContent(userManagementPanel);
+        }
+        mainFrame.highlightMenuButton(mainFrame.getMenuUserManagement());
     }
 
     /**

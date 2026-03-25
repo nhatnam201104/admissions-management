@@ -4,12 +4,12 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * ScorePanel - Temporary placeholder for Candidate Score Management
+ * ConversionTablePanel - Temporary placeholder for Conversion Table Management
  * Shows demo UI only (large title JLabel)
  */
-public class ScorePanel extends JPanel {
+public class ConversionTablePanel extends JPanel {
     
-    public ScorePanel() {
+    public ConversionTablePanel() {
         initComponents();
     }
     
@@ -18,12 +18,12 @@ public class ScorePanel extends JPanel {
         setBackground(Color.WHITE);
         
         // Title label
-        JLabel titleLabel = new JLabel("Screen: Candidate Score Management", SwingConstants.CENTER);
+        JLabel titleLabel = new JLabel("Screen: Bảng quy đổi", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 32));
         titleLabel.setForeground(new Color(44, 62, 80));
         
         // Subtitle
-        JLabel subtitleLabel = new JLabel("<html><center>This panel will contain:<br>• Score list table<br>• Add/Edit/Delete score functionality<br>• Subject-wise score entry<br>• Score validation</center></html>", SwingConstants.CENTER);
+        JLabel subtitleLabel = new JLabel("<html><center>This panel will contain:<br>• Conversion table list<br>• Import conversion table list<br>• View/Add/Edit/Delete conversion table<br>• Search functionality</center></html>", SwingConstants.CENTER);
         subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         subtitleLabel.setForeground(new Color(127, 140, 141));
         

@@ -2,7 +2,6 @@ package com.example.managementadmissionwf.ui.panel.major;
 
 import javax.swing.*;
 
-import com.example.managementadmissionwf.ui.panel.MajorPanel;
 
 public class TestUi {
     public static void main(String[] args) {

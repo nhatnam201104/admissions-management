@@ -4,12 +4,12 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * CandidatePanel - Temporary placeholder for Candidate Management
+ * BonusScorePanel - Temporary placeholder for Bonus Score Management
  * Shows demo UI only (large title JLabel)
  */
-public class CandidatePanel extends JPanel {
+public class BonusScorePanel extends JPanel {
     
-    public CandidatePanel() {
+    public BonusScorePanel() {
         initComponents();
     }
     
@@ -18,12 +18,12 @@ public class CandidatePanel extends JPanel {
         setBackground(Color.WHITE);
         
         // Title label
-        JLabel titleLabel = new JLabel("Screen: Candidate Management", SwingConstants.CENTER);
+        JLabel titleLabel = new JLabel("Screen: Điểm cộng", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 32));
         titleLabel.setForeground(new Color(44, 62, 80));
         
         // Subtitle
-        JLabel subtitleLabel = new JLabel("<html><center>This panel will contain:<br>• Candidate list table<br>• Add/Edit/Delete candidate functionality<br>• Search and filter options<br>• Candidate details form</center></html>", SwingConstants.CENTER);
+        JLabel subtitleLabel = new JLabel("<html><center>This panel will contain:<br>• Bonus score list table<br>• Import bonus score list<br>• Add/Edit/Delete bonus score functionality<br>• Search by candidate ID</center></html>", SwingConstants.CENTER);
         subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         subtitleLabel.setForeground(new Color(127, 140, 141));
         

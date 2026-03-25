@@ -1,8 +1,13 @@
 package com.example.managementadmissionwf.ui.frame;
 
 import com.example.managementadmissionwf.dto.User.UserDTO;
-
-import com.example.managementadmissionwf.ui.panel.MajorPanel;
+import com.example.managementadmissionwf.ui.panel.major.MajorPanel;
+import com.example.managementadmissionwf.ui.panel.subjectgroup.SubjectGroupPanel;
+import com.example.managementadmissionwf.ui.panel.UserManagementPanel;
+import com.example.managementadmissionwf.ui.panel.BonusScorePanel;
+import com.example.managementadmissionwf.ui.panel.ConversionTablePanel;
+import com.example.managementadmissionwf.ui.panel.ThresholdPanel;
+import com.example.managementadmissionwf.ui.panel.StatisticPanel;
 import com.example.managementadmissionwf.ui.util.UIConstants;
 import lombok.Getter;
 import lombok.Setter;
@@ -34,10 +39,12 @@ public class MainFrame extends JFrame {
     private JPanel menuPanel;
     private JButton menuCandidate;
     private JButton menuScore;
-    private JButton menuWish;
     private JButton menuMajor;
-    private JButton menuThreshold;
     private JButton menuSubjectGroup;
+
+    private JButton menuBonusScore;
+    private JButton menuConversionTable;
+    private JButton menuUserManagement;
     private JButton menuAdmission;
     private JButton menuStatistic;
     private UserDTO user;
@@ -50,16 +57,39 @@ public class MainFrame extends JFrame {
     private com.example.managementadmissionwf.ui.panel.score.ScorePanel scorePanel;
 
     @Autowired(required = false)
+    private MajorPanel majorPanel;
+
+    @Autowired(required = false)
+    private SubjectGroupPanel subjectGroupPanel;
+
+    @Autowired(required = false)
+    private UserManagementPanel userManagementPanel;
+
+    @Autowired(required = false)
+    private BonusScorePanel bonusScorePanel;
+
+    @Autowired(required = false)
+    private ConversionTablePanel conversionTablePanel;
+
+    @Autowired(required = false)
     private com.example.managementadmissionwf.ui.panel.admission.AdmissionPanel admissionPanel;
+
+    @Autowired(required = false)
+    private ThresholdPanel thresholdPanel;
+
+    @Autowired(required = false)
+    private StatisticPanel statisticPanel;
+
+
     /**
      * Default constructor for Spring Bean
      */
-    @Autowired(required = false)
-    private MajorPanel majorPanel;
-
     public MainFrame() {
     }
 
+    /**
+     * Constructor with user parameter
+     */
     public MainFrame(UserDTO user) {
         this.user = user;
         initComponents();
@@ -107,27 +137,30 @@ public class MainFrame extends JFrame {
         menuPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Create menu buttons
-        menuCandidate = createMenuButton("Candidate", "users");
-        menuScore = createMenuButton("Candidate Score", "score");
-        menuWish = createMenuButton("Wish / Preference", "listCheck");
-        menuMajor = createMenuButton("Major List", "book");
-        menuThreshold = createMenuButton("Admission Threshold Score", "trendingUp");
-        menuSubjectGroup = createMenuButton("Subject Combination List", "layers");
-        menuAdmission = createMenuButton("Admission Result List", "checkCircle");
-        menuStatistic = createMenuButton("Statistics & Reports", "barchart");
+        menuCandidate = createMenuButton("Quản lý thí sinh", "users");
+        menuScore = createMenuButton("Quản lý điểm", "score");
+        menuMajor = createMenuButton("Danh sách ngành", "book");
+        menuSubjectGroup = createMenuButton("Tổ hợp môn", "layers");
+        menuBonusScore = createMenuButton("Điểm cộng", "trendingUp");
+        menuConversionTable = createMenuButton("Bảng quy đổi", "layers");
+        menuUserManagement = createMenuButton("Quản lý người dùng", "users");
+        menuAdmission = createMenuButton("Quản lý nguyện vọng và xét tuyển ", "checkCircle");
+        menuStatistic = createMenuButton("Thống kê", "barchart");
 
         // Add buttons to menu panel
         menuPanel.add(menuCandidate);
         menuPanel.add(Box.createVerticalStrut(5));
         menuPanel.add(menuScore);
         menuPanel.add(Box.createVerticalStrut(5));
-        menuPanel.add(menuWish);
-        menuPanel.add(Box.createVerticalStrut(5));
         menuPanel.add(menuMajor);
         menuPanel.add(Box.createVerticalStrut(5));
-        menuPanel.add(menuThreshold);
-        menuPanel.add(Box.createVerticalStrut(5));
         menuPanel.add(menuSubjectGroup);
+        menuPanel.add(Box.createVerticalStrut(5));
+        menuPanel.add(menuBonusScore);
+        menuPanel.add(Box.createVerticalStrut(5));
+        menuPanel.add(menuConversionTable);
+        menuPanel.add(Box.createVerticalStrut(5));
+        menuPanel.add(menuUserManagement);
         menuPanel.add(Box.createVerticalStrut(5));
         if (user.getRole().toString().equalsIgnoreCase("admin")) {
             menuPanel.add(menuAdmission);
@@ -217,31 +250,43 @@ public class MainFrame extends JFrame {
             }
         });
 
-        menuWish.addActionListener(e -> {
-            // TODO: Implement WishPanel
-            highlightMenuButton(menuWish);
-            showPlaceholderPanel("Wish / Preference Management");
-        });
-
         menuMajor.addActionListener(e -> {
-            // TODO: Implement MajorPanel
-            highlightMenuButton(menuMajor);
             if (majorPanel != null) {
                 setContent(majorPanel);
+                highlightMenuButton(menuMajor);
             }
         });
 
-        menuThreshold.addActionListener(e -> {
-            // TODO: Implement ThresholdPanel
-            highlightMenuButton(menuThreshold);
-            showPlaceholderPanel("Admission Threshold Score Management");
+        menuSubjectGroup.addActionListener(e -> {
+            if (subjectGroupPanel != null) {
+                setContent(subjectGroupPanel);
+                highlightMenuButton(menuSubjectGroup);
+            }
         });
 
-        menuSubjectGroup.addActionListener(e -> {
-            // TODO: Implement SubjectGroupPanel
-            highlightMenuButton(menuSubjectGroup);
-            showPlaceholderPanel("Subject Combination List Management");
+
+
+        menuBonusScore.addActionListener(e -> {
+            if (bonusScorePanel != null) {
+                setContent(bonusScorePanel);
+                highlightMenuButton(menuBonusScore);
+            }
         });
+
+        menuConversionTable.addActionListener(e -> {
+            if (conversionTablePanel != null) {
+                setContent(conversionTablePanel);
+                highlightMenuButton(menuConversionTable);
+            }
+        });
+
+        menuUserManagement.addActionListener(e -> {
+            if (userManagementPanel != null) {
+                setContent(userManagementPanel);
+                highlightMenuButton(menuUserManagement);
+            }
+        });
+
 
         if (user.getRole().toString().equalsIgnoreCase("admin")) {
             menuAdmission.addActionListener(e -> {
@@ -252,11 +297,13 @@ public class MainFrame extends JFrame {
             });
 
             menuStatistic.addActionListener(e -> {
-                // TODO: Implement StatisticPanel
-                highlightMenuButton(menuStatistic);
-                showPlaceholderPanel("Statistics & Reports");
+                if (statisticPanel != null) {
+                    setContent(statisticPanel);
+                    highlightMenuButton(menuStatistic);
+                }
             });
         }
+
     }
 
     /**
@@ -325,8 +372,9 @@ public class MainFrame extends JFrame {
      */
     public void highlightMenuButton(JButton selectedButton) {
         // Reset all buttons
-        JButton[] buttons = {menuCandidate, menuScore, menuWish, menuMajor,
-                menuThreshold, menuSubjectGroup, menuAdmission, menuStatistic};
+        JButton[] buttons = {menuCandidate, menuScore, menuMajor, menuSubjectGroup,
+               menuBonusScore, menuConversionTable, menuUserManagement,
+                menuAdmission, menuStatistic};
 
         for (JButton button : buttons) {
             button.setSelected(false);
@@ -339,5 +387,4 @@ public class MainFrame extends JFrame {
         selectedButton.setBackground(new Color(41, 128, 185));
         selectedButton.setFont(selectedButton.getFont().deriveFont(Font.BOLD));
     }
-
 }
