@@ -4,12 +4,12 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * MajorPanel - Temporary placeholder for Major List Management
+ * UserManagementPanel - Temporary placeholder for User Management
  * Shows demo UI only (large title JLabel)
  */
-public class MajorPanel extends JPanel {
+public class UserManagementPanel extends JPanel {
     
-    public MajorPanel() {
+    public UserManagementPanel() {
         initComponents();
     }
     
@@ -18,12 +18,12 @@ public class MajorPanel extends JPanel {
         setBackground(Color.WHITE);
         
         // Title label
-        JLabel titleLabel = new JLabel("Screen: Major List Management", SwingConstants.CENTER);
+        JLabel titleLabel = new JLabel("Screen: Quản lý người dùng", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 32));
         titleLabel.setForeground(new Color(44, 62, 80));
         
         // Subtitle
-        JLabel subtitleLabel = new JLabel("<html><center>This panel will contain:<br>• Major list table<br>• Add/Edit/Delete major functionality<br>• Major code and name<br>• Quota management</center></html>", SwingConstants.CENTER);
+        JLabel subtitleLabel = new JLabel("<html><center>This panel will contain:<br>• User list table<br>• Add/Edit/Delete user functionality<br>• Change password<br>• Change user role (user ↔ admin)<br>• Enable/disable users</center></html>", SwingConstants.CENTER);
         subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         subtitleLabel.setForeground(new Color(127, 140, 141));
         

@@ -247,12 +247,13 @@ public class RightLoginPanel extends JPanel {
             // Get MainFrame from Spring context and set user
             MainFrame mainFrame = ApplicationContextHolder.getBean(MainFrame.class);
             mainFrame.setUser(response.getUser());
-            
+
             // Initialize MainFrame components
             mainFrame.initComponents();
             mainFrame.setupFrame();
-            
-            Navigation navController = new Navigation(mainFrame);
+
+            Navigation navController = new Navigation();
+            navController.init(mainFrame);
             mainFrame.setVisible(true);
 
             // Close login window
