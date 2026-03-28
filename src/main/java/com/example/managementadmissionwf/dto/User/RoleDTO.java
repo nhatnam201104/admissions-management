@@ -5,8 +5,7 @@ package com.example.managementadmissionwf.dto.User;
  */
 public enum RoleDTO {
     STUDENT,
-    ADMIN,
-    MANAGER;
+    ADMIN;
     
     /**
      * Convert from entity enum to DTO enum

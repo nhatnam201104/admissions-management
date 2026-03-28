@@ -16,27 +16,27 @@ public class AppConfig {
 
     private final UserRepository userRepository;
 
-    @Bean
-    CommandLineRunner seedAdminUser() {
-        return args -> {
+    // @Bean
+    // CommandLineRunner seedAdminUser() {
+    //     return args -> {
 
-            if (userRepository.existsByUsername("admin")) {
-                return;
-            }
+    //         if (userRepository.existsByUsername("admin")) {
+    //             return;
+    //         }
 
-            BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    //         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
-            Users admin = Users.builder()
-                    .fullname("Administrator")
-                    .email("admin@gmail.com")
-                    .username("admin")
-                    .password(encoder.encode("admin123"))
-                    .role(RoleUser.ADMIN)
-                    .build();
+    //         Users admin = Users.builder()
+    //                 .fullname("Administrator")
+    //                 .email("admin@gmail.com")
+    //                 .username("admin")
+    //                 .password(encoder.encode("admin123"))
+    //                 .role(RoleUser.ADMIN)
+    //                 .build();
 
-            userRepository.save(admin);
+    //         userRepository.save(admin);
 
-            System.out.println(" Admin user seeded successfully");
-        };
-    }
+    //         System.out.println(" Admin user seeded successfully");
+    //     };
+    // }
 }

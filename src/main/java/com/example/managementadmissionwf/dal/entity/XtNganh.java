@@ -3,6 +3,7 @@ package com.example.managementadmissionwf.dal.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
 
@@ -18,6 +19,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@SQLRestriction("is_deleted = false")
 public class XtNganh {
     
     @Id
@@ -67,6 +69,10 @@ public class XtNganh {
     @Column(name = "sl_thpt")
     Integer slThpt = 0; // số lượng THPT
     
+    @Column(nullable = false)
+    @Builder.Default
+    Boolean isDeleted = false;
+
     LocalDate createdAt = LocalDate.now();
     LocalDate updatedAt = LocalDate.now();
     

@@ -4,6 +4,4 @@ public enum RoleUser {
 
     STUDENT,
     ADMIN,
-    MANAGER,
 }
-
