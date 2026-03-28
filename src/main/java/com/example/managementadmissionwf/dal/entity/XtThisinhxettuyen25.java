@@ -3,6 +3,7 @@ package com.example.managementadmissionwf.dal.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
 
@@ -19,6 +20,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@SQLRestriction("is_deleted = false")
 public class XtThisinhxettuyen25 {
     
     @Id
@@ -61,6 +63,10 @@ public class XtThisinhxettuyen25 {
     @Column(name = "ho_va_ten")
     String hoVaTen; // Họ và tên đầy đủ (computed field)
     
+    @Column(nullable = false)
+    @Builder.Default
+    Boolean isDeleted = false;
+
     LocalDate createdAt = LocalDate.now();
     LocalDate updatedAt = LocalDate.now();
     

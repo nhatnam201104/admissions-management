@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -28,27 +29,43 @@ public class AuthServiceImpl implements AuthService {
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
 
+    @NonFinal
+    private UserDTO currentUser = new UserDTO();
+
     @Override
     public LoginResponseDTO login(@Valid LoginDTO loginDTO) {
-        // Step 1: Find user by username
         var userOptional = userRepository.findByUsername(loginDTO.getUsername());
-        
-        // Step 2: Validate credentials
+
         if (userOptional.isEmpty()) {
-            // Use same message for security (prevent username enumeration)
             throw new AuthenticationException("Invalid username or password.");
         }
-        
+
         var user = userOptional.get();
-        
-        // Step 3: Verify password using encoder
+
         if (!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
             throw new AuthenticationException("Invalid username or password.");
         }
-        
-        // Step 4: Map to DTO and return
+
         UserDTO userDTO = userMapper.toUserDTO(user);
-        
+
+        // Store current user in session
+        this.currentUser = userDTO;
+
         return LoginResponseDTO.success(userDTO);
+    }
+
+    @Override
+    public UserDTO getCurrentUser() {
+        return currentUser;
+    }
+
+    @Override
+    public void setCurrentUser(UserDTO user) {
+        this.currentUser = user;
+    }
+
+    @Override
+    public Integer getCurrentUserId() {
+        return currentUser != null ? currentUser.getId() : null;
     }
 }

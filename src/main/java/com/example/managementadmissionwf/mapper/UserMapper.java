@@ -1,10 +1,11 @@
 package com.example.managementadmissionwf.mapper;
 
 import com.example.managementadmissionwf.dal.entity.Users;
-import com.example.managementadmissionwf.dto.User.UserDTO;
-import com.example.managementadmissionwf.dto.User.RoleDTO;
+import com.example.managementadmissionwf.dto.User.*;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+
+import java.util.List;
 
 /**
  * User entity to DTO mapper
@@ -14,11 +15,20 @@ public interface UserMapper {
     
     @Mapping(target = "role", expression = "java(mapRole(user.getRole()))")
     UserDTO toUserDTO(Users user);
+
+    @Mapping(target = "role", expression = "java(mapRole(user.getRole()))")
+    CreateUserResponse toCreateResponse(Users user);
+
+    @Mapping(target = "role", expression = "java(mapRole(user.getRole()))")
+    UpdateUserResponse toUpdateResponse(Users user);
+
+    @Mapping(target = "role", expression = "java(mapRole(user.getRole()))")
+    GetUserResponse toGetUserResponse(Users user);
+
+    List<GetUserResponse> toGetUserResponses(List<Users> users);
     
     /**
      * Map entity role enum to DTO role enum
-     * @param role Entity role
-     * @return DTO role
      */
     default RoleDTO mapRole(com.example.managementadmissionwf.dal.entity.RoleUser role) {
         if (role == null) {

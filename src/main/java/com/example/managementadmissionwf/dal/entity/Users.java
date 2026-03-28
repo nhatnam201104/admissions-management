@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
 
@@ -14,6 +15,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@SQLRestriction("is_deleted = false")
 public class Users {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,6 +31,10 @@ public class Users {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     RoleUser role;
+
+    @Column(nullable = false)
+    @Builder.Default
+    Boolean isDeleted = false;
 
     LocalDate createdAt = LocalDate.now();
     LocalDate updatedAt = LocalDate.now();
