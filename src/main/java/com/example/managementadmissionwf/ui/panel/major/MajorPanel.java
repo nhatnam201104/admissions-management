@@ -85,12 +85,10 @@ public class MajorPanel extends JPanel {
                 if (getText().isEmpty()) {
                     Graphics2D g2 = (Graphics2D) g.create();
                     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                    
                     g2.setColor(new Color(170, 170, 170)); 
                     g2.setFont(getFont());
                     FontMetrics fm = g2.getFontMetrics();
                     int y = (getHeight() - fm.getHeight()) / 2 + fm.getAscent();
-                    
                     g2.drawString("Nhập nội dung tìm kiếm...", 2, y);
                     g2.dispose();
                 }
@@ -103,7 +101,7 @@ public class MajorPanel extends JPanel {
         searchWrapper.add(txtSearch, BorderLayout.CENTER);
 
         JPanel methodWrapper = new JPanel();
-        methodWrapper.setLayout(new BoxLayout(methodWrapper, BoxLayout.Y_AXIS));
+        methodWrapper.setLayout(new BoxLayout(methodWrapper, BoxLayout.X_AXIS)); // Đổi sang X_AXIS để đi kèm nút
         methodWrapper.setBackground(BG);
         methodWrapper.setBorder(new EmptyBorder(0, 15, 0, 0));
 
@@ -112,16 +110,15 @@ public class MajorPanel extends JPanel {
         });
         cbMethod.setFont(FONT);
         cbMethod.setBackground(Color.WHITE);
-
         cbMethod.setPreferredSize(new Dimension(140, 32));
         cbMethod.setMaximumSize(new Dimension(140, 32));
-        cbMethod.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
 
-        methodWrapper.add(Box.createVerticalGlue());
-        methodWrapper.add(Box.createVerticalStrut(3));
+        JButton btnFilter = new JButton("Lọc");
+        styleButton(btnFilter, PRIMARY);
+        
         methodWrapper.add(cbMethod);
-        methodWrapper.add(Box.createVerticalGlue());
-
+        methodWrapper.add(Box.createHorizontalStrut(10)); 
+        methodWrapper.add(btnFilter);
 
         left.add(searchWrapper);
         left.add(methodWrapper);
