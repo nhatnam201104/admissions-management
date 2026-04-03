@@ -4,6 +4,7 @@ import javax.swing.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import com.example.managementadmissionwf.ui.util.UIFactory;
 
 import jakarta.annotation.PostConstruct;
 
@@ -74,8 +75,7 @@ public class AdmissionPanel extends JPanel {
     }
     
     private JPanel createFilterPanel() {
-    	JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        panel.setBackground(new Color(240, 240, 240));
+    	JPanel panel = UIFactory.createFilterPanel();
 
         // Ô Tìm kiếm
         JLabel lblSearch = new JLabel("Từ khóa:");
@@ -118,8 +118,9 @@ public class AdmissionPanel extends JPanel {
         panel.add(cboPhuongThuc);
 
         // Nút Tìm kiếm & Reset
-        btnSearch = createButton("Tìm kiếm", new Color(52, 152, 219));
-        btnReset = createButton("Reset", new Color(149, 165, 166));
+        btnSearch = UIFactory.createActionButton("Tìm kiếm", "search", new Color(52, 152, 219), 120);
+        btnReset = UIFactory.createActionButton("Reset", "reset", new Color(149, 165, 166), 110);
+        btnSearch.addActionListener(e -> handleSearch());
 
         panel.add(btnSearch);
         panel.add(btnReset);
@@ -128,14 +129,12 @@ public class AdmissionPanel extends JPanel {
     }
     
     private JPanel createActionPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-        panel.setBackground(new Color(240, 240, 240));
-        panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+        JPanel panel = UIFactory.createActionPanel();
         
-        btnUpdate = createButton("Cập nhật KQ", new Color(243, 156, 18));
-        btnExportExcel = createButton("Xuất Excel", new Color(46, 204, 113)); 
-        btnExportPDF = createButton("Xuất PDF", new Color(231, 76, 60));
-        btnPrint = createButton("In danh sách", new Color(52, 152, 219));
+        btnUpdate = UIFactory.createActionButton("Cập nhật KQ", "refresh", new Color(243, 156, 18), 145);
+        btnExportExcel = UIFactory.createActionButton("Xuất Excel", "export", new Color(46, 204, 113), 130);
+        btnExportPDF = UIFactory.createActionButton("Xuất PDF", "picture_as_pdf", new Color(231, 76, 60), 120);
+        btnPrint = UIFactory.createActionButton("In danh sách", "print", new Color(52, 152, 219), 135);
 
         panel.add(btnUpdate);
         panel.add(btnExportExcel);
@@ -179,15 +178,4 @@ public class AdmissionPanel extends JPanel {
         controller.loadResults();
     }
     
-    private JButton createButton(String text, Color bgColor) {
-        JButton button = new JButton(text);
-        button.setPreferredSize(new Dimension(120, 35));
-        button.setBackground(bgColor);
-        button.setForeground(Color.WHITE);
-        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return button;
-    }
 }

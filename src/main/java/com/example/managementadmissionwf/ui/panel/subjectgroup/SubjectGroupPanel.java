@@ -3,6 +3,7 @@ package com.example.managementadmissionwf.ui.panel.subjectgroup;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import com.example.managementadmissionwf.ui.util.UIFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -63,7 +64,7 @@ public class SubjectGroupPanel extends JPanel {
         controller.setSubjectGroupPanel(this);
 
         // Add panels
-        JPanel topPanel = new JPanel(new BorderLayout());
+        JPanel topPanel = UIFactory.createTopSection();
         topPanel.add(filterPanel, BorderLayout.NORTH);
         topPanel.add(actionPanel, BorderLayout.SOUTH);
 
@@ -76,9 +77,7 @@ public class SubjectGroupPanel extends JPanel {
     }
 
     private JPanel createFilterPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        panel.setBackground(new Color(240, 240, 240));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JPanel panel = UIFactory.createFilterPanel();
 
         // Search field
         JLabel lblSearch = new JLabel("Tìm kiếm:");
@@ -91,12 +90,12 @@ public class SubjectGroupPanel extends JPanel {
         panel.add(txtSearch);
 
         // Search button
-        btnSearch = createButton("Tìm kiếm", new Color(52, 152, 219));
+        btnSearch = UIFactory.createActionButton("Tìm kiếm", "search", new Color(52, 152, 219), 120);
         btnSearch.addActionListener(e -> handleSearch());
         panel.add(btnSearch);
 
         // Reset button
-        btnReset = createButton("Reset", new Color(149, 165, 166));
+        btnReset = UIFactory.createActionButton("Reset", "reset", new Color(149, 165, 166), 110);
         btnReset.addActionListener(e -> handleReset());
         panel.add(btnReset);
 
@@ -104,37 +103,35 @@ public class SubjectGroupPanel extends JPanel {
     }
 
     private JPanel createActionPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-        panel.setBackground(new Color(240, 240, 240));
-        panel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
+        JPanel panel = UIFactory.createActionPanel();
 
         // Add button
-        btnAdd = createButton("Thêm", new Color(46, 204, 113));
+        btnAdd = UIFactory.createActionButton("Thêm", "add", new Color(46, 204, 113), 100);
         btnAdd.addActionListener(e -> controller.addSubjectGroup());
         panel.add(btnAdd);
 
         // Edit button
-        btnEdit = createButton("Sửa", new Color(52, 152, 219));
+        btnEdit = UIFactory.createActionButton("Sửa", "edit", new Color(52, 152, 219), 100);
         btnEdit.addActionListener(e -> controller.editSubjectGroup());
         panel.add(btnEdit);
 
         // Delete button
-        btnDelete = createButton("Xóa", new Color(231, 76, 60));
+        btnDelete = UIFactory.createActionButton("Xóa", "delete", new Color(231, 76, 60), 100);
         btnDelete.addActionListener(e -> controller.deleteSubjectGroup());
         panel.add(btnDelete);
 
         // Refresh button
-        btnRefresh = createButton("Làm mới", new Color(149, 165, 166));
+        btnRefresh = UIFactory.createActionButton("Làm mới", "refresh", new Color(149, 165, 166), 120);
         btnRefresh.addActionListener(e -> refreshData());
         panel.add(btnRefresh);
 
         // Export button
-        btnExport = createButton("Xuất Excel", new Color(39, 174, 96));
+        btnExport = UIFactory.createActionButton("Xuất Excel", "export", new Color(39, 174, 96), 130);
         btnExport.addActionListener(e -> controller.exportExcel(txtSearch.getText().trim()));
         panel.add(btnExport);
 
         // Import button
-        btnImport = createButton("Nhập Excel", new Color(243, 156, 18));
+        btnImport = UIFactory.createActionButton("Nhập Excel", "import", new Color(243, 156, 18), 130);
         btnImport.addActionListener(e -> controller.importExcel());
         panel.add(btnImport);
 
@@ -142,10 +139,7 @@ public class SubjectGroupPanel extends JPanel {
     }
 
     private JPanel createPaginationPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 10));
-        panel.setBackground(new Color(240, 240, 240));
-        panel.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createEmptyBorder(5, 10, 5, 10), "", 0, 0));
+        JPanel panel = UIFactory.createPaginationPanel();
 
         // Total label
         lblTotalItems = new JLabel("Tổng: 0 bản ghi");
@@ -156,14 +150,12 @@ public class SubjectGroupPanel extends JPanel {
         panel.add(Box.createHorizontalStrut(30));
 
         // First page button
-        btnFirst = createSmallButton("⏮", new Color(149, 165, 166));
-        btnFirst.setToolTipText("Trang đầu");
+        btnFirst = UIFactory.createPaginationButton("first_page", new Color(149, 165, 166), "Trang đầu");
         btnFirst.addActionListener(e -> goToPage(1));
         panel.add(btnFirst);
 
         // Previous button
-        btnPrev = createSmallButton("◀", new Color(52, 152, 219));
-        btnPrev.setToolTipText("Trang trước");
+        btnPrev = UIFactory.createPaginationButton("chevron_left", new Color(52, 152, 219), "Trang trước");
         btnPrev.addActionListener(e -> goToPage(currentPage - 1));
         panel.add(btnPrev);
 
@@ -174,14 +166,12 @@ public class SubjectGroupPanel extends JPanel {
         panel.add(lblPageInfo);
 
         // Next button
-        btnNext = createSmallButton("▶", new Color(52, 152, 219));
-        btnNext.setToolTipText("Trang sau");
+        btnNext = UIFactory.createPaginationButton("chevron_right", new Color(52, 152, 219), "Trang sau");
         btnNext.addActionListener(e -> goToPage(currentPage + 1));
         panel.add(btnNext);
 
         // Last page button
-        btnLast = createSmallButton("⏭", new Color(149, 165, 166));
-        btnLast.setToolTipText("Trang cuối");
+        btnLast = UIFactory.createPaginationButton("last_page", new Color(149, 165, 166), "Trang cuối");
         btnLast.addActionListener(e -> goToPage(totalPages));
         panel.add(btnLast);
 
@@ -249,30 +239,6 @@ public class SubjectGroupPanel extends JPanel {
         btnPrev.setEnabled(!isFirst);
         btnNext.setEnabled(!isLast);
         btnLast.setEnabled(!isLast);
-    }
-
-    private JButton createButton(String text, Color bgColor) {
-        JButton button = new JButton(text);
-        button.setPreferredSize(new Dimension(100, 35));
-        button.setBackground(bgColor);
-        button.setForeground(Color.WHITE);
-        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return button;
-    }
-
-    private JButton createSmallButton(String text, Color bgColor) {
-        JButton button = new JButton(text);
-        button.setPreferredSize(new Dimension(35, 30));
-        button.setBackground(bgColor);
-        button.setForeground(Color.WHITE);
-        button.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return button;
     }
 
     public SubjectGroupListPanel getListPanel() {

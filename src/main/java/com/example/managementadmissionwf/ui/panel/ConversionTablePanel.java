@@ -1,5 +1,6 @@
 package com.example.managementadmissionwf.ui.panel;
 
+import com.example.managementadmissionwf.ui.util.UIFactory;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
@@ -95,7 +96,7 @@ public class ConversionTablePanel extends JPanel {
         comboPanel.add(new JLabel("Tổ hợp:"));
         comboPanel.add(cbToHop);
 
-        JButton btnFilter = styleButton(new JButton("Lọc"), PRIMARY);
+        JButton btnFilter = styleButton(new JButton("Lọc", UIFactory.loadIcon("filter_list", 16, 16)), PRIMARY);
         btnFilter.addActionListener(e -> applyFilters());
         comboPanel.add(btnFilter);
 
@@ -161,8 +162,8 @@ public class ConversionTablePanel extends JPanel {
         });
         panel.add(cbPageSize);
 
-        btnPrev = new JButton("< Trước");
-        btnNext = new JButton("Sau >");
+        btnPrev = new JButton("Trước", UIFactory.loadIcon("chevron_left", 16, 16));
+        btnNext = new JButton("Sau", UIFactory.loadIcon("chevron_right", 16, 16));
         lblPageInfo = new JLabel("Trang 1 / 1");
         lblPageInfo.setFont(FONT_BOLD);
 

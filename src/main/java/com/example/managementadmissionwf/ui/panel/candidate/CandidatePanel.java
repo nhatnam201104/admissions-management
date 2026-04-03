@@ -3,6 +3,7 @@ package com.example.managementadmissionwf.ui.panel.candidate;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import com.example.managementadmissionwf.ui.util.UIFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -61,9 +62,7 @@ public class CandidatePanel extends JPanel {
     }
     
     private JPanel createFilterPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        panel.setBackground(new Color(240, 240, 240));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JPanel panel = UIFactory.createFilterPanel();
         
         // Search field
         JLabel lblSearch = new JLabel("Tìm kiếm:");
@@ -98,12 +97,12 @@ public class CandidatePanel extends JPanel {
         panel.add(cboDoiTuong);
         
         // Search button
-        btnSearch = createButton("Tìm kiếm", new Color(52, 152, 219));
+        btnSearch = UIFactory.createActionButton("Tìm kiếm", "search", new Color(52, 152, 219), 120);
         btnSearch.addActionListener(e -> handleSearch());
         panel.add(btnSearch);
         
         // Reset button
-        btnReset = createButton("Reset", new Color(149, 165, 166));
+        btnReset = UIFactory.createActionButton("Reset", "reset", new Color(149, 165, 166), 110);
         btnReset.addActionListener(e -> handleReset());
         panel.add(btnReset);
         
@@ -111,27 +110,25 @@ public class CandidatePanel extends JPanel {
     }
     
     private JPanel createActionPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-        panel.setBackground(new Color(240, 240, 240));
-        panel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
+        JPanel panel = UIFactory.createActionPanel();
         
         // Add button
-        btnAdd = createButton("Thêm", new Color(46, 204, 113));
+        btnAdd = UIFactory.createActionButton("Thêm", "add", new Color(46, 204, 113), 100);
         btnAdd.addActionListener(e -> controller.addCandidate());
         panel.add(btnAdd);
         
         // Edit button
-        btnEdit = createButton("Sửa", new Color(52, 152, 219));
+        btnEdit = UIFactory.createActionButton("Sửa", "edit", new Color(52, 152, 219), 100);
         btnEdit.addActionListener(e -> controller.editCandidate());
         panel.add(btnEdit);
         
         // Delete button
-        btnDelete = createButton("Xóa", new Color(231, 76, 60));
+        btnDelete = UIFactory.createActionButton("Xóa", "delete", new Color(231, 76, 60), 100);
         btnDelete.addActionListener(e -> controller.deleteCandidate());
         panel.add(btnDelete);
         
         // Refresh button
-        btnRefresh = createButton("Làm mới", new Color(149, 165, 166));
+        btnRefresh = UIFactory.createActionButton("Làm mới", "refresh", new Color(149, 165, 166), 120);
         btnRefresh.addActionListener(e -> controller.refreshData());
         panel.add(btnRefresh);
         
@@ -150,18 +147,6 @@ public class CandidatePanel extends JPanel {
         cboKhuVuc.setSelectedIndex(0);
         cboDoiTuong.setSelectedIndex(0);
         controller.loadAllCandidates();
-    }
-    
-    private JButton createButton(String text, Color bgColor) {
-        JButton button = new JButton(text);
-        button.setPreferredSize(new Dimension(100, 35));
-        button.setBackground(bgColor);
-        button.setForeground(Color.WHITE);
-        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return button;
     }
     
     public CandidateListPanel getListPanel() {

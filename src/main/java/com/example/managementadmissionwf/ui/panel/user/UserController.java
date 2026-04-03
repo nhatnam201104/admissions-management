@@ -5,7 +5,6 @@ import com.example.managementadmissionwf.bus.interfaces.UserService;
 import com.example.managementadmissionwf.dto.User.*;
 import com.example.managementadmissionwf.dto.common.ApiResponse;
 import com.example.managementadmissionwf.dto.common.Paging;
-import com.example.managementadmissionwf.ui.panel.UserManagementPanel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

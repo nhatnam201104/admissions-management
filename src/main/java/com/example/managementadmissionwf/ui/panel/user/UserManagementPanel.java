@@ -1,9 +1,7 @@
-package com.example.managementadmissionwf.ui.panel;
+package com.example.managementadmissionwf.ui.panel.user;
 
-import com.example.managementadmissionwf.dto.User.GetUserResponse;
 import com.example.managementadmissionwf.dto.common.Paging;
-import com.example.managementadmissionwf.ui.panel.user.UserController;
-import com.example.managementadmissionwf.ui.panel.user.UserListPanel;
+import com.example.managementadmissionwf.ui.util.UIFactory;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -63,7 +61,7 @@ public class UserManagementPanel extends JPanel {
 
         controller.setManagementPanel(this);
 
-        JPanel topPanel = new JPanel(new BorderLayout());
+        JPanel topPanel = UIFactory.createTopSection();
         topPanel.add(filterPanel, BorderLayout.NORTH);
         topPanel.add(actionPanel, BorderLayout.SOUTH);
 
@@ -76,9 +74,7 @@ public class UserManagementPanel extends JPanel {
     }
 
     private JPanel createFilterPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        panel.setBackground(new Color(240, 240, 240));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JPanel panel = UIFactory.createFilterPanel();
 
         JLabel lblSearch = new JLabel("Tìm kiếm:");
         lblSearch.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -98,11 +94,11 @@ public class UserManagementPanel extends JPanel {
         cboRole.setPreferredSize(new Dimension(120, 30));
         panel.add(cboRole);
 
-        btnSearch = createButton("Tìm kiếm", new Color(52, 152, 219));
+        btnSearch = UIFactory.createActionButton("Tìm kiếm", "search", new Color(52, 152, 219), 120);
         btnSearch.addActionListener(e -> handleSearch());
         panel.add(btnSearch);
 
-        btnReset = createButton("Reset", new Color(149, 165, 166));
+        btnReset = UIFactory.createActionButton("Reset", "reset", new Color(149, 165, 166), 110);
         btnReset.addActionListener(e -> handleReset());
         panel.add(btnReset);
 
@@ -110,23 +106,21 @@ public class UserManagementPanel extends JPanel {
     }
 
     private JPanel createActionPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-        panel.setBackground(new Color(240, 240, 240));
-        panel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
+        JPanel panel = UIFactory.createActionPanel();
 
-        btnThem = createButton("➕ Thêm", new Color(46, 204, 113));
+        btnThem = UIFactory.createActionButton("Thêm", "add", new Color(46, 204, 113), 110);
         btnThem.addActionListener(e -> controller.addUser());
         panel.add(btnThem);
 
-        btnSua = createButton("✏️ Sửa", new Color(52, 152, 219));
+        btnSua = UIFactory.createActionButton("Sửa", "edit", new Color(52, 152, 219), 110);
         btnSua.addActionListener(e -> controller.editUser());
         panel.add(btnSua);
 
-        btnXoa = createButton("🗑️ Xóa", new Color(231, 76, 60));
+        btnXoa = UIFactory.createActionButton("Xóa", "delete", new Color(231, 76, 60), 110);
         btnXoa.addActionListener(e -> controller.deleteUser());
         panel.add(btnXoa);
 
-        btnLamMoi = createButton("🔄 Làm mới", new Color(149, 165, 166));
+        btnLamMoi = UIFactory.createActionButton("Làm mới", "refresh", new Color(149, 165, 166), 130);
         btnLamMoi.addActionListener(e -> refreshData());
         panel.add(btnLamMoi);
 
@@ -134,10 +128,7 @@ public class UserManagementPanel extends JPanel {
     }
 
     private JPanel createPaginationPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 10));
-        panel.setBackground(new Color(240, 240, 240));
-        panel.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createEmptyBorder(5, 10, 5, 10), "", 0, 0));
+        JPanel panel = UIFactory.createPaginationPanel();
 
         // Total label
         lblTotalUsers = new JLabel("Tổng: 0 người dùng");
@@ -148,14 +139,12 @@ public class UserManagementPanel extends JPanel {
         panel.add(Box.createHorizontalStrut(30));
 
         // First page button
-        btnFirst = createSmallButton("⏮", new Color(149, 165, 166));
-        btnFirst.setToolTipText("Trang đầu");
+        btnFirst = UIFactory.createPaginationButton("first_page", new Color(149, 165, 166), "Trang đầu");
         btnFirst.addActionListener(e -> goToPage(1));
         panel.add(btnFirst);
 
         // Previous button
-        btnPrev = createSmallButton("◀", new Color(52, 152, 219));
-        btnPrev.setToolTipText("Trang trước");
+        btnPrev = UIFactory.createPaginationButton("chevron_left", new Color(52, 152, 219), "Trang trước");
         btnPrev.addActionListener(e -> goToPage(currentPage - 1));
         panel.add(btnPrev);
 
@@ -166,14 +155,12 @@ public class UserManagementPanel extends JPanel {
         panel.add(lblPageInfo);
 
         // Next button
-        btnNext = createSmallButton("▶", new Color(52, 152, 219));
-        btnNext.setToolTipText("Trang sau");
+        btnNext = UIFactory.createPaginationButton("chevron_right", new Color(52, 152, 219), "Trang sau");
         btnNext.addActionListener(e -> goToPage(currentPage + 1));
         panel.add(btnNext);
 
         // Last page button
-        btnLast = createSmallButton("⏭", new Color(149, 165, 166));
-        btnLast.setToolTipText("Trang cuối");
+        btnLast = UIFactory.createPaginationButton("last_page", new Color(149, 165, 166), "Trang cuối");
         btnLast.addActionListener(e -> goToPage(totalPages));
         panel.add(btnLast);
 
@@ -254,27 +241,4 @@ public class UserManagementPanel extends JPanel {
         return listPanel;
     }
 
-    private JButton createButton(String text, Color bgColor) {
-        JButton button = new JButton(text);
-        button.setPreferredSize(new Dimension(120, 35));
-        button.setBackground(bgColor);
-        button.setForeground(Color.WHITE);
-        button.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return button;
-    }
-
-    private JButton createSmallButton(String text, Color bgColor) {
-        JButton button = new JButton(text);
-        button.setPreferredSize(new Dimension(35, 30));
-        button.setBackground(bgColor);
-        button.setForeground(Color.WHITE);
-        button.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return button;
-    }
 }

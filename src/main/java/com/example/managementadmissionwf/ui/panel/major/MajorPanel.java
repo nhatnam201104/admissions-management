@@ -7,6 +7,7 @@ import javax.swing.border.*;
 import javax.swing.table.*;
 
 import org.springframework.stereotype.Component;
+import com.example.managementadmissionwf.ui.util.UIFactory;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -43,18 +44,8 @@ public class MajorPanel extends JPanel {
         add(createCenterPanel(), BorderLayout.CENTER);
     }
 
-    private ImageIcon createIcon(String path, int width, int height) {
-        java.net.URL imgURL = getClass().getResource(path);
-        
-        if (imgURL != null) {
-            ImageIcon icon = new ImageIcon(imgURL);
-            Image img = icon.getImage();
-            Image newImg = img.getScaledInstance(width, height, java.awt.Image.SCALE_SMOOTH);
-            return new ImageIcon(newImg);
-        } else {
-            System.err.println("Không tìm thấy file ảnh: " + path);
-            return null;
-        }
+    private ImageIcon createIcon(String iconName, int width, int height) {
+        return UIFactory.loadIcon(iconName, width, height);
     }
 
 
@@ -76,7 +67,7 @@ public class MajorPanel extends JPanel {
         searchWrapper.setPreferredSize(new Dimension(250, 32)); 
         searchWrapper.setMaximumSize(new Dimension(250, 32));
 
-        JLabel icon = new JLabel(createIcon("/icons/search.png", 16, 16));
+        JLabel icon = new JLabel(createIcon("search", 16, 16));
         icon.setBorder(new EmptyBorder(0, 0, 0, 6));
         JTextField txtSearch = new JTextField() {
             @Override
@@ -113,7 +104,7 @@ public class MajorPanel extends JPanel {
         cbMethod.setPreferredSize(new Dimension(140, 32));
         cbMethod.setMaximumSize(new Dimension(140, 32));
 
-        JButton btnFilter = new JButton("Lọc");
+        JButton btnFilter = new JButton("Lọc", createIcon("filter_list", 16, 16));
         styleButton(btnFilter, PRIMARY);
         
         methodWrapper.add(cbMethod);
@@ -125,9 +116,9 @@ public class MajorPanel extends JPanel {
 
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         right.setBackground(BG);
-        JButton btnAdd = new JButton("Thêm ngành", createIcon("/icons/add.png", 16, 16));
-        JButton btnEdit = new JButton("Sửa", createIcon("/icons/edit.png", 16, 16));
-        JButton btnDelete = new JButton("Xóa", createIcon("/icons/delete.png", 16, 16));
+        JButton btnAdd = new JButton("Thêm ngành", createIcon("add", 16, 16));
+        JButton btnEdit = new JButton("Sửa", createIcon("edit", 16, 16));
+        JButton btnDelete = new JButton("Xóa", createIcon("delete", 16, 16));
 
         right.add(styleButton(btnAdd, SUCCESS));
         right.add(styleButton(btnEdit, PRIMARY));

@@ -5,6 +5,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import org.springframework.stereotype.Component;
+import com.example.managementadmissionwf.ui.util.UIFactory;
 
 import jakarta.annotation.PostConstruct;
 
@@ -67,9 +68,7 @@ public class BonusScorePanel extends JPanel {
     }
     
     private JPanel createFilterPanel() {
-    	JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));    
-    	panel.setBackground(new Color(240, 240, 240));
-    	panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    	JPanel panel = UIFactory.createFilterPanel();
     	
     	JLabel lblSearch = new JLabel("Tìm kiếm:");
         lblSearch.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -80,11 +79,11 @@ public class BonusScorePanel extends JPanel {
         txtSearch.setToolTipText("Nhập CCCD hoặc Họ tên thí sinh...");
         panel.add(txtSearch);
 
-        btnSearch = createButton("Tìm kiếm", new Color(52, 152, 219));
+        btnSearch = UIFactory.createActionButton("Tìm kiếm", "search", new Color(52, 152, 219), 120);
         btnSearch.addActionListener(e -> handleSearch());
         panel.add(btnSearch);
 
-        btnReset = createButton("Reset", new Color(149, 165, 166));
+        btnReset = UIFactory.createActionButton("Reset", "reset", new Color(149, 165, 166), 110);
         btnReset.addActionListener(e -> handleReset());
         panel.add(btnReset);
     	
@@ -135,8 +134,7 @@ public class BonusScorePanel extends JPanel {
     }
     
     private JPanel createPaginationPanel() {
-    	JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 10));
-        panel.setBackground(new Color(240, 240, 240));
+    	JPanel panel = UIFactory.createPaginationPanel();
         
         lblTotalItems = new JLabel("Tổng: 0 thí sinh");
         lblTotalItems.setFont(new Font("Segoe UI", Font.PLAIN, 13));
@@ -145,11 +143,11 @@ public class BonusScorePanel extends JPanel {
         
         panel.add(Box.createHorizontalStrut(30));
     	
-        btnFirst = createSmallButton("<<", new Color(149, 165, 166));
+        btnFirst = UIFactory.createPaginationButton("first_page", new Color(149, 165, 166), "Trang đầu");
         btnFirst.addActionListener(e -> goToPage(1));
         panel.add(btnFirst);
         
-        btnPrev = createSmallButton("<", new Color(52, 152, 219));
+        btnPrev = UIFactory.createPaginationButton("chevron_left", new Color(52, 152, 219), "Trang trước");
         btnPrev.addActionListener(e -> goToPage(currentPage - 1));
         panel.add(btnPrev);
         
@@ -158,11 +156,11 @@ public class BonusScorePanel extends JPanel {
         lblPageInfo.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
         panel.add(lblPageInfo);
         
-        btnNext = createSmallButton(">", new Color(52, 152, 219));
+        btnNext = UIFactory.createPaginationButton("chevron_right", new Color(52, 152, 219), "Trang sau");
         btnNext.addActionListener(e -> goToPage(currentPage + 1));
         panel.add(btnNext);
 
-        btnLast = createSmallButton(">>", new Color(149, 165, 166));
+        btnLast = UIFactory.createPaginationButton("last_page", new Color(149, 165, 166), "Trang cuối");
         btnLast.addActionListener(e -> goToPage(totalPages));
         panel.add(btnLast);
         
@@ -258,32 +256,6 @@ public class BonusScorePanel extends JPanel {
         btnNext.setEnabled(!isLast);
         btnLast.setEnabled(!isLast);
     }
-    
-    private JButton createButton(String text, Color bgColor) {
-        JButton button = new JButton(text);
-        button.setPreferredSize(new Dimension(100, 35));
-        button.setBackground(bgColor);
-        button.setForeground(Color.WHITE);
-        button.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return button;
-    }
-    
-    private JButton createSmallButton(String text, Color bgColor) {
-        JButton button = new JButton(text);
-        button.setPreferredSize(new Dimension(45, 30));
-        button.setMargin(new Insets(0, 0, 0, 0));
-        button.setBackground(bgColor);
-        button.setForeground(Color.WHITE);
-        button.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return button;
-    }
-    
     
     //Inner Class 
     private static class BonusScoreMock {
