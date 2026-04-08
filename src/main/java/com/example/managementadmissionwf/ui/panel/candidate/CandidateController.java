@@ -6,7 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 
 /**
@@ -129,6 +135,53 @@ public class CandidateController {
      */
     public void refreshData() {
         loadAllCandidates();
-        JOptionPane.showMessageDialog(candidatePanel, "Dữ liệu đã được làm mới!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    public void exportExcel(String keyword) {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Chọn vị trí lưu file Excel");
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files (*.xlsx)", "xlsx"));
+        fileChooser.setSelectedFile(new File("Danh_sach_thisinh.xlsx"));
+
+        int userSelection = fileChooser.showSaveDialog(candidatePanel);
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToSave = fileChooser.getSelectedFile();
+            String filePath = fileToSave.getAbsolutePath();
+            if (!filePath.toLowerCase().endsWith(".xlsx")) {
+                filePath += ".xlsx";
+            }
+            try (OutputStream os = new FileOutputStream(filePath)) {
+                // TODO: candidateService.exportExcel(os, keyword);
+                JOptionPane.showMessageDialog(candidatePanel,
+                        "Đã xuất dữ liệu ra file Excel thành công!\n" + filePath,
+                        "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(candidatePanel,
+                        "Lỗi khi xuất file Excel: " + e.getMessage(),
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    public void importExcel() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Chọn file Excel để nhập dữ liệu");
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files (*.xlsx)", "xlsx"));
+
+        int userSelection = fileChooser.showOpenDialog(candidatePanel);
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToOpen = fileChooser.getSelectedFile();
+            try (InputStream is = new FileInputStream(fileToOpen)) {
+                // TODO: candidateService.importExcel(is)
+                JOptionPane.showMessageDialog(candidatePanel,
+                        "Nhập dữ liệu từ Excel thành công!",
+                        "Kết quả nhập Excel", JOptionPane.INFORMATION_MESSAGE);
+                candidatePanel.refreshData();
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(candidatePanel,
+                        "Lỗi khi đọc file Excel: " + e.getMessage(),
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 }

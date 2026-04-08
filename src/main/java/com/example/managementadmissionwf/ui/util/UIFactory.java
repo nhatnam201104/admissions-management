@@ -1,6 +1,8 @@
 package com.example.managementadmissionwf.ui.util;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.net.URL;
 
@@ -70,6 +72,57 @@ public final class UIFactory {
         }
         return button;
     }
+
+    // ========== Filter helpers ==========
+
+    public static JLabel createFilterLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        return label;
+    }
+
+    public static JTextField createFilterTextField(int columns, String tooltip) {
+        JTextField field = new JTextField(columns);
+        field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        field.setToolTipText(tooltip);
+        return field;
+    }
+
+    public static JComboBox<String> createFilterCombo(String[] items, int width) {
+        JComboBox<String> combo = new JComboBox<>(items);
+        combo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        combo.setPreferredSize(new Dimension(width, 30));
+        return combo;
+    }
+
+    // ========== Table helpers ==========
+
+    public static JTable createStandardTable(DefaultTableModel model) {
+        JTable table = new JTable(model);
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        table.setRowHeight(36);
+        table.setForeground(Color.BLACK);
+        table.setBackground(Color.WHITE);
+        table.setGridColor(new Color(220, 220, 220));
+        table.setSelectionBackground(new Color(225, 245, 254));
+        table.setSelectionForeground(Color.BLACK);
+        table.getTableHeader().setReorderingAllowed(false);
+
+        JTableHeader header = table.getTableHeader();
+        header.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        header.setBackground(new Color(232, 240, 254));
+        header.setPreferredSize(new Dimension(100, 40));
+
+        return table;
+    }
+
+    public static JScrollPane createStandardScrollPane(JTable table) {
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        return scrollPane;
+    }
+
+    // ========== Icon loading ==========
 
     public static ImageIcon loadIcon(String iconName, int width, int height) {
         if (iconName == null || iconName.isBlank()) {
