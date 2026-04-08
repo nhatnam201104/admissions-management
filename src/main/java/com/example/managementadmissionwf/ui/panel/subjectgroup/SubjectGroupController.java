@@ -1,10 +1,11 @@
 package com.example.managementadmissionwf.ui.panel.subjectgroup;
 
+import com.example.managementadmissionwf.bus.interfaces.SubjectGroupService;
 import com.example.managementadmissionwf.dto.common.ImportResult;
 import com.example.managementadmissionwf.dto.common.Paging;
 import com.example.managementadmissionwf.dto.request.SubjectGroupRequest;
 import com.example.managementadmissionwf.dto.response.SubjectGroupResponse;
-import com.example.managementadmissionwf.service.SubjectGroupService;
+
 import org.springframework.stereotype.Component;
 
 import javax.swing.*;
