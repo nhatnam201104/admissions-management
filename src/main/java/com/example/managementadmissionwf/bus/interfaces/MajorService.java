@@ -1,22 +1,32 @@
 package com.example.managementadmissionwf.bus.interfaces;
 
-import java.util.List;
+import com.example.managementadmissionwf.dto.common.ImportResult;
+import com.example.managementadmissionwf.dto.common.Paging;
+import com.example.managementadmissionwf.dto.major.MajorDTO;
+import com.example.managementadmissionwf.dto.major.MajorTohopDTO;
 
-import com.example.managementadmissionwf.dto.MajorDTO;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public interface MajorService {
-    
-    List<MajorDTO> getAllMajors();
-    MajorDTO getMajorByCode(String maNganh);
 
-    List<MajorDTO> searchMajors(String keyword);
-    MajorDTO createMajor(MajorDTO dto);
+    Paging<MajorDTO> search(String keyword, int page, int size);
 
-    MajorDTO updateMajor(MajorDTO dto);
-    
-    void deleteMajor(Integer id);
+    MajorDTO getByMaNganh(String maNganh);
 
-    void addSubjectGroup(String maNganh, String maToHop);
+    MajorDTO create(MajorDTO dto);
 
-    void removeSubjectGroup(Integer id);
+    MajorDTO update(String maNganh, MajorDTO dto);
+
+    void delete(String maNganh);
+
+    Paging<MajorTohopDTO> getTohopByMaNganh(String maNganh, int page, int size);
+
+    MajorTohopDTO addTohop(MajorTohopDTO tohopDTO);
+
+    void removeTohop(Integer tohopId);
+
+    void exportExcel(OutputStream outputStream, String keyword);
+
+    ImportResult<MajorDTO> importExcel(InputStream inputStream);
 }

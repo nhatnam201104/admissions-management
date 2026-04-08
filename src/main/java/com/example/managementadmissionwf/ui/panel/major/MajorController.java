@@ -1,9 +1,9 @@
 package com.example.managementadmissionwf.ui.panel.major;
 
 import com.example.managementadmissionwf.bus.interfaces.MajorService;
-import com.example.managementadmissionwf.dto.MajorDTO;
-import com.example.managementadmissionwf.dto.MajorTohopDTO;
-
+import com.example.managementadmissionwf.dto.major.MajorDTO;
+import com.example.managementadmissionwf.dto.major.MajorTohopDTO;
+import com.example.managementadmissionwf.dto.common.Paging;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.util.List;
@@ -16,140 +16,98 @@ public class MajorController {
     public MajorController(MajorService majorService) {
         this.majorService = majorService;
     }
+
     public void setView(MajorListPanel view) {
         this.view = view;
     }
-    // 1. HIỂN THỊ DỮ LIỆU (READ)
 
-    public void loadAllMajors(DefaultTableModel masterModel) {
+    public void loadMajorsWithPaging(String keyword, DefaultTableModel model, int page, int size) {
         try {
-            List<MajorDTO> majors = majorService.getAllMajors();
-            populateMasterTable(masterModel, majors);
+            Paging<MajorDTO> paging = majorService.search(keyword, page, size);
+            populateMasterTable(model, paging.getData());
+            if (view != null) view.updatePagination(paging);
         } catch (Exception e) {
-            showError("Lỗi khi tải danh sách ngành: " + e.getMessage());
-        }
-    }
-
-    public void searchMajors(String keyword, DefaultTableModel masterModel) {
-        try {
-            List<MajorDTO> majors = majorService.searchMajors(keyword);
-            populateMasterTable(masterModel, majors);
-            if (majors.isEmpty()) {
-                JOptionPane.showMessageDialog(view, "Không tìm thấy kết quả nào cho: " + keyword, "Tìm kiếm", JOptionPane.INFORMATION_MESSAGE);
-            }
-        } catch (Exception e) {
-            showError("Lỗi khi tìm kiếm: " + e.getMessage());
+            JOptionPane.showMessageDialog(null, "Lỗi tải dữ liệu: " + e.getMessage());
         }
     }
 
     public void refreshDetail(String maNganh, DefaultTableModel detailModel) {
+        detailModel.setRowCount(0);
         try {
-            detailModel.setRowCount(0); // Xóa dữ liệu cũ ở bảng Detail
-
-            MajorDTO major = majorService.getMajorByCode(maNganh);
-            if (major != null && major.getTohopList() != null) {
-                for (MajorTohopDTO th : major.getTohopList()) {
-                    detailModel.addRow(new Object[]{
-                            th.getMaToHop(),
-                            th.getThMon1() + " (" + th.getHsMon1() + ")",
-                            th.getThMon2() + " (" + th.getHsMon2() + ")",
-                            th.getThMon3() + " (" + th.getHsMon3() + ")"
-                    });
-                }
+            Paging<MajorTohopDTO> paging = majorService.getTohopByMaNganh(maNganh, 1, 100);
+            for (MajorTohopDTO th : paging.getData()) {
+                detailModel.addRow(new Object[]{
+                        th.getMaToHop(),
+                        th.getThMon1() + " (" + th.getHsMon1() + ")",
+                        th.getThMon2() + " (" + th.getHsMon2() + ")",
+                        th.getThMon3() + " (" + th.getHsMon3() + ")"
+                });
             }
         } catch (Exception e) {
-            System.err.println("Lỗi tải chi tiết tổ hợp: " + e.getMessage());
+            System.err.println("Lỗi tải tổ hợp: " + e.getMessage());
         }
     }
 
-    // 2. THAO TÁC VỚI NGÀNH (CRUD MAJOR)
-
-    public void addMajor(MajorDTO dto, DefaultTableModel masterModel) {
+    public void addMajor(MajorDTO dto) {
         try {
-            majorService.createMajor(dto);
-            showSuccess("Thêm ngành " + dto.getTenNganh() + " thành công!");
-            loadAllMajors(masterModel); 
+            majorService.create(dto);
+            // Thông báo chi tiết
+            JOptionPane.showMessageDialog(view,
+                    "Thêm mới ngành học: " + dto.getTenNganh() + " thành công!",
+                    "Thành công", JOptionPane.INFORMATION_MESSAGE);
+
+            if (view != null) view.refreshData();
         } catch (Exception e) {
-            showError(e.getMessage());
+            JOptionPane.showMessageDialog(view, "Lỗi khi thêm ngành: " + e.getMessage(), "Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    public void editMajor(MajorDTO dto, DefaultTableModel masterModel) {
+    public void updateMajor(String maNganhCu, MajorDTO dto) {
         try {
-            majorService.updateMajor(dto);
-            showSuccess("Cập nhật thông tin ngành thành công!");
-            loadAllMajors(masterModel); 
+            majorService.update(maNganhCu, dto);
+            // Thông báo chi tiết
+            JOptionPane.showMessageDialog(view,
+                    "Cập nhật thông tin ngành " + dto.getTenNganh() + " thành công!",
+                    "Thành công", JOptionPane.INFORMATION_MESSAGE);
+
+            if (view != null) view.refreshData();
         } catch (Exception e) {
-            showError(e.getMessage());
+            JOptionPane.showMessageDialog(view, "Lỗi khi cập nhật: " + e.getMessage(), "Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    public void deleteMajor(Integer idNganh, DefaultTableModel masterModel, DefaultTableModel detailModel) {
-        int confirm = JOptionPane.showConfirmDialog(view, 
-                "Bạn có chắc chắn muốn xóa ngành này? Toàn bộ tổ hợp môn bên trong cũng sẽ bị xóa.", 
+    public void deleteMajor(String maNganh, DefaultTableModel detailModel) {
+        // Hỏi xác nhận trước khi xóa
+        int confirm = JOptionPane.showConfirmDialog(view,
+                "Bạn có chắc chắn muốn xóa ngành học mã [" + maNganh + "] không?\nLưu ý: Thao tác này sẽ đánh dấu xóa ngành trong hệ thống.",
                 "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-                
+
         if (confirm == JOptionPane.YES_OPTION) {
             try {
-                majorService.deleteMajor(idNganh);
-                showSuccess("Đã xóa ngành thành công!");
-                loadAllMajors(masterModel);
-                detailModel.setRowCount(0);
+                majorService.delete(maNganh);
+                JOptionPane.showMessageDialog(view, "Đã xóa ngành [" + maNganh + "] thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+
+                if (view != null) {
+                    view.refreshData();
+                    detailModel.setRowCount(0); // Clear bảng tổ hợp bên dưới
+                }
             } catch (Exception e) {
-                showError(e.getMessage());
+                JOptionPane.showMessageDialog(view, "Không thể xóa ngành: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
-    // 3. THAO TÁC VỚI TỔ HỢP MÔN
+    private void populateMasterTable(DefaultTableModel model, List<MajorDTO> list) {
+        model.setRowCount(0);
+        for (MajorDTO m : list) {
+            StringBuilder pt = new StringBuilder();
+            if (Boolean.TRUE.equals(m.getThpt())) pt.append("THPT, ");
+            if (Boolean.TRUE.equals(m.getDgnl())) pt.append("ĐGNL, ");
+            if (Boolean.TRUE.equals(m.getTuyenThang())) pt.append("T.Thẳng, ");
+            if (Boolean.TRUE.equals(m.getVsat())) pt.append("VSAT, ");
+            String ptStr = pt.length() > 0 ? pt.substring(0, pt.length() - 2) : "Chưa có";
 
-    public void addSubjectGroup(String maNganh, String maTohop, DefaultTableModel detailModel) {
-        try {
-            majorService.addSubjectGroup(maNganh, maTohop);
-            showSuccess("Thêm tổ hợp " + maTohop + " thành công!");
-            refreshDetail(maNganh, detailModel); 
-        } catch (Exception e) {
-            showError(e.getMessage());
+            model.addRow(new Object[]{ m.getMaNganh(), m.getTenNganh(), m.getChiTieu(), m.getDiemSan(), ptStr });
         }
-    }
-
-    public void removeSubjectGroup(Integer tohopId, String maNganh, DefaultTableModel detailModel) {
-        try {
-            majorService.removeSubjectGroup(tohopId);
-            refreshDetail(maNganh, detailModel);
-        } catch (Exception e) {
-            showError(e.getMessage());
-        }
-    }
-
-    // 4. HÀM TIỆN ÍCH (UTILITIES)
-
-    private void populateMasterTable(DefaultTableModel masterModel, List<MajorDTO> majors) {
-        masterModel.setRowCount(0); // Xóa dữ liệu cũ
-        for (MajorDTO m : majors) {
-            StringBuilder phuongThuc = new StringBuilder();
-            if (Boolean.TRUE.equals(m.getNThpt())) phuongThuc.append("THPT, ");
-            if (Boolean.TRUE.equals(m.getNDgnl())) phuongThuc.append("ĐGNL, ");
-            if (Boolean.TRUE.equals(m.getNTuyenThang())) phuongThuc.append("Tuyển thẳng, ");
-            if (Boolean.TRUE.equals(m.getNVsat())) phuongThuc.append("VSAT, ");
-            
-            String ptStr = phuongThuc.length() > 0 ? phuongThuc.substring(0, phuongThuc.length() - 2) : "Chưa cập nhật";
-
-            masterModel.addRow(new Object[]{
-                    m.getMaNganh(),
-                    m.getTenNganh(),
-                    m.getNChiTieu(),
-                    m.getNDiemSan(),
-                    ptStr
-            });
-        }
-    }
-
-    private void showError(String message) {
-        JOptionPane.showMessageDialog(view, message, "Lỗi thực thi", JOptionPane.ERROR_MESSAGE);
-    }
-
-    private void showSuccess(String message) {
-        JOptionPane.showMessageDialog(view, message, "Thành công", JOptionPane.INFORMATION_MESSAGE);
     }
 }
