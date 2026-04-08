@@ -1,5 +1,6 @@
-package com.example.managementadmissionwf.service.impl;
+package com.example.managementadmissionwf.bus.impl;
 
+import com.example.managementadmissionwf.bus.interfaces.SubjectGroupService;
 import com.example.managementadmissionwf.dal.entity.XtTohopMonthi;
 import com.example.managementadmissionwf.dal.repository.SubjectGroupRepository;
 import com.example.managementadmissionwf.dto.common.ImportResult;
@@ -7,7 +8,6 @@ import com.example.managementadmissionwf.dto.common.Paging;
 import com.example.managementadmissionwf.dto.request.SubjectGroupRequest;
 import com.example.managementadmissionwf.dto.response.SubjectGroupResponse;
 import com.example.managementadmissionwf.mapper.SubjectGroupMapper;
-import com.example.managementadmissionwf.service.SubjectGroupService;
 import com.example.managementadmissionwf.util.ExcelUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

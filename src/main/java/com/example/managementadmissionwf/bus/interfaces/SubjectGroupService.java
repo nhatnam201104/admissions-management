@@ -1,4 +1,4 @@
-package com.example.managementadmissionwf.service;
+package com.example.managementadmissionwf.bus.interfaces;
 
 import com.example.managementadmissionwf.dto.common.ImportResult;
 import com.example.managementadmissionwf.dto.common.Paging;
