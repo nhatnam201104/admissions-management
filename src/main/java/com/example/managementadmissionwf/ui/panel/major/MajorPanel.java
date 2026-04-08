@@ -1,165 +1,126 @@
 package com.example.managementadmissionwf.ui.panel.major;
 
+import com.example.managementadmissionwf.ui.util.ToolbarAction;
+import com.example.managementadmissionwf.ui.util.UIFactory;
+import com.example.managementadmissionwf.ui.panel.AbstractFeaturePanel;
 import jakarta.annotation.PostConstruct;
-
-import javax.swing.*;
-import javax.swing.border.*;
-import javax.swing.table.*;
-
 import org.springframework.stereotype.Component;
 
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.EnumSet;
+import java.util.stream.Collectors;
 
 @Component
-public class MajorPanel extends JPanel {
-
-    private final Color PRIMARY = new Color(33, 150, 243);
-    private final Color PRIMARY_DARK = new Color(25, 118, 210);
-    private final Color SUCCESS = new Color(46, 204, 113);
-    private final Color DANGER = new Color(231, 76, 60);
-    private final Color BG = new Color(248, 250, 252);
-    private final Color TEXT = new Color(33, 33, 33);
-    private final Color BORDER = new Color(220, 220, 220);
-
-    private final Font FONT = new Font("Segoe UI", Font.PLAIN, 14);
-    private final Font FONT_BOLD = new Font("Segoe UI", Font.BOLD, 14);
+public class MajorPanel extends AbstractFeaturePanel {
 
     private JTable majorTable;
+    private DefaultTableModel tableModel;
+    private JComboBox<String> cboPhuongThuc;
 
+    // Mock data
+    private List<Object[]> allData = new ArrayList<>();
+    private List<Object[]> filteredData = new ArrayList<>();
 
     public MajorPanel() {
-        initComponents();
+        super();
     }
 
     @PostConstruct
     private void initComponents() {
-        setLayout(new BorderLayout(10, 10));
-        setBackground(BG);
-        setBorder(new EmptyBorder(15, 15, 15, 15));
-
-        add(createTopPanel(), BorderLayout.NORTH);
-        add(createCenterPanel(), BorderLayout.CENTER);
+        generateMockData();
+        buildUI();
+        applyFilters();
     }
 
-    private ImageIcon createIcon(String path, int width, int height) {
-        java.net.URL imgURL = getClass().getResource(path);
-        
-        if (imgURL != null) {
-            ImageIcon icon = new ImageIcon(imgURL);
-            Image img = icon.getImage();
-            Image newImg = img.getScaledInstance(width, height, java.awt.Image.SCALE_SMOOTH);
-            return new ImageIcon(newImg);
-        } else {
-            System.err.println("Không tìm thấy file ảnh: " + path);
-            return null;
-        }
+    @Override
+    protected void createFilterFields(JPanel filterPanel) {
+        filterPanel.add(UIFactory.createFilterLabel("Phương thức:"));
+        cboPhuongThuc = UIFactory.createFilterCombo(
+                new String[]{"Tất cả", "THPT", "ĐGNL", "Tuyển thẳng", "VSAT"}, 140);
+        filterPanel.add(cboPhuongThuc);
     }
 
+    @Override
+    protected void resetFilters() {
+        super.resetFilters();
+        if (cboPhuongThuc != null) cboPhuongThuc.setSelectedIndex(0);
+        applyFilters();
+    }
 
+    @Override
+    protected Set<ToolbarAction> getToolbarActions() {
+        return EnumSet.of(ToolbarAction.ADD, ToolbarAction.EDIT, ToolbarAction.DELETE,
+                ToolbarAction.REFRESH, ToolbarAction.EXPORT_EXCEL, ToolbarAction.IMPORT_EXCEL);
+    }
 
-    private JPanel createTopPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(BG);
+    @Override
+    protected void onToolbarAction(ToolbarAction action) {
+        // TODO: Wire to MajorController when service layer is fully implemented
+    }
 
-        JPanel left = new JPanel();
-        left.setLayout(new BoxLayout(left, BoxLayout.X_AXIS));
-        left.setBackground(BG);
-
-        JPanel searchWrapper = new JPanel(new BorderLayout());
-        searchWrapper.setBackground(Color.WHITE);
-        searchWrapper.setBorder(new CompoundBorder(
-                new LineBorder(BORDER, 1, true),
-                new EmptyBorder(6, 10, 6, 10)
-        ));
-        searchWrapper.setPreferredSize(new Dimension(250, 32)); 
-        searchWrapper.setMaximumSize(new Dimension(250, 32));
-
-        JLabel icon = new JLabel(createIcon("/icons/search.png", 16, 16));
-        icon.setBorder(new EmptyBorder(0, 0, 0, 6));
-        JTextField txtSearch = new JTextField() {
+    @Override
+    protected JComponent createContentPanel() {
+        String[] columnNames = {"Mã Ngành", "Tên Ngành", "Chỉ Tiêu", "Điểm Sàn", "Phương thức"};
+        tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                if (getText().isEmpty()) {
-                    Graphics2D g2 = (Graphics2D) g.create();
-                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                    
-                    g2.setColor(new Color(170, 170, 170)); 
-                    g2.setFont(getFont());
-                    FontMetrics fm = g2.getFontMetrics();
-                    int y = (getHeight() - fm.getHeight()) / 2 + fm.getAscent();
-                    
-                    g2.drawString("Nhập nội dung tìm kiếm...", 2, y);
-                    g2.dispose();
-                }
-            }
+            public boolean isCellEditable(int r, int c) { return false; }
         };
-        txtSearch.setBorder(null);
-        txtSearch.setFont(FONT);
 
-        searchWrapper.add(icon, BorderLayout.WEST);
-        searchWrapper.add(txtSearch, BorderLayout.CENTER);
-
-        JPanel methodWrapper = new JPanel();
-        methodWrapper.setLayout(new BoxLayout(methodWrapper, BoxLayout.Y_AXIS));
-        methodWrapper.setBackground(BG);
-        methodWrapper.setBorder(new EmptyBorder(0, 15, 0, 0));
-
-        JComboBox<String> cbMethod = new JComboBox<>(new String[]{
-                "Tất cả", "THPT", "ĐGNL", "Tuyển thẳng" , "VSAT"
-        });
-        cbMethod.setFont(FONT);
-        cbMethod.setBackground(Color.WHITE);
-
-        cbMethod.setPreferredSize(new Dimension(140, 32));
-        cbMethod.setMaximumSize(new Dimension(140, 32));
-        cbMethod.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
-
-        methodWrapper.add(Box.createVerticalGlue());
-        methodWrapper.add(Box.createVerticalStrut(3));
-        methodWrapper.add(cbMethod);
-        methodWrapper.add(Box.createVerticalGlue());
-
-
-        left.add(searchWrapper);
-        left.add(methodWrapper);
-
-        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        right.setBackground(BG);
-        JButton btnAdd = new JButton("Thêm ngành", createIcon("/icons/add.png", 16, 16));
-        JButton btnEdit = new JButton("Sửa", createIcon("/icons/edit.png", 16, 16));
-        JButton btnDelete = new JButton("Xóa", createIcon("/icons/delete.png", 16, 16));
-
-        right.add(styleButton(btnAdd, SUCCESS));
-        right.add(styleButton(btnEdit, PRIMARY));
-        right.add(styleButton(btnDelete, DANGER));
-
-        panel.add(left, BorderLayout.WEST);
-        panel.add(right, BorderLayout.EAST);
-
-        return panel;
+        majorTable = UIFactory.createStandardTable(tableModel);
+        return UIFactory.createStandardScrollPane(majorTable);
     }
 
-    private JComponent createCenterPanel() {
+    @Override
+    protected void loadData() {
+        applyFilters();
+    }
 
-        JPanel container = new JPanel(new BorderLayout(10, 10));
-        container.setBackground(BG);
+    @Override
+    protected String getItemLabel() {
+        return "ngành";
+    }
 
-        JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(BG);
+    // ========== Client-side filter logic ==========
 
-        JLabel title = new JLabel("Danh sách ngành");
-        title.setFont(FONT_BOLD);
+    private void applyFilters() {
+        String keyword = getSearchField().getText().trim().toLowerCase();
+        String phuongThuc = cboPhuongThuc != null ? (String) cboPhuongThuc.getSelectedItem() : "Tất cả";
 
-        JButton btnStats = styleButton(new JButton("Thống kê"), PRIMARY);
+        filteredData = allData.stream().filter(row -> {
+            boolean mKw = keyword.isEmpty()
+                    || row[0].toString().toLowerCase().contains(keyword)
+                    || row[1].toString().toLowerCase().contains(keyword);
+            boolean mPt = phuongThuc.equals("Tất cả") || row[4].toString().contains(phuongThuc);
+            return mKw && mPt;
+        }).collect(Collectors.toList());
 
-        header.add(title, BorderLayout.WEST);
-        header.add(btnStats, BorderLayout.EAST);
+        currentPage = 1;
+        updateTable();
+    }
 
-        String[] majorCols = {"Mã Ngành", "Tên Ngành", "Chỉ Tiêu", "Điểm Sàn", "Phương thức"};
-        Object[][] majorData = {
+    private void updateTable() {
+        tableModel.setRowCount(0);
+        int pageSize = getPageSize();
+        int total = filteredData.size();
+        int totalPages = Math.max(1, (int) Math.ceil((double) total / pageSize));
+        int start = (currentPage - 1) * pageSize;
+        int end = Math.min(start + pageSize, total);
+
+        for (int i = start; i < end; i++) {
+            tableModel.addRow(filteredData.get(i));
+        }
+
+        updatePaginationDirect(currentPage, totalPages, total);
+    }
+
+    // ========== Mock data ==========
+
+    private void generateMockData() {
+        String[][] rawData = {
                 {"7480201", "Công nghệ thông tin", "500", "18.0", "THPT, ĐGNL"},
                 {"7480101", "Khoa học máy tính", "400", "19.0", "THPT, ĐGNL"},
                 {"7480102", "Mạng máy tính", "350", "18.5", "THPT"},
@@ -185,71 +146,10 @@ public class MajorPanel extends JPanel {
                 {"7580201", "Kỹ thuật xây dựng", "200", "17.5", "THPT"}
         };
 
-        majorTable = createTable(majorData, majorCols);
-        JScrollPane majorScroll = new JScrollPane(majorTable);
-        majorScroll.setBorder(new EmptyBorder(5, 0, 5, 0));
-
-        JPanel majorPanel = new JPanel(new BorderLayout());
-        majorPanel.setBackground(BG);
-        majorPanel.add(header, BorderLayout.NORTH);
-        majorPanel.add(majorScroll, BorderLayout.CENTER);
-
-        return majorPanel;
-    }
-
-    private JButton styleButton(JButton btn, Color bgColor) {
-        btn.setFont(FONT_BOLD);
-        btn.setForeground(Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setContentAreaFilled(false);
-        btn.setBorder(new EmptyBorder(8, 16, 8, 16));
-        btn.setOpaque(false);
-
-        btn.setUI(new javax.swing.plaf.basic.BasicButtonUI() {
-            public void paint(Graphics g, JComponent c) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                int w = c.getWidth();
-                int h = c.getHeight();
-
-                g2.setColor(new Color(0, 0, 0, 30));
-                g2.fillRoundRect(3, 3, w - 3, h - 3, 12, 12);
-
-                g2.setColor(bgColor);
-                g2.fillRoundRect(0, 0, w - 3, h - 3, 12, 12);
-
-                g2.dispose();
-                super.paint(g, c);
-            }
-        });
-
-        return btn;
-    }
-
-    private JTable createTable(Object[][] data, String[] cols) {
-        DefaultTableModel model = new DefaultTableModel(data, cols) {
-            public boolean isCellEditable(int r, int c) { return false; }
-        };
-
-        JTable table = new JTable(model);
-        table.setFont(FONT);
-        table.setRowHeight(36);
-        table.setForeground(Color.BLACK);
-        table.setBackground(Color.WHITE);
-        table.setGridColor(BORDER);
-
-        table.getTableHeader().setReorderingAllowed(false);
-
-        table.setSelectionBackground(new Color(225, 245, 254));
-        table.setSelectionForeground(Color.BLACK);
-
-        JTableHeader header = table.getTableHeader();
-        header.setFont(FONT_BOLD);
-        header.setBackground(new Color(232, 240, 254));
-        header.setPreferredSize(new Dimension(100, 40));
-
-        return table;
+        allData = new ArrayList<>();
+        for (String[] row : rawData) {
+            allData.add(row);
+        }
+        filteredData = new ArrayList<>(allData);
     }
 }

@@ -34,3 +34,4 @@ build/
 
 # Ignore markdown folder
 markdown/
+.claude

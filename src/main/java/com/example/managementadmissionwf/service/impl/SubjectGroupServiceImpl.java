@@ -34,7 +34,7 @@ public class SubjectGroupServiceImpl implements SubjectGroupService {
 
     @Override
     public Paging<SubjectGroupResponse> search(String keyword, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
         Page<XtTohopMonthi> entityPage;
 
         if (keyword != null && !keyword.trim().isEmpty()) {
@@ -49,7 +49,7 @@ public class SubjectGroupServiceImpl implements SubjectGroupService {
                 .data(responses)
                 .totalItems(entityPage.getTotalElements())
                 .totalPages(entityPage.getTotalPages())
-                .page(entityPage.getNumber())
+                .page(entityPage.getNumber() + 1)
                 .limit(entityPage.getSize())
                 .hasNext(entityPage.hasNext())
                 .build();

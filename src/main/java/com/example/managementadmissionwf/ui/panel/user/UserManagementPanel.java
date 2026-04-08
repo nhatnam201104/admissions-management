@@ -1,4 +1,4 @@
-package com.example.managementadmissionwf.ui.panel.candidate;
+package com.example.managementadmissionwf.ui.panel.user;
 
 import com.example.managementadmissionwf.ui.util.ToolbarAction;
 import com.example.managementadmissionwf.ui.util.UIFactory;
@@ -12,47 +12,40 @@ import java.util.EnumSet;
 import java.util.Set;
 
 @Component
-public class CandidatePanel extends AbstractFeaturePanel {
+public class UserManagementPanel extends AbstractFeaturePanel {
 
     @Autowired
-    private CandidateController controller;
+    private UserController controller;
 
-    private CandidateListPanel listPanel;
-    private JComboBox<String> cboKhuVuc;
-    private JComboBox<String> cboDoiTuong;
+    private UserListPanel listPanel;
+    private JComboBox<String> cboRole;
 
-    public CandidatePanel() {
+    public UserManagementPanel() {
         super();
     }
 
     @PostConstruct
     private void initComponents() {
-        listPanel = new CandidateListPanel();
+        listPanel = new UserListPanel();
         buildUI();
     }
 
     @Override
     protected void onInit() {
-        controller.setCandidatePanel(this);
+        controller.setManagementPanel(this);
     }
 
     @Override
     protected void createFilterFields(JPanel filterPanel) {
-        filterPanel.add(UIFactory.createFilterLabel("Khu vực:"));
-        cboKhuVuc = UIFactory.createFilterCombo(new String[]{"Tất cả", "KV1", "KV2", "KV3"}, 100);
-        filterPanel.add(cboKhuVuc);
-
-        filterPanel.add(UIFactory.createFilterLabel("Đối tượng:"));
-        cboDoiTuong = UIFactory.createFilterCombo(
-                new String[]{"Tất cả", "Không", "KV1", "KV2-NT", "KV2", "KV3", "Con thương binh"}, 120);
-        filterPanel.add(cboDoiTuong);
+        filterPanel.add(UIFactory.createFilterLabel("Vai trò:"));
+        cboRole = UIFactory.createFilterCombo(new String[]{"Tất cả", "ADMIN", "STUDENT"}, 120);
+        filterPanel.add(cboRole);
     }
 
     @Override
     protected void resetFilters() {
         super.resetFilters();
-        if (cboKhuVuc != null) cboKhuVuc.setSelectedIndex(0);
-        if (cboDoiTuong != null) cboDoiTuong.setSelectedIndex(0);
+        if (cboRole != null) cboRole.setSelectedIndex(0);
     }
 
     @Override
@@ -64,9 +57,9 @@ public class CandidatePanel extends AbstractFeaturePanel {
     @Override
     protected void onToolbarAction(ToolbarAction action) {
         switch (action) {
-            case ADD -> controller.addCandidate();
-            case EDIT -> controller.editCandidate();
-            case DELETE -> controller.deleteCandidate();
+            case ADD -> controller.addUser();
+            case EDIT -> controller.editUser();
+            case DELETE -> controller.deleteUser();
             case REFRESH -> refreshData();
             case EXPORT_EXCEL -> controller.exportExcel(getSearchField().getText().trim());
             case IMPORT_EXCEL -> controller.importExcel();
@@ -82,17 +75,16 @@ public class CandidatePanel extends AbstractFeaturePanel {
     @Override
     protected void loadData() {
         String keyword = getSearchField().getText().trim();
-        String khuVuc = (String) cboKhuVuc.getSelectedItem();
-        String doiTuong = (String) cboDoiTuong.getSelectedItem();
-        controller.searchCandidates(keyword, khuVuc, doiTuong);
+        String role = (String) cboRole.getSelectedItem();
+        controller.loadUsers(keyword, role, getCurrentPage(), getPageSize());
     }
 
     @Override
     protected String getItemLabel() {
-        return "thí sinh";
+        return "người dùng";
     }
 
-    public CandidateListPanel getListPanel() {
+    public UserListPanel getListPanel() {
         return listPanel;
     }
 }

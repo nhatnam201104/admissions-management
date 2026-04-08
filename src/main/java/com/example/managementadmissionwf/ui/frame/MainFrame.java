@@ -1,14 +1,16 @@
 package com.example.managementadmissionwf.ui.frame;
 
 import com.example.managementadmissionwf.dto.User.UserDTO;
+import com.example.managementadmissionwf.ui.panel.candidate.CandidatePanel;
 import com.example.managementadmissionwf.ui.panel.major.MajorPanel;
+import com.example.managementadmissionwf.ui.panel.score.ScorePanel;
 import com.example.managementadmissionwf.ui.panel.subjectgroup.SubjectGroupPanel;
-import com.example.managementadmissionwf.ui.panel.UserManagementPanel;
+import com.example.managementadmissionwf.ui.panel.user.UserManagementPanel;
 import com.example.managementadmissionwf.ui.panel.BonusScorePanel;
 import com.example.managementadmissionwf.ui.panel.ConversionTablePanel;
-import com.example.managementadmissionwf.ui.panel.ThresholdPanel;
 import com.example.managementadmissionwf.ui.panel.StatisticPanel;
 import com.example.managementadmissionwf.ui.util.UIConstants;
+import com.example.managementadmissionwf.ui.util.UIFactory;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -51,10 +53,10 @@ public class MainFrame extends JFrame {
 
     // Injected panels
     @Autowired(required = false)
-    private com.example.managementadmissionwf.ui.panel.candidate.CandidatePanel candidatePanel;
+    private CandidatePanel candidatePanel;
 
     @Autowired(required = false)
-    private com.example.managementadmissionwf.ui.panel.score.ScorePanel scorePanel;
+    private ScorePanel scorePanel;
 
     @Autowired(required = false)
     private MajorPanel majorPanel;
@@ -74,8 +76,6 @@ public class MainFrame extends JFrame {
     @Autowired(required = false)
     private com.example.managementadmissionwf.ui.panel.admission.AdmissionPanel admissionPanel;
 
-    @Autowired(required = false)
-    private ThresholdPanel thresholdPanel;
 
     @Autowired(required = false)
     private StatisticPanel statisticPanel;
@@ -118,7 +118,9 @@ public class MainFrame extends JFrame {
         userSection.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         userIconLabel = new JLabel();
-        userIconLabel.setIcon(new ImageIcon(Objects.requireNonNull(getClass().getResource("/icons/users.png"))));
+        userIconLabel.setIcon(Objects.requireNonNullElseGet(
+                UIFactory.loadIcon("users", 24, 24),
+                () -> new ImageIcon(Objects.requireNonNull(getClass().getResource("/icons/users.png")))));
         userIconLabel.setPreferredSize(new Dimension(50, 50));
 
         usernameLabel = new JLabel(user.getUsername());
@@ -206,10 +208,9 @@ public class MainFrame extends JFrame {
 
         // Add icon
         try {
-            String iconPath = "/icons/" + iconName + ".png";
-            java.net.URL iconUrl = getClass().getResource(iconPath);
-            if (iconUrl != null) {
-                button.setIcon(new ImageIcon(iconUrl));
+            ImageIcon icon = UIFactory.loadIcon(iconName, 18, 18);
+            if (icon != null) {
+                button.setIcon(icon);
                 button.setIconTextGap(15);
             }
         } catch (Exception e) {
