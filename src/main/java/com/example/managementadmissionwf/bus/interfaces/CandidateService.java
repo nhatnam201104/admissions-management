@@ -1,16 +1,18 @@
 package com.example.managementadmissionwf.bus.interfaces;
 
 import com.example.managementadmissionwf.dto.candidate.CandidateDTO;
+import com.example.managementadmissionwf.dto.common.ImportResult;
+import com.example.managementadmissionwf.dto.common.Paging;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 
 /**
  * Service Interface for Candidate Management
  */
 public interface CandidateService {
-    List<CandidateDTO> getAllCandidates();
-    
-    List<CandidateDTO> searchCandidates(String keyword, String khuVuc, String doiTuong);
+	Paging<CandidateDTO> searchCandidates(String keyword, String khuVuc, String doiTuong, int page, int size);
     
     CandidateDTO getCandidateByCccd(String cccd);
     
@@ -19,4 +21,8 @@ public interface CandidateService {
     CandidateDTO updateCandidate(CandidateDTO dto);
     
     void deleteCandidate(String cccd);
+
+    void exportExcel(OutputStream outputStream, String keyword);
+
+    ImportResult<CandidateDTO> importExcel(InputStream inputStream);
 }
