@@ -1,66 +1,56 @@
 package com.example.managementadmissionwf.dto.score;
 
+import com.example.managementadmissionwf.annotation.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * DTO for Score Management
- * Maps to xt_diemthixettuyen + xt_diemcongxettuyen tables
- */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ScoreDTO {
-    // Candidate info
+    @ExcelColumn(name = "CCCD")
     private String cccd;
+
+    @ExcelColumn(name = "Số báo danh")
     private String sobaodanh;
+
+    @ExcelColumn(name = "Phương thức")
     private String phuongThuc; // THPT, DGNL, VSAT
     
-    // Subject scores
-    private Double toan;    // TO
-    private Double ly;      // LI
-    private Double hoa;     // HO
-    private Double sinh;    // SI
-    private Double su;      // SU
-    private Double dia;     // DI
-    private Double van;     // VA
+    @ExcelColumn(name = "Toán")
+    private Double toan;
+    @ExcelColumn(name = "Lý")
+    private Double ly;
+    @ExcelColumn(name = "Hóa")
+    private Double hoa;
+    @ExcelColumn(name = "Sinh")
+    private Double sinh;
+    @ExcelColumn(name = "Sử")
+    private Double su;
+    @ExcelColumn(name = "Địa")
+    private Double dia;
+    @ExcelColumn(name = "Văn")
+    private Double van;
     
-    // Foreign language
-    private Double n1Thi;   // N1_THI
-    private Double n1Cc;    // N1_CC
+    @ExcelColumn(name = "Ngoại ngữ (Thi)")
+    private Double n1Thi;
+    @ExcelColumn(name = "Ngoại ngữ (CC)")
+    private Double n1Cc;
     
-    // Other exams
-    private Double nl1;     // NL1
-    private Double nk1;     // NK1
-    private Double nk2;     // NK2
+    @ExcelColumn(name = "NL1")
+    private Double nl1;
+    @ExcelColumn(name = "NK1")
+    private Double nk1;
+    @ExcelColumn(name = "NK2")
+    private Double nk2;
     
-    // Bonus points
-    private Double diemCc;
-    private Double diemUtxt;
-    private Double diemTong;
-    
-    // Helper method to get N1_CC (max of thi and cc)
     public Double getN1CcCalculated() {
-        if (n1Thi == null && n1Cc == null) {
-            return 0.0;
-        }
-        if (n1Cc == null) {
-            return n1Thi;
-        }
-        if (n1Thi == null) {
-            return n1Cc;
-        }
+        if (n1Thi == null && n1Cc == null) return 0.0;
+        if (n1Cc == null) return n1Thi;
+        if (n1Thi == null) return n1Cc;
         return Math.max(n1Thi, n1Cc);
-    }
-    
-    // Helper method to calculate total bonus points
-    public Double calculateTotalBonus() {
-        double total = 0.0;
-        if (diemCc != null) total += diemCc;
-        if (diemUtxt != null) total += diemUtxt;
-        return total;
     }
 }

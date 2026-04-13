@@ -37,7 +37,7 @@ public class XtDiemthixettuyen {
     String sobaodanh; // SBD
     
     @Column(name = "d_phuongthuc", length = 50)
-    String dPhuongthuc; // phương thức xét tuyển
+    String d_Phuongthuc; // phương thức xét tuyển
     
     // Điểm các môn
     @Column(name = "TOAN")

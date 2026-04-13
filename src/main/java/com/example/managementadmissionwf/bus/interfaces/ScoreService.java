@@ -1,14 +1,11 @@
 package com.example.managementadmissionwf.bus.interfaces;
 
 import com.example.managementadmissionwf.dto.score.ScoreDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
-
-/**
- * Service Interface for Score Management
- */
 public interface ScoreService {
-    List<ScoreDTO> getAllScores();
+    Page<ScoreDTO> getAllScores(Pageable pageable);
     
     ScoreDTO getScoreByCccd(String cccd);
     
@@ -17,6 +14,4 @@ public interface ScoreService {
     ScoreDTO updateScore(ScoreDTO dto);
     
     void deleteScore(String cccd);
-    
-    Double calculateTotalScore(ScoreDTO dto);
 }

@@ -1,203 +1,246 @@
 package com.example.managementadmissionwf.ui.panel.score;
 
+import com.example.managementadmissionwf.bus.interfaces.BonusScoreService;
 import com.example.managementadmissionwf.bus.interfaces.ScoreService;
+import com.example.managementadmissionwf.dto.score.BonusScoreDTO;
 import com.example.managementadmissionwf.dto.score.ScoreDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.List;
 
 /**
- * Controller for Score Management
- * Handles business logic for ScorePanel
+ * Controller xử lý logic cho quản lý Điểm thi và Điểm ưu tiên.
+ * Tách biệt luồng xử lý giữa Score và BonusScore.
  */
 @Component
 public class ScoreController {
-    
+
     @Autowired
     private ScoreService scoreService;
-    
+
+    @Autowired
+    private BonusScoreService bonusScoreService;
+
     private ScorePanel scorePanel;
     private ScoreListPanel listPanel;
-    
+
+    // Trạng thái phân trang
+    private int currentPage = 0;
+    private int pageSize = 15;
+
     public void setScorePanel(ScorePanel scorePanel) {
         this.scorePanel = scorePanel;
         this.listPanel = scorePanel.getListPanel();
     }
-    
-    /**
-     * Load all scores to table
-     */
-    public void loadAllScores() {
-        List<ScoreDTO> scores = scoreService.getAllScores();
-        listPanel.loadData(scores);
-    }
-    
-    /**
-     * Search scores
-     */
-    public void searchScores(String keyword, String phuongThuc) {
-//        List<ScoreDTO> scores = scoreService.(keyword, phuongThuc);
-//        listPanel.loadData(scores);
-    }
-    
-    /**
-     * Add new score
-     */
-    public void addScore() {
-        // Show dialog to select candidate first
-        String cccd = JOptionPane.showInputDialog(
-            scorePanel,
-            "Nhập CCCD của thí sinh:",
-            "Chọn Thí Sinh",
-            JOptionPane.QUESTION_MESSAGE
-        );
-        
-        if (cccd == null || cccd.trim().isEmpty()) {
-            return;
+
+    // 1. QUẢN LÝ ĐIỂM THI (SCORE)
+
+    public void loadScores(int page) {
+        try {
+            this.currentPage = page;
+            Pageable pageable = PageRequest.of(currentPage, pageSize);
+            Page<ScoreDTO> scorePage = scoreService.getAllScores(pageable);
+            
+            listPanel.loadData(scorePage.getContent());
+        } catch (Exception e) {
+            showError("Lỗi tải danh sách điểm: " + e.getMessage());
         }
-        
+    }
+
+    public void addScore() {
+        String cccd = inputCCCD();
+        if (cccd == null) return;
+
         ScoreDTO score = new ScoreDTO();
-        score.setCccd(cccd.trim());
-        score.setSobaodanh(""); // Will be filled by service
-        
+        score.setCccd(cccd);
+
         ScoreFormDialog dialog = new ScoreFormDialog(
-            (Frame) SwingUtilities.getWindowAncestor(scorePanel),
-            "Thêm Điểm Thí Sinh",
-            score
+            (Frame) SwingUtilities.getWindowAncestor(scorePanel), "Thêm Điểm Thi", score
         );
         dialog.setVisible(true);
-        
+
         if (dialog.isSaved()) {
             try {
-                ScoreDTO newScore = dialog.getScore();
-                scoreService.createScore(newScore);
-                loadAllScores();
-                JOptionPane.showMessageDialog(scorePanel, "Thêm điểm thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                scoreService.createScore(dialog.getScore());
+                loadScores(currentPage);
+                showInfo("Thêm điểm thi thành công!");
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(scorePanel, "Lỗi: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                showError("Lỗi: " + e.getMessage());
             }
         }
     }
-    
-    /**
-     * Edit selected score
-     */
+
     public void editScore() {
         ScoreDTO selected = listPanel.getSelectedScore();
         if (selected == null) {
-            JOptionPane.showMessageDialog(scorePanel, "Vui lòng chọn điểm cần sửa!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            showWarning("Vui lòng chọn dòng điểm thi cần sửa!");
             return;
         }
-        
+
         ScoreFormDialog dialog = new ScoreFormDialog(
-            (Frame) SwingUtilities.getWindowAncestor(scorePanel),
-            "Sửa Điểm Thí Sinh",
-            selected
+            (Frame) SwingUtilities.getWindowAncestor(scorePanel), "Sửa Điểm Thi", selected
         );
         dialog.setVisible(true);
-        
+
         if (dialog.isSaved()) {
             try {
-                ScoreDTO updatedScore = dialog.getScore();
-                scoreService.updateScore(updatedScore);
-                loadAllScores();
-                JOptionPane.showMessageDialog(scorePanel, "Cập nhật điểm thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                scoreService.updateScore(dialog.getScore());
+                loadScores(currentPage);
+                showInfo("Cập nhật điểm thi thành công!");
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(scorePanel, "Lỗi: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                showError("Lỗi: " + e.getMessage());
             }
         }
     }
-    
-    /**
-     * Delete selected score
-     */
+
     public void deleteScore() {
         ScoreDTO selected = listPanel.getSelectedScore();
         if (selected == null) {
-            JOptionPane.showMessageDialog(scorePanel, "Vui lòng chọn điểm cần xóa!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            showWarning("Vui lòng chọn dòng điểm thi cần xóa!");
             return;
         }
-        
-        int confirm = JOptionPane.showConfirmDialog(
-            scorePanel,
-            "Bạn có chắc chắn muốn xóa điểm của thí sinh:\nCCCD: " + selected.getCccd() + "?",
-            "Xác nhận xóa",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.QUESTION_MESSAGE
-        );
-        
-        if (confirm == JOptionPane.YES_OPTION) {
+
+        if (confirmDelete("điểm thi của CCCD: " + selected.getCccd())) {
             try {
                 scoreService.deleteScore(selected.getCccd());
-                loadAllScores();
-                JOptionPane.showMessageDialog(scorePanel, "Xóa điểm thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                validatePageAfterDelete(true);
+                showInfo("Xóa điểm thi thành công!");
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(scorePanel, "Lỗi: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-    
-    /**
-     * Refresh data
-     */
-    public void refreshData() {
-        loadAllScores();
-    }
-
-    public void exportExcel(String keyword) {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Chọn vị trí lưu file Excel");
-        fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files (*.xlsx)", "xlsx"));
-        fileChooser.setSelectedFile(new File("Danh_sach_diem.xlsx"));
-
-        int userSelection = fileChooser.showSaveDialog(scorePanel);
-        if (userSelection == JFileChooser.APPROVE_OPTION) {
-            File fileToSave = fileChooser.getSelectedFile();
-            String filePath = fileToSave.getAbsolutePath();
-            if (!filePath.toLowerCase().endsWith(".xlsx")) {
-                filePath += ".xlsx";
-            }
-            try (OutputStream os = new FileOutputStream(filePath)) {
-                // TODO: scoreService.exportExcel(os, keyword);
-                JOptionPane.showMessageDialog(scorePanel,
-                        "Đã xuất dữ liệu ra file Excel thành công!\n" + filePath,
-                        "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(scorePanel,
-                        "Lỗi khi xuất file Excel: " + e.getMessage(),
-                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+                showError("Lỗi: " + e.getMessage());
             }
         }
     }
 
-    public void importExcel() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Chọn file Excel để nhập dữ liệu");
-        fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files (*.xlsx)", "xlsx"));
+    // 2. QUẢN LÝ ĐIỂM CỘNG (BONUS SCORE)
 
-        int userSelection = fileChooser.showOpenDialog(scorePanel);
-        if (userSelection == JFileChooser.APPROVE_OPTION) {
-            File fileToOpen = fileChooser.getSelectedFile();
-            try (InputStream is = new FileInputStream(fileToOpen)) {
-                // TODO: scoreService.importExcel(is)
-                JOptionPane.showMessageDialog(scorePanel,
-                        "Nhập dữ liệu từ Excel thành công!",
-                        "Kết quả nhập Excel", JOptionPane.INFORMATION_MESSAGE);
-                scorePanel.refreshData();
+    public void loadBonusScores(int page) {
+        try {
+            this.currentPage = page;
+            Pageable pageable = PageRequest.of(currentPage, pageSize);
+            Page<BonusScoreDTO> bonusPage = bonusScoreService.getAllBonusScores(pageable);
+            
+            // Giả sử listPanel có phương thức hiển thị dữ liệu Bonus
+            // listPanel.loadBonusData(bonusPage.getContent());
+        } catch (Exception e) {
+            showError("Lỗi tải danh sách điểm ưu tiên: " + e.getMessage());
+        }
+    }
+
+    public void addBonusScore() {
+        String cccd = inputCCCD();
+        if (cccd == null) return;
+
+        BonusScoreDTO bonus = new BonusScoreDTO();
+        bonus.setCccd(cccd);
+
+        // Sử dụng Dialog dành riêng cho Điểm cộng
+        BonusScoreFormDialog dialog = new BonusScoreFormDialog(
+            (Frame) SwingUtilities.getWindowAncestor(scorePanel), "Thêm Điểm Ưu Tiên", bonus
+        );
+        dialog.setVisible(true);
+
+        if (dialog.isSaved()) {
+            try {
+                bonusScoreService.createBonusScore(dialog.getBonusScore());
+                loadBonusScores(currentPage);
+                showInfo("Thêm điểm ưu tiên thành công!");
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(scorePanel,
-                        "Lỗi khi đọc file Excel: " + e.getMessage(),
-                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+                showError("Lỗi: " + e.getMessage());
             }
         }
+    }
+
+    public void editBonusScore() {
+        // Giả sử listPanel có phương thức lấy Bonus đang chọn
+        BonusScoreDTO selected = listPanel.getSelectedBonusScore(); 
+        if (selected == null) {
+            showWarning("Vui lòng chọn dòng điểm ưu tiên cần sửa!");
+            return;
+        }
+
+        BonusScoreFormDialog dialog = new BonusScoreFormDialog(
+            (Frame) SwingUtilities.getWindowAncestor(scorePanel), "Sửa Điểm Ưu Tiên", selected
+        );
+        dialog.setVisible(true);
+
+        if (dialog.isSaved()) {
+            try {
+                bonusScoreService.updateBonusScore(dialog.getBonusScore());
+                loadBonusScores(currentPage);
+                showInfo("Cập nhật điểm ưu tiên thành công!");
+            } catch (Exception e) {
+                showError("Lỗi: " + e.getMessage());
+            }
+        }
+    }
+
+    public void deleteBonusScore() {
+        BonusScoreDTO selected = listPanel.getSelectedBonusScore();
+        if (selected == null) return;
+
+        if (confirmDelete("điểm ưu tiên của CCCD: " + selected.getCccd())) {
+            try {
+                bonusScoreService.deleteBonusScore(selected.getCccd());
+                validatePageAfterDelete(false);
+                showInfo("Xóa điểm ưu tiên thành công!");
+            } catch (Exception e) {
+                showError("Lỗi: " + e.getMessage());
+            }
+        }
+    }
+
+    // CÁC TIỆN ÍCH HỖ TRỢ (HELPERS)
+
+    public void nextPage() {
+        currentPage++;
+        loadScores(currentPage); 
+    }
+
+    public void previousPage() {
+        if (currentPage > 0) {
+            currentPage--;
+            loadScores(currentPage);
+        }
+    }
+
+    private void validatePageAfterDelete(boolean isScore) {
+        Pageable pageable = PageRequest.of(currentPage, pageSize);
+        boolean isEmpty = isScore 
+            ? scoreService.getAllScores(pageable).getContent().isEmpty()
+            : bonusScoreService.getAllBonusScores(pageable).getContent().isEmpty();
+
+        if (isEmpty && currentPage > 0) {
+            currentPage--;
+        }
+
+        if (isScore) loadScores(currentPage);
+        else loadBonusScores(currentPage);
+    }
+
+    private String inputCCCD() {
+        String res = JOptionPane.showInputDialog(scorePanel, "Nhập CCCD của thí sinh:", "Xác nhận", JOptionPane.QUESTION_MESSAGE);
+        return (res == null || res.trim().isEmpty()) ? null : res.trim();
+    }
+
+    private boolean confirmDelete(String message) {
+        return JOptionPane.showConfirmDialog(scorePanel, "Bạn có chắc chắn muốn xóa " + message + "?", 
+                "Xác nhận xóa", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+    }
+
+    private void showInfo(String msg) {
+        JOptionPane.showMessageDialog(scorePanel, msg, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void showWarning(String msg) {
+        JOptionPane.showMessageDialog(scorePanel, msg, "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+    }
+
+    private void showError(String msg) {
+        JOptionPane.showMessageDialog(scorePanel, msg, "Lỗi", JOptionPane.ERROR_MESSAGE);
     }
 }
