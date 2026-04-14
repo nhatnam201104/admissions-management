@@ -15,7 +15,7 @@ public interface ScoreMapper {
     @Mapping(source = "va", target = "van")
     @Mapping(source = "si", target = "sinh")
     @Mapping(source = "di", target = "dia")
-    @Mapping(source = "d_Phuongthuc", target = "phuongThuc")
+    @Mapping(source = "dPhuongthuc", target = "phuongThuc")
     ScoreDTO toDto(XtDiemthixettuyen entity);
 
     @InheritInverseConfiguration
@@ -26,7 +26,6 @@ public interface ScoreMapper {
     @Mapping(target = "updatedAt", ignore = true)
     XtDiemthixettuyen toEntity(ScoreDTO dto);
 
-    // Cập nhật Entity hiện có từ dữ liệu DTO
     @InheritInverseConfiguration
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "thisinh", ignore = true)
