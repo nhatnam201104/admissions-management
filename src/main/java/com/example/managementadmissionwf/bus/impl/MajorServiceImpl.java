@@ -121,6 +121,13 @@ public class MajorServiceImpl implements MajorService {
     @Override
     @Transactional
     public MajorTohopDTO addTohop(MajorTohopDTO tohopDTO) {
+        // VALIDATE DUPLICATE
+        if (nganhTohopRepository.existsByManganhAndMatohopAndIsDeletedFalse(
+                tohopDTO.getMaNganh(), tohopDTO.getMaToHop())) {
+            throw new RuntimeException("Tổ hợp " + tohopDTO.getMaToHop() +
+                    " đã tồn tại cho ngành " + tohopDTO.getMaNganh());
+        }
+
         XtNganhTohop entity = nganhTohopMapper.toEntity(tohopDTO);
         entity = nganhTohopRepository.save(entity);
         return nganhTohopMapper.toResponse(entity);
@@ -131,7 +138,10 @@ public class MajorServiceImpl implements MajorService {
     public void removeTohop(Integer tohopId) {
         XtNganhTohop entity = nganhTohopRepository.findById(tohopId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy mapping tổ hợp với ID: " + tohopId));
-        nganhTohopRepository.delete(entity);
+
+        // SOFT DELETE thay vì physical delete
+        entity.setIsDeleted(true);
+        nganhTohopRepository.save(entity);
     }
 
     @Override
@@ -152,7 +162,7 @@ public class MajorServiceImpl implements MajorService {
     }
 
     @Override
-    // KHÔNG dùng @Transactional ở đây để hỗ trợ lưu từng dòng (Partial Success)
+    // KHÔNG dùng @Transactional ở đây để hỗ trợ partial success
     public ImportResult<MajorDTO> importExcel(InputStream inputStream) {
         ImportResult<MajorDTO> result = new ImportResult<>();
         List<String> errors = new ArrayList<>();
@@ -161,8 +171,8 @@ public class MajorServiceImpl implements MajorService {
         try {
             List<MajorDTO> importedList = ExcelUtil.importExcel(inputStream, MajorDTO.class);
             result.setTotalRows(importedList.size());
-            int rowNum = 2;
 
+            int rowNum = 2;
             for (MajorDTO dto : importedList) {
                 try {
                     if (dto.getMaNganh() == null || dto.getMaNganh().trim().isEmpty()) {
@@ -172,15 +182,27 @@ public class MajorServiceImpl implements MajorService {
                     }
 
                     String cleanMaNganh = dto.getMaNganh().trim().toUpperCase();
-                    Optional<XtNganh> existing = majorRepository.findByManganhAndIsDeletedFalse(cleanMaNganh);
 
                     XtNganh entity;
-                    if (existing.isPresent()) {
-                        entity = existing.get();
+                    Optional<XtNganh> existingActive = majorRepository.findByManganhAndIsDeletedFalse(cleanMaNganh);
+
+                    if (existingActive.isPresent()) {
+                        // Cập nhật ngành đang active
+                        entity = existingActive.get();
                         majorMapper.updateEntity(entity, dto);
                     } else {
-                        entity = majorMapper.toEntity(dto);
-                        entity.setManganh(cleanMaNganh);
+                        // Kiểm tra ngành đã soft delete chưa
+                        Optional<XtNganh> softDeleted = majorRepository.findByManganh(cleanMaNganh);
+                        if (softDeleted.isPresent()) {
+                            // ← RESTORE + UPDATE
+                            entity = softDeleted.get();
+                            entity.setIsDeleted(false);
+                            majorMapper.updateEntity(entity, dto);
+                        } else {
+                            // Tạo mới
+                            entity = majorMapper.toEntity(dto);
+                            entity.setManganh(cleanMaNganh);
+                        }
                     }
 
                     majorRepository.save(entity);
@@ -200,7 +222,6 @@ public class MajorServiceImpl implements MajorService {
         } catch (Exception e) {
             throw new RuntimeException("Lỗi khi đọc file Excel: " + e.getMessage(), e);
         }
-
         return result;
     }
 }

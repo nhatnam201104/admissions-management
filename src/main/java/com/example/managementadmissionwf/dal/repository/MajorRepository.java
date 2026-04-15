@@ -20,6 +20,10 @@ public interface MajorRepository extends JpaRepository<XtNganh, Integer> {
 
     Optional<XtNganh> findByManganhAndIsDeletedFalse(String manganh);
 
+    // dùng cho Import Excel (restore soft-deleted)
+    @Query("SELECT n FROM XtNganh n WHERE n.manganh = :manganh")
+    Optional<XtNganh> findByManganh(@Param("manganh") String manganh);
+
     boolean existsByManganhAndIsDeletedFalse(String manganh);
 
     boolean existsByManganhAndIdnganhNotAndIsDeletedFalse(String manganh, Integer idnganh);
