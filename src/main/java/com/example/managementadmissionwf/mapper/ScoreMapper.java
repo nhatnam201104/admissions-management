@@ -15,7 +15,7 @@ public interface ScoreMapper {
     @Mapping(source = "va", target = "van")
     @Mapping(source = "si", target = "sinh")
     @Mapping(source = "di", target = "dia")
-    @Mapping(source = "dPhuongthuc", target = "phuongThuc")
+    @Mapping(source = "DPhuongthuc", target = "phuongThuc")
     ScoreDTO toDto(XtDiemthixettuyen entity);
 
     @InheritInverseConfiguration

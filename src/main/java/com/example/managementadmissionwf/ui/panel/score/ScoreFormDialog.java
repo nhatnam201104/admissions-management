@@ -303,10 +303,6 @@ public class ScoreFormDialog extends JDialog {
             setFieldValue(txtNl1, score.getNl1());
             setFieldValue(txtNk1, score.getNk1());
             setFieldValue(txtNk2, score.getNk2());
-            
-            setFieldValue(txtDiemCc, score.getDiemCc());
-            setFieldValue(txtDiemUtxt, score.getDiemUtxt());
-            setFieldValue(txtDiemTong, score.getDiemTong());
         }
     }
     
@@ -363,10 +359,6 @@ public class ScoreFormDialog extends JDialog {
             score.setNl1(getDoubleValue(txtNl1));
             score.setNk1(getDoubleValue(txtNk1));
             score.setNk2(getDoubleValue(txtNk2));
-            
-            score.setDiemCc(getDoubleValue(txtDiemCc));
-            score.setDiemUtxt(getDoubleValue(txtDiemUtxt));
-            score.setDiemTong(getDoubleValue(txtDiemTong));
             
             saved = true;
             dispose();

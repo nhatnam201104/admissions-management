@@ -6,7 +6,9 @@ import org.springframework.data.domain.Pageable;
 
 public interface ScoreService {
     Page<ScoreDTO> getAllScores(Pageable pageable);
-    
+
+    Page<ScoreDTO> searchScores(String keyword, String phuongThuc, Pageable pageable);
+
     ScoreDTO getScoreByCccd(String cccd);
     
     ScoreDTO createScore(ScoreDTO dto);
@@ -14,4 +16,5 @@ public interface ScoreService {
     ScoreDTO updateScore(ScoreDTO dto);
     
     void deleteScore(String cccd);
+    
 }
