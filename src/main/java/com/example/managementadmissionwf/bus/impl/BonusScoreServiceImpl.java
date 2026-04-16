@@ -6,6 +6,7 @@ import com.example.managementadmissionwf.dal.repository.BonusScoreRepository;
 import com.example.managementadmissionwf.dto.score.BonusScoreDTO;
 import com.example.managementadmissionwf.mapper.BonusScoreMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -35,13 +36,14 @@ public class BonusScoreServiceImpl implements BonusScoreService {
     @Override
     @Transactional
     public BonusScoreDTO createBonusScore(BonusScoreDTO dto) {
-        if (bonusScoreRepository.existsByCccd(dto.getCccd())) {
-            throw new RuntimeException("Điểm cộng cho CCCD này đã tồn tại!");
+        try {
+            XtDiemcongxettuyen entity = bonusScoreMapper.toEntity(dto);
+            // diemTong sẽ được tự động tính qua @PrePersist/PreUpdate trong Entity nếu bạn đã cấu hình
+            XtDiemcongxettuyen savedEntity = bonusScoreRepository.save(entity);
+            return bonusScoreMapper.toDto(savedEntity);
+        } catch (DataIntegrityViolationException e) {
+            throw new RuntimeException("Lỗi: Điểm cộng cho thí sinh có CCCD " + dto.getCccd() + " đã tồn tại.");
         }
-        XtDiemcongxettuyen entity = bonusScoreMapper.toEntity(dto);
-        // diemTong sẽ được tự động tính qua @PrePersist trong Entity
-        XtDiemcongxettuyen savedEntity = bonusScoreRepository.save(entity);
-        return bonusScoreMapper.toDto(savedEntity);
     }
 
     @Override
@@ -51,9 +53,11 @@ public class BonusScoreServiceImpl implements BonusScoreService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy điểm cộng để cập nhật cho CCCD: " + dto.getCccd()));
         
         bonusScoreMapper.updateEntityFromDto(dto, existingEntity);
-        // Buộc tính lại diemTong nếu user có thay đổi diemCc hoặc diemUtxt
-        existingEntity.setDiemTong((existingEntity.getDiemCc() != null ? existingEntity.getDiemCc() : 0) + 
-                                   (existingEntity.getDiemUtxt() != null ? existingEntity.getDiemUtxt() : 0));
+        
+        // Tính toán lại tổng điểm trước khi lưu để đảm bảo tính chính xác
+        double diemCc = (existingEntity.getDiemCc() != null) ? existingEntity.getDiemCc() : 0.0;
+        double diemUtxt = (existingEntity.getDiemUtxt() != null) ? existingEntity.getDiemUtxt() : 0.0;
+        existingEntity.setDiemTong(diemCc + diemUtxt);
         
         XtDiemcongxettuyen updatedEntity = bonusScoreRepository.save(existingEntity);
         return bonusScoreMapper.toDto(updatedEntity);
@@ -65,7 +69,6 @@ public class BonusScoreServiceImpl implements BonusScoreService {
         XtDiemcongxettuyen entity = bonusScoreRepository.findByCccd(cccd)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy điểm cộng để xóa cho CCCD: " + cccd));
         
-        entity.setIsDeleted(true); // Soft delete
-        bonusScoreRepository.save(entity);
+        bonusScoreRepository.delete(entity);
     }
 }
