@@ -8,11 +8,9 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
+import java.util.Map;
+import java.util.Vector;
 
-/**
- * List Panel for Score Management
- * Displays JTable with score list or bonus score list dynamically
- */
 public class ScoreListPanel extends JPanel {
     private JTable table;
     private DefaultTableModel tableModel;
@@ -60,46 +58,65 @@ public class ScoreListPanel extends JPanel {
         table.setDefaultRenderer(Object.class, centerRenderer);
     }
 
-    // 1. QUẢN LÝ DỮ LIỆU ĐIỂM THI (SCORE)
+    public void loadData(List<ScoreDTO> list, Map<String, BonusScoreDTO> bonusMap) {
+        this.scores = list;
+        this.isShowingBonus = false;
 
-    public void loadData(List<ScoreDTO> scores) {
-        this.scores = scores;
-        this.isShowingBonus = false; 
-
-        String[] columnNames = {
-                "STT", "CCCD", "SBD", "PT", "T_TO", "T_LI", "T_HO",
-                "T_SI", "T_SU", "T_DI", "T_VA", "N1", "NL1", "Điểm cộng"
+        String[] columns = {
+            "STT", "CCCD", "SBD", "PT",
+            "T_TO", "T_LI", "T_HO", "T_SI", "T_SU", "T_DI", "T_VA",
+            "N1", "NL1", "Điểm cộng"
         };
-        tableModel.setColumnIdentifiers(columnNames);
-        setScoreColumnWidths();
+        tableModel.setColumnIdentifiers(columns);
+
         tableModel.setRowCount(0);
 
+        if (list == null || list.isEmpty()) return;
+
         int stt = 1;
-        for (ScoreDTO score : scores) {
-            Object[] rowData = {
-                    stt++,
-                    score.getCccd(),
-                    score.getSobaodanh(),
-                    score.getPhuongThuc(),
-                    formatScore(score.getToan()),
-                    formatScore(score.getLy()),
-                    formatScore(score.getHoa()),
-                    formatScore(score.getSinh()),
-                    formatScore(score.getSu()),
-                    formatScore(score.getDia()),
-                    formatScore(score.getVan()),
-                    formatScore(score.getN1CcCalculated() != null ? score.getN1CcCalculated() : score.getN1Thi()),
-                    formatScore(score.getNl1()),
-            };
-            tableModel.addRow(rowData);
+
+        for (ScoreDTO score : list) {
+            Vector<Object> row = new Vector<>();
+
+            String cccd = score.getCccd() != null ? score.getCccd().trim() : "";
+
+            BonusScoreDTO bonus = bonusMap.get(cccd);
+
+            row.add(stt++);
+            row.add(cccd);
+            row.add(score.getSobaodanh()); 
+            row.add(score.getPhuongThuc()); 
+
+            row.add(formatScore(score.getToan()));
+            row.add(formatScore(score.getLy()));
+            row.add(formatScore(score.getHoa()));
+            row.add(formatScore(score.getSinh()));
+            row.add(formatScore(score.getSu()));
+            row.add(formatScore(score.getDia()));
+            row.add(formatScore(score.getVan()));
+
+            row.add(formatScore(score.getN1CcCalculated()));
+
+            row.add(formatScore(score.getNl1()));
+
+            row.add(bonus != null ? formatScore(bonus.getDiemTong()) : "-");
+
+            tableModel.addRow(row);
         }
+
+        setScoreColumnWidths();
     }
 
     public ScoreDTO getSelectedScore() {
         int selectedRow = table.getSelectedRow();
-        if (!isShowingBonus && selectedRow >= 0 && scores != null && selectedRow < scores.size()) {
+
+        if (!isShowingBonus && selectedRow >= 0 
+            && scores != null 
+            && selectedRow < scores.size()) {
+
             return scores.get(selectedRow);
         }
+
         return null;
     }
 
@@ -166,8 +183,6 @@ public class ScoreListPanel extends JPanel {
             table.getColumnModel().getColumn(4).setPreferredWidth(150);  // Tổng
         }
     }
-
-    // TIỆN ÍCH HỖ TRỢ
 
     private String formatScore(Double score) {
         if (score == null) {

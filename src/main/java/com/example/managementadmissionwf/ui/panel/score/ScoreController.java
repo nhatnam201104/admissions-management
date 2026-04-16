@@ -43,6 +43,13 @@ public class ScoreController {
         Pageable pageable = PageRequest.of(page, size);
         return bonusScoreService.getAllBonusScores(pageable);
     }
+    public BonusScoreDTO getBonusScoreByCccd(String cccd) {
+        if (cccd == null || cccd.trim().isEmpty()) {
+            throw new RuntimeException("CCCD không hợp lệ");
+        }
+
+        return bonusScoreService.getBonusScoreByCccd(cccd.trim());
+    }
 
     public void saveBonusScore(BonusScoreDTO dto, boolean isUpdate) throws Exception {
         if (isUpdate) {

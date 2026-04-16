@@ -28,47 +28,73 @@ public class BonusScoreServiceImpl implements BonusScoreService {
     @Override
     @Transactional(readOnly = true)
     public BonusScoreDTO getBonusScoreByCccd(String cccd) {
-        return bonusScoreRepository.findByCccd(cccd)
+        if (cccd == null || cccd.trim().isEmpty()) {
+            throw new RuntimeException("CCCD không được để trống");
+        }
+
+        String cleanCccd = cccd.trim();
+
+        return bonusScoreRepository.findByCccd(cleanCccd)
                 .map(bonusScoreMapper::toDto)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy điểm cộng cho CCCD: " + cccd));
+                .orElseThrow(() ->
+                        new RuntimeException("Chưa có điểm cộng cho CCCD: " + cleanCccd));
     }
 
     @Override
     @Transactional
     public BonusScoreDTO createBonusScore(BonusScoreDTO dto) {
+        String cccd = dto.getCccd().trim();
+
+        // ✅ check trước khi save
+        if (bonusScoreRepository.findByCccd(cccd).isPresent()) {
+            throw new RuntimeException("Đã tồn tại điểm cộng cho CCCD: " + cccd);
+        }
+
         try {
             XtDiemcongxettuyen entity = bonusScoreMapper.toEntity(dto);
-            // diemTong sẽ được tự động tính qua @PrePersist/PreUpdate trong Entity nếu bạn đã cấu hình
-            XtDiemcongxettuyen savedEntity = bonusScoreRepository.save(entity);
-            return bonusScoreMapper.toDto(savedEntity);
+            entity.setCccd(cccd);
+
+            // tính tổng
+            double cc = dto.getDiemCc() != null ? dto.getDiemCc() : 0.0;
+            double utxt = dto.getDiemUtxt() != null ? dto.getDiemUtxt() : 0.0;
+            entity.setDiemTong(cc + utxt);
+
+            return bonusScoreMapper.toDto(bonusScoreRepository.save(entity));
+
         } catch (DataIntegrityViolationException e) {
-            throw new RuntimeException("Lỗi: Điểm cộng cho thí sinh có CCCD " + dto.getCccd() + " đã tồn tại.");
+            throw new RuntimeException("Lỗi dữ liệu: " + e.getMostSpecificCause().getMessage());
         }
     }
 
     @Override
     @Transactional
     public BonusScoreDTO updateBonusScore(BonusScoreDTO dto) {
-        XtDiemcongxettuyen existingEntity = bonusScoreRepository.findByCccd(dto.getCccd())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy điểm cộng để cập nhật cho CCCD: " + dto.getCccd()));
-        
-        bonusScoreMapper.updateEntityFromDto(dto, existingEntity);
-        
-        // Tính toán lại tổng điểm trước khi lưu để đảm bảo tính chính xác
-        double diemCc = (existingEntity.getDiemCc() != null) ? existingEntity.getDiemCc() : 0.0;
-        double diemUtxt = (existingEntity.getDiemUtxt() != null) ? existingEntity.getDiemUtxt() : 0.0;
-        existingEntity.setDiemTong(diemCc + diemUtxt);
-        
-        XtDiemcongxettuyen updatedEntity = bonusScoreRepository.save(existingEntity);
-        return bonusScoreMapper.toDto(updatedEntity);
+        String cccd = dto.getCccd().trim();
+
+        XtDiemcongxettuyen entity = bonusScoreRepository.findByCccd(cccd)
+                .orElseThrow(() ->
+                        new RuntimeException("Không tìm thấy điểm cộng cho CCCD: " + cccd));
+
+        bonusScoreMapper.updateEntityFromDto(dto, entity);
+
+        // tính lại tổng
+        double cc = entity.getDiemCc() != null ? entity.getDiemCc() : 0.0;
+        double utxt = entity.getDiemUtxt() != null ? entity.getDiemUtxt() : 0.0;
+        entity.setDiemTong(cc + utxt);
+
+        return bonusScoreMapper.toDto(bonusScoreRepository.save(entity));
     }
 
     @Override
     @Transactional
     public void deleteBonusScore(String cccd) {
-        XtDiemcongxettuyen entity = bonusScoreRepository.findByCccd(cccd)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy điểm cộng để xóa cho CCCD: " + cccd));
-        
-        bonusScoreRepository.delete(entity);
+        String cleanCccd = cccd.trim();
+
+        XtDiemcongxettuyen entity = bonusScoreRepository.findByCccd(cleanCccd)
+                .orElseThrow(() ->
+                        new RuntimeException("Không tìm thấy điểm cộng cho CCCD: " + cleanCccd));
+
+        entity.setIsDeleted(true);
+        bonusScoreRepository.save(entity);
     }
 }

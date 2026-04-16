@@ -3,13 +3,16 @@ package com.example.managementadmissionwf.ui.panel.score;
 import com.example.managementadmissionwf.dto.score.ScoreDTO;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
 import javax.swing.text.NumberFormatter;
 import java.awt.*;
 import java.text.DecimalFormat;
 
-/**
- * Form Dialog for Add/Edit Score
- */
 public class ScoreFormDialog extends JDialog {
     private ScoreDTO score;
     private boolean saved = false;
@@ -48,6 +51,7 @@ public class ScoreFormDialog extends JDialog {
         super(parent, title, true);
         this.score = score;
         initComponents();
+        setupValidation();
         loadScoreData();
         setLocationRelativeTo(parent);
     }
@@ -56,6 +60,18 @@ public class ScoreFormDialog extends JDialog {
         setSize(650, 450);
         setLayout(new BorderLayout());
         
+
+
+        txtSobaodanh = new JTextField();
+        txtSobaodanh.setPreferredSize(new Dimension(200, 30));
+        txtSobaodanh.setEditable(true);
+        
+        txtCccd = new JTextField();
+        txtCccd.setPreferredSize(new Dimension(200, 30));
+        
+        btnSave = new JButton("Lưu");
+        btnSave.setEnabled(false);
+
         // Create tabbed pane
         tabbedPane = new JTabbedPane();
         tabbedPane.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -76,6 +92,31 @@ public class ScoreFormDialog extends JDialog {
         add(buttonPanel, BorderLayout.SOUTH);
     }
     
+    private void setupValidation() {
+        // 1. Validate CCCD: Chỉ số, tối đa 12 ký tự
+        ((AbstractDocument) txtCccd.getDocument()).setDocumentFilter(new DocumentFilter() {
+            @Override
+            public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
+                if (text.matches("\\d*") && (fb.getDocument().getLength() + text.length() - length <= 12)) {
+                    super.replace(fb, offset, length, text, attrs);
+                    checkFormValidity();
+                }
+            }
+        });
+
+        txtSobaodanh.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { checkFormValidity(); }
+            public void removeUpdate(DocumentEvent e) { checkFormValidity(); }
+            public void changedUpdate(DocumentEvent e) { checkFormValidity(); }
+        });
+    }
+
+    private void checkFormValidity() {
+        boolean isCccdValid = txtCccd.getText().length() == 12;
+        boolean isSbdValid = !txtSobaodanh.getText().trim().isEmpty();
+        btnSave.setEnabled(isCccdValid && isSbdValid);
+    }
+
     private JPanel createExamScoresPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -89,7 +130,6 @@ public class ScoreFormDialog extends JDialog {
         gbc.gridx = 0; gbc.gridy = 0;
         panel.add(createLabel("CCCD:"), gbc);
         gbc.gridx = 1;
-        txtCccd = createTextField();
         txtCccd.setEditable(false);
         panel.add(txtCccd, gbc);
         
@@ -97,7 +137,7 @@ public class ScoreFormDialog extends JDialog {
         panel.add(createLabel("SBD:"), gbc);
         gbc.gridx = 3;
         txtSobaodanh = createTextField();
-        txtSobaodanh.setEditable(false);
+        txtSobaodanh.setEditable(true);
         panel.add(txtSobaodanh, gbc);
         
         // Separator
@@ -166,6 +206,7 @@ public class ScoreFormDialog extends JDialog {
         panel.add(createLabel("Phương thức:"), gbc);
         gbc.gridx = 1;
         cboPhuongThuc = createComboBox(new String[]{"THPT", "DGNL", "VSAT"});
+        cboPhuongThuc.setSelectedIndex(0);
         panel.add(cboPhuongThuc, gbc);
         
         // Separator
@@ -281,27 +322,69 @@ public class ScoreFormDialog extends JDialog {
     }
     
     private void loadScoreData() {
-        if (score != null) {
-            txtCccd.setText(score.getCccd());
-            txtSobaodanh.setText(score.getSobaodanh());
-            cboPhuongThuc.setSelectedItem(score.getPhuongThuc());
-            
-            setFieldValue(txtToan, score.getToan());
-            setFieldValue(txtLy, score.getLy());
-            setFieldValue(txtHoa, score.getHoa());
-            setFieldValue(txtSinh, score.getSinh());
-            setFieldValue(txtSu, score.getSu());
-            setFieldValue(txtDia, score.getDia());
-            setFieldValue(txtVan, score.getVan());
-            
-            setFieldValue(txtN1Thi, score.getN1Thi());
-            setFieldValue(txtN1Cc, score.getN1Cc());
-            setFieldValue(txtNl1, score.getNl1());
-            setFieldValue(txtNk1, score.getNk1());
-            setFieldValue(txtNk2, score.getNk2());
+        if (score == null) {
+            txtCccd.setText("");
+            txtSobaodanh.setText("");
+
+            if (cboPhuongThuc.getItemCount() > 0) {
+                cboPhuongThuc.setSelectedIndex(0);
+            }
+
+            resetAllScoreFields();
+            return;
         }
+
+        txtCccd.setText(safeString(score.getCccd()));
+        txtSobaodanh.setText(safeString(score.getSobaodanh()));
+
+        String phuongThuc = score.getPhuongThuc();
+        if (phuongThuc != null && containsItem(cboPhuongThuc, phuongThuc)) {
+            cboPhuongThuc.setSelectedItem(phuongThuc);
+        } else {
+            if (cboPhuongThuc.getItemCount() > 0) {
+                cboPhuongThuc.setSelectedIndex(0);
+            }
+        }
+        setFieldValue(txtToan, score.getToan());
+        setFieldValue(txtLy, score.getLy());
+        setFieldValue(txtHoa, score.getHoa());
+        setFieldValue(txtSinh, score.getSinh());
+        setFieldValue(txtSu, score.getSu());
+        setFieldValue(txtDia, score.getDia());
+        setFieldValue(txtVan, score.getVan());
+
+        setFieldValue(txtN1Thi, score.getN1Thi());
+        setFieldValue(txtN1Cc, score.getN1Cc());
+        setFieldValue(txtNl1, score.getNl1());
+        setFieldValue(txtNk1, score.getNk1());
+        setFieldValue(txtNk2, score.getNk2());
     }
-    
+    private String safeString(String value) {
+        return value != null ? value : "";
+    }
+    private boolean containsItem(JComboBox<String> comboBox, String value) {
+        for (int i = 0; i < comboBox.getItemCount(); i++) {
+            if (comboBox.getItemAt(i).equals(value)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    private void resetAllScoreFields() {
+        setFieldValue(txtToan, null);
+        setFieldValue(txtLy, null);
+        setFieldValue(txtHoa, null);
+        setFieldValue(txtSinh, null);
+        setFieldValue(txtSu, null);
+        setFieldValue(txtDia, null);
+        setFieldValue(txtVan, null);
+
+        setFieldValue(txtN1Thi, null);
+        setFieldValue(txtN1Cc, null);
+        setFieldValue(txtNl1, null);
+        setFieldValue(txtNk1, null);
+        setFieldValue(txtNk2, null);
+    }
     private void setFieldValue(JFormattedTextField field, Double value) {
         if (value != null) {
             try {

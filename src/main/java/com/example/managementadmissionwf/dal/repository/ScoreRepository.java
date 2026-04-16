@@ -19,7 +19,8 @@ public interface ScoreRepository extends JpaRepository<XtDiemthixettuyen, Intege
         @Param("phuongThuc") String phuongThuc, 
         Pageable pageable
     );
-
+    @Query(value = "SELECT * FROM xt_diemthixettuyen WHERE cccd = :cccd LIMIT 1", nativeQuery = true)
+    XtDiemthixettuyen findByCccdIncludeDeleted(@Param("cccd") String cccd);
     Optional<XtDiemthixettuyen> findByCccd(String cccd);
 
     boolean existsByCccd(String cccd);

@@ -13,6 +13,8 @@ import org.springframework.stereotype.Component;
 import javax.swing.*;
 import java.awt.*;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 @Component
@@ -32,7 +34,6 @@ public class ScorePanel extends AbstractFeaturePanel {
     @PostConstruct
     private void initComponents() {
         listPanel = new ScoreListPanel();
-        // Không gọi loadData() trực tiếp ở đây để tránh HeadlessException trong Test
         buildUI();
     }
 
@@ -56,7 +57,6 @@ public class ScorePanel extends AbstractFeaturePanel {
             case EDIT -> handleEdit();
             case DELETE -> handleDelete();
             case REFRESH -> {
-                // Fix lỗi: Reset toàn bộ state về mặc định
                 getSearchField().setText(""); 
                 if (cboPhuongThuc != null) {
                     cboPhuongThuc.setSelectedIndex(0); 
@@ -75,7 +75,6 @@ public class ScorePanel extends AbstractFeaturePanel {
     protected void createFilterFields(JPanel filterPanel) {
         filterPanel.add(UIFactory.createFilterLabel("Phương thức:"));
         cboPhuongThuc = UIFactory.createFilterCombo(new String[]{"Tất cả", "THPT", "DGNL", "VSAT"}, 100);
-        // Lắng nghe sự kiện đổi combo để tự reload
         cboPhuongThuc.addActionListener(e -> {
             super.currentPage = 1;
             loadData();
@@ -85,23 +84,34 @@ public class ScorePanel extends AbstractFeaturePanel {
 
     @Override
     protected void loadData() {
-        // Kiểm tra headless để tránh lỗi khi chạy Test context
         if (GraphicsEnvironment.isHeadless()) return;
 
         try {
             String keyword = getSearchField().getText().trim();
             String phuongThuc = (String) cboPhuongThuc.getSelectedItem();
-            
-            // Xử lý trang cho API (0-based)
-            int apiPage = Math.max(0, super.currentPage - 1); 
-            
+
+            int apiPage = Math.max(0, super.currentPage - 1);
+
             Page<ScoreDTO> page = controller.getScores(keyword, phuongThuc, apiPage, PAGE_SIZE);
-            
+
             if (page != null) {
-                listPanel.loadData(page.getContent());
-                // Cập nhật UI phân trang (1-based)
-                super.updatePaginationDirect(apiPage + 1, page.getTotalPages(), page.getTotalElements());
+
+                Map<String, BonusScoreDTO> bonusMap = new HashMap<>();
+
+                Page<BonusScoreDTO> bonusPage = controller.getBonusScores(0, 1000); 
+
+                for (BonusScoreDTO b : bonusPage.getContent()) {
+                    bonusMap.put(b.getCccd().trim(), b);
+                }
+                listPanel.loadData(page.getContent(), bonusMap);
+
+                super.updatePaginationDirect(
+                    apiPage + 1,
+                    page.getTotalPages(),
+                    page.getTotalElements()
+                );
             }
+
         } catch (Exception e) {
             e.printStackTrace();
             showError("Lỗi nạp dữ liệu: " + e.getMessage());
@@ -119,19 +129,48 @@ public class ScorePanel extends AbstractFeaturePanel {
             return;
         }
 
-        BonusScoreDTO bonus = new BonusScoreDTO();
-        bonus.setCccd(selected.getCccd()); 
-        
+        String cccd = selected.getCccd() != null ? selected.getCccd().trim() : null;
+
+        if (cccd == null || cccd.isEmpty()) {
+            showError("CCCD không hợp lệ!");
+            return;
+        }
+
+        BonusScoreDTO bonus;
+        boolean isUpdate = true;
+
+        try {
+            bonus = controller.getBonusScoreByCccd(cccd);
+        } catch (Exception e) {
+            bonus = new BonusScoreDTO();
+            bonus.setCccd(cccd);
+            isUpdate = false;
+        }
+
         BonusScoreFormDialog dialog = new BonusScoreFormDialog(
-            (Frame) SwingUtilities.getWindowAncestor(this), 
-            "Quản lý Điểm Cộng", 
-            bonus 
+            (Frame) SwingUtilities.getWindowAncestor(this),
+            "Quản lý Điểm Cộng",
+            bonus
         );
+
         dialog.setVisible(true);
 
         if (dialog.isSaved()) {
-            loadData();
-            showInfo("Cập nhật điểm cộng thành công!");
+            try {
+                BonusScoreDTO result = dialog.getBonusScore();
+
+                result.setCccd(result.getCccd().trim());
+
+                controller.saveBonusScore(result, isUpdate);
+                loadData();
+
+                showInfo(isUpdate 
+                    ? "Cập nhật điểm cộng thành công!" 
+                    : "Thêm điểm cộng thành công!");
+
+            } catch (Exception e) {
+                showError(e.getMessage());
+            }
         }
     }
 
@@ -139,10 +178,21 @@ public class ScorePanel extends AbstractFeaturePanel {
         String cccd = inputCCCD();
         if (cccd == null || cccd.trim().isEmpty()) return;
 
-        ScoreDTO score = new ScoreDTO();
-        score.setCccd(cccd.trim());
+        cccd = cccd.trim();
 
-        ScoreFormDialog dialog = new ScoreFormDialog((Frame) SwingUtilities.getWindowAncestor(this), "Thêm Điểm Thi", score);
+        if (!cccd.matches("\\d{12}")) {
+            showError("CCCD phải gồm đúng 12 chữ số!");
+            return;
+        }
+
+        ScoreDTO score = new ScoreDTO();
+        score.setCccd(cccd);
+
+        ScoreFormDialog dialog = new ScoreFormDialog(
+            (Frame) SwingUtilities.getWindowAncestor(this),
+            "Thêm Điểm Thi",
+            score
+        );
         dialog.setVisible(true);
 
         if (dialog.isSaved()) {
@@ -197,7 +247,21 @@ public class ScorePanel extends AbstractFeaturePanel {
     }
 
     // --- Utils ---
-    private String inputCCCD() { return JOptionPane.showInputDialog(this, "Nhập CCCD (12 số):"); }
+    private String inputCCCD() {
+        while (true) {
+            String cccd = JOptionPane.showInputDialog(this, "Nhập CCCD (12 số):");
+
+            if (cccd == null) return null; // cancel
+
+            cccd = cccd.trim();
+
+            if (cccd.matches("\\d{12}")) {
+                return cccd;
+            }
+
+            showError("CCCD phải gồm đúng 12 chữ số!");
+        }
+    }
     
     private void showInfo(String msg) { 
         if (!GraphicsEnvironment.isHeadless())

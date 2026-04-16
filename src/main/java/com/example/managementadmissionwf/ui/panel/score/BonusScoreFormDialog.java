@@ -4,6 +4,10 @@ import com.example.managementadmissionwf.dto.score.BonusScoreDTO;
 import com.example.managementadmissionwf.dto.score.ScoreDTO;
 
 import javax.swing.*;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
 import javax.swing.text.NumberFormatter;
 import java.awt.*;
 import java.text.DecimalFormat;
@@ -26,8 +30,16 @@ public class BonusScoreFormDialog extends JDialog {
         initComponents();
         loadBonusData();
         setLocationRelativeTo(parent);
+        ((AbstractDocument) txtCccd.getDocument()).setDocumentFilter(new DocumentFilter() {
+            @Override
+            public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
+                // Chỉ cho phép nhập số và tổng độ dài không quá 12
+                if (text.matches("\\d*") && (fb.getDocument().getLength() + text.length() - length <= 12)) {
+                    super.replace(fb, offset, length, text, attrs);
+                }
+            }
+        });
     }
-
     private void initComponents() {
         setSize(450, 380);
         setLayout(new BorderLayout());
