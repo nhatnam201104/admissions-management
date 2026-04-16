@@ -68,10 +68,6 @@ public class ScoreFormDialog extends JDialog {
         JPanel tab2 = createOtherScoresPanel();
         tabbedPane.addTab("Ngoại ngữ & Khác", tab2);
         
-        // Tab 3: Điểm cộng ưu tiên
-        JPanel tab3 = createBonusScoresPanel();
-        tabbedPane.addTab("Điểm cộng ưu tiên", tab3);
-        
         // Add tabbed pane
         add(tabbedPane, BorderLayout.CENTER);
         
@@ -369,10 +365,25 @@ public class ScoreFormDialog extends JDialog {
     }
     
     private boolean validateForm() {
-        if (txtCccd.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "CCCD không được để trống", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        String cccd = txtCccd.getText().trim();
+        if (cccd.isEmpty() || !cccd.matches("^\\d{12}$")) {
+            JOptionPane.showMessageDialog(this, "CCCD phải bao gồm đúng 12 chữ số!", "Lỗi xác thực", JOptionPane.ERROR_MESSAGE);
+            txtCccd.requestFocus();
             return false;
         }
+
+        if (txtSobaodanh.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Số báo danh không được để trống!", "Lỗi xác thực", JOptionPane.ERROR_MESSAGE);
+            txtSobaodanh.requestFocus();
+            return false;
+        }
+        double toan = getDoubleValue(txtToan);
+        double ly = getDoubleValue(txtLy);
+        if (toan > 10.0 || ly > 10.0 /* || thêm các môn khác */) {
+            JOptionPane.showMessageDialog(this, "Điểm thi THPT không được vượt quá 10!", "Lỗi xác thực", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
         return true;
     }
     
@@ -404,7 +415,6 @@ public class ScoreFormDialog extends JDialog {
         formatter.setValueClass(Double.class);
         formatter.setAllowsInvalid(false);
         formatter.setMinimum(0.0);
-        formatter.setMaximum(10.0);
         
         JFormattedTextField field = new JFormattedTextField(formatter);
         field.setPreferredSize(new Dimension(150, 30));

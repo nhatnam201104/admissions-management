@@ -1,6 +1,7 @@
 package com.example.managementadmissionwf.ui.panel.score;
 
 import com.example.managementadmissionwf.dto.score.BonusScoreDTO;
+import com.example.managementadmissionwf.dto.score.ScoreDTO;
 
 import javax.swing.*;
 import javax.swing.text.NumberFormatter;
@@ -95,12 +96,30 @@ public class BonusScoreFormDialog extends JDialog {
         }
     }
 
+    private boolean validateForm() {
+        String cccd = txtCccd.getText().trim();
+        if (cccd.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Không xác định được CCCD!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        
+        // Formatter đã chặn số âm, ta có thể chặn ngưỡng tối đa hợp lý nếu cần
+        double cc = getDoubleValue(txtDiemCc);
+        double utxt = getDoubleValue(txtDiemUtxt);
+        if (cc > 10.0 || utxt > 10.0) { // Tùy quy chế tuyển sinh của trường
+            JOptionPane.showMessageDialog(this, "Điểm cộng có vẻ không hợp lý (quá cao)!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            // Có thể return false nếu muốn chặn cứng
+        }
+        return true;
+    }
+
     private void saveData() {
+        if (!validateForm()) return;
+
         try {
             if (bonusScore == null) {
                 bonusScore = new BonusScoreDTO();
             }
-
             bonusScore.setCccd(txtCccd.getText());
             bonusScore.setDiemCc(getDoubleValue(txtDiemCc));
             bonusScore.setDiemUtxt(getDoubleValue(txtDiemUtxt));
@@ -140,7 +159,6 @@ public class BonusScoreFormDialog extends JDialog {
         NumberFormatter formatter = new NumberFormatter(format);
         formatter.setValueClass(Double.class);
         formatter.setMinimum(0.0);
-        formatter.setMaximum(10.0);
 
         JFormattedTextField field = new JFormattedTextField(formatter);
         field.setPreferredSize(new Dimension(200, 30));

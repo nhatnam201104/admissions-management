@@ -6,6 +6,7 @@ import com.example.managementadmissionwf.dal.repository.ScoreRepository;
 import com.example.managementadmissionwf.dto.score.ScoreDTO;
 import com.example.managementadmissionwf.mapper.ScoreMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,20 +22,16 @@ public class ScoreServiceImpl implements ScoreService {
     @Override
     @Transactional(readOnly = true)
     public Page<ScoreDTO> getAllScores(Pageable pageable) {
-        // Chỉ lấy những bản ghi chưa bị xóa (isDeleted = false)
         return scoreRepository.findAll(pageable).map(scoreMapper::toDto);
     }
 
-    /**
-     * Phương thức tìm kiếm mới:
-     * Hỗ trợ tìm theo từ khóa (CCCD/SBD) và lọc theo Phương thức xét tuyển.
-     */
     @Override
     @Transactional(readOnly = true)
     public Page<ScoreDTO> searchScores(String keyword, String phuongThuc, Pageable pageable) {
         String searchKey = (keyword == null || keyword.trim().isEmpty()) ? null : "%" + keyword.trim() + "%";
-    
-        return scoreRepository.searchScores(searchKey, phuongThuc, pageable)
+        String filterPhuongThuc = "Tất cả".equals(phuongThuc) ? null : phuongThuc;
+
+        return scoreRepository.searchScores(searchKey, filterPhuongThuc, pageable)
                 .map(scoreMapper::toDto);
     }
 
@@ -49,14 +46,16 @@ public class ScoreServiceImpl implements ScoreService {
     @Override
     @Transactional
     public ScoreDTO createScore(ScoreDTO dto) {
-        if (scoreRepository.existsByCccd(dto.getCccd())) {
-            throw new RuntimeException("Điểm thi cho CCCD này đã tồn tại!");
+        try {
+            XtDiemthixettuyen entity = scoreMapper.toEntity(dto);
+            entity.setIsDeleted(false);
+            
+            XtDiemthixettuyen savedEntity = scoreRepository.save(entity);
+            return scoreMapper.toDto(savedEntity);
+            
+        } catch (DataIntegrityViolationException e) {
+            throw new RuntimeException("Lỗi: Thí sinh có CCCD " + dto.getCccd() + " đã tồn tại.");
         }
-        XtDiemthixettuyen entity = scoreMapper.toEntity(dto);
-        // Đảm bảo bản ghi mới không ở trạng thái đã xóa
-        entity.setIsDeleted(false);
-        XtDiemthixettuyen savedEntity = scoreRepository.save(entity);
-        return scoreMapper.toDto(savedEntity);
     }
 
     @Override
@@ -66,6 +65,7 @@ public class ScoreServiceImpl implements ScoreService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy điểm thi để cập nhật cho CCCD: " + dto.getCccd()));
         
         scoreMapper.updateEntityFromDto(dto, existingEntity);
+        
         XtDiemthixettuyen updatedEntity = scoreRepository.save(existingEntity);
         return scoreMapper.toDto(updatedEntity);
     }
@@ -76,7 +76,6 @@ public class ScoreServiceImpl implements ScoreService {
         XtDiemthixettuyen entity = scoreRepository.findByCccd(cccd)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy điểm thi để xóa cho CCCD: " + cccd));
         
-        // Thực hiện Soft Delete
         entity.setIsDeleted(true); 
         scoreRepository.save(entity);
     }
