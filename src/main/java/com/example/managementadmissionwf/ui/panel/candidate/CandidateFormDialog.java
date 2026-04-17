@@ -1,12 +1,15 @@
 package com.example.managementadmissionwf.ui.panel.candidate;
 
 import com.example.managementadmissionwf.dto.candidate.CandidateDTO;
+import com.example.managementadmissionwf.mapper.CandidateMapper;
 import com.example.managementadmissionwf.ui.util.UIConstants;
 
 import javax.swing.*;
 import java.awt.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Date;
 
 /**
@@ -21,7 +24,7 @@ public class CandidateFormDialog extends JDialog {
     private JTextField txtSobaodanh;
     private JTextField txtHo;
     private JTextField txtTen;
-    private JFormattedTextField txtNgaySinh;
+    private JSpinner spnNgaySinh;
     private JTextField txtDienThoai;
     private JTextField txtEmail;
     private JComboBox<String> cboGioiTinh;
@@ -96,8 +99,8 @@ public class CandidateFormDialog extends JDialog {
         gbc.gridx = 0; gbc.gridy = 2;
         panel.add(createLabel("Ngày sinh:"), gbc);
         gbc.gridx = 1;
-        txtNgaySinh = createFormattedTextField();
-        panel.add(txtNgaySinh, gbc);
+        spnNgaySinh = createDateSpinner();
+        panel.add(spnNgaySinh, gbc);
         
         // Giới tính
         gbc.gridx = 2;
@@ -169,7 +172,7 @@ public class CandidateFormDialog extends JDialog {
             txtTen.setText(candidate.getTen());
             
             if (candidate.getNgaySinh() != null) {
-                txtNgaySinh.setText(sdf.format(candidate.getNgaySinh()));
+            	spnNgaySinh.setValue(CandidateMapper.toDate(candidate.getNgaySinh()));
             }
             
             txtDienThoai.setText(candidate.getDienThoai());
@@ -186,37 +189,26 @@ public class CandidateFormDialog extends JDialog {
             return;
         }
         
-        try {
-            if (candidate == null) {
-                candidate = new CandidateDTO();
-            }
-            
-            candidate.setCccd(txtCccd.getText().trim());
-            candidate.setSobaodanh(txtSobaodanh.getText().trim());
-            candidate.setHo(txtHo.getText().trim());
-            candidate.setTen(txtTen.getText().trim());
-            
-            String ngaySinhStr = txtNgaySinh.getText().trim();
-            if (!ngaySinhStr.isEmpty()) {
-                candidate.setNgaySinh(sdf.parse(ngaySinhStr));
-            }
-            
-            candidate.setDienThoai(txtDienThoai.getText().trim());
-            candidate.setEmail(txtEmail.getText().trim());
-            candidate.setGioiTinh((String) cboGioiTinh.getSelectedItem());
-            candidate.setNoiSinh(txtNoiSinh.getText().trim());
-            candidate.setDoiTuong((String) cboDoiTuong.getSelectedItem());
-            candidate.setKhuVuc((String) cboKhuVuc.getSelectedItem());
-            
-            saved = true;
-            dispose();
-            
-        } catch (ParseException e) {
-            JOptionPane.showMessageDialog(this, 
-                "Định dạng ngày sinh không đúng (dd/MM/yyyy)", 
-                "Lỗi", 
-                JOptionPane.ERROR_MESSAGE);
-        }
+        if (candidate == null) {
+		    candidate = new CandidateDTO();
+		}
+		
+		candidate.setCccd(txtCccd.getText().trim());
+		candidate.setSobaodanh(txtSobaodanh.getText().trim());
+		candidate.setHo(txtHo.getText().trim());
+		candidate.setTen(txtTen.getText().trim());
+		
+		candidate.setNgaySinh(CandidateMapper.toLocalDate((Date) spnNgaySinh.getValue()));
+		
+		candidate.setDienThoai(txtDienThoai.getText().trim());
+		candidate.setEmail(txtEmail.getText().trim());
+		candidate.setGioiTinh((String) cboGioiTinh.getSelectedItem());
+		candidate.setNoiSinh(txtNoiSinh.getText().trim());
+		candidate.setDoiTuong((String) cboDoiTuong.getSelectedItem());
+		candidate.setKhuVuc((String) cboKhuVuc.getSelectedItem());
+		
+		saved = true;
+		dispose();
     }
     
     private boolean validateForm() {
@@ -295,5 +287,15 @@ public class CandidateFormDialog extends JDialog {
         button.setBorderPainted(false);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return button;
+    }
+    
+    private JSpinner createDateSpinner() {
+        SpinnerDateModel model = new SpinnerDateModel();
+        JSpinner spinner = new JSpinner(model);
+        JSpinner.DateEditor editor = new JSpinner.DateEditor(spinner, "dd/MM/yyyy");
+        spinner.setEditor(editor);
+        spinner.setPreferredSize(new Dimension(150, 30));
+        spinner.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        return spinner;
     }
 }

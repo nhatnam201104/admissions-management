@@ -6,7 +6,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
@@ -17,7 +17,7 @@ public class CandidateListPanel extends JPanel {
     private JTable table;
     private DefaultTableModel tableModel;
     private List<CandidateDTO> candidates;
-    private SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     
     public CandidateListPanel() {
         initComponents();
@@ -92,7 +92,7 @@ public class CandidateListPanel extends JPanel {
                 candidate.getCccd(),
                 candidate.getSobaodanh(),
                 candidate.getHoTen(),
-                candidate.getNgaySinh() != null ? sdf.format(candidate.getNgaySinh()) : "",
+                candidate.getNgaySinh() != null ? candidate.getNgaySinh().format(dateFormatter) : "",
                 candidate.getDienThoai(),
                 candidate.getEmail(),
                 candidate.getDoiTuong(),

@@ -5,6 +5,9 @@ import com.example.managementadmissionwf.dto.candidate.CandidateDTO;
 import com.example.managementadmissionwf.dto.common.ImportResult;
 import com.example.managementadmissionwf.dto.common.Paging;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -67,6 +70,12 @@ public class CandidateController {
                 candidateService.createCandidate(newCandidate);
                 candidatePanel.refreshData();
                 JOptionPane.showMessageDialog(candidatePanel, "Thêm thí sinh thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            } catch (ConstraintViolationException cve) {
+                StringBuilder errorMsg = new StringBuilder("Dữ liệu không hợp lệ:\n");
+                for (ConstraintViolation<?> violation : cve.getConstraintViolations()) {
+                    errorMsg.append("- ").append(violation.getMessage()).append("\n");
+                }
+                JOptionPane.showMessageDialog(candidatePanel, errorMsg.toString(), "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(candidatePanel, "Lỗi: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
@@ -96,6 +105,12 @@ public class CandidateController {
                 candidateService.updateCandidate(updatedCandidate);
                 candidatePanel.refreshData();
                 JOptionPane.showMessageDialog(candidatePanel, "Cập nhật thí sinh thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            } catch (ConstraintViolationException cve) {
+                StringBuilder errorMsg = new StringBuilder("Dữ liệu không hợp lệ:\n");
+                for (ConstraintViolation<?> violation : cve.getConstraintViolations()) {
+                    errorMsg.append("- ").append(violation.getMessage()).append("\n");
+                }
+                JOptionPane.showMessageDialog(candidatePanel, errorMsg.toString(), "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(candidatePanel, "Lỗi: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }

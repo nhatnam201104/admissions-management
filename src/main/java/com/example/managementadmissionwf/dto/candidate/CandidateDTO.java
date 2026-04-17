@@ -5,9 +5,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 import com.example.managementadmissionwf.annotation.ExcelColumn;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.Pattern;
 
 /**
  * DTO for Candidate Management
@@ -19,24 +25,33 @@ import com.example.managementadmissionwf.annotation.ExcelColumn;
 @AllArgsConstructor
 public class CandidateDTO {
 	
-	@ExcelColumn(name = "CCCD")
+	@NotBlank(message = "CCCD không được để trống")
+    @Pattern(regexp = "^\\d{12}$", message = "CCCD phải bao gồm đúng 12 chữ số")
+    @ExcelColumn(name = "CCCD")
     private String cccd;
     
+    @NotBlank(message = "Số báo danh không được để trống")
     @ExcelColumn(name = "SBD")
     private String sobaodanh;
     
+    @NotBlank(message = "Họ không được để trống")
     @ExcelColumn(name = "Họ")
     private String ho;
     
+    @NotBlank(message = "Tên không được để trống")
     @ExcelColumn(name = "Tên")
     private String ten;
     
+    @NotNull(message = "Ngày sinh không được để trống")
+    @Past(message = "Ngày sinh phải là một ngày trong quá khứ")
     @ExcelColumn(name = "Ngày Sinh")
-    private Date ngaySinh;
+    private LocalDate ngaySinh;
     
+    @Pattern(regexp = "^(0\\d{9})?$", message = "Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0")
     @ExcelColumn(name = "SĐT")
     private String dienThoai;
     
+    @Email(message = "Email không đúng định dạng")
     @ExcelColumn(name = "Email")
     private String email;
     

@@ -4,6 +4,8 @@ import com.example.managementadmissionwf.dto.candidate.CandidateDTO;
 import com.example.managementadmissionwf.dto.common.ImportResult;
 import com.example.managementadmissionwf.dto.common.Paging;
 
+import jakarta.validation.Valid;
+
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
@@ -16,9 +18,9 @@ public interface CandidateService {
     
     CandidateDTO getCandidateByCccd(String cccd);
     
-    CandidateDTO createCandidate(CandidateDTO dto);
+    CandidateDTO createCandidate(@Valid CandidateDTO dto);
     
-    CandidateDTO updateCandidate(CandidateDTO dto);
+    CandidateDTO updateCandidate(@Valid CandidateDTO dto);
     
     void deleteCandidate(String cccd);
 

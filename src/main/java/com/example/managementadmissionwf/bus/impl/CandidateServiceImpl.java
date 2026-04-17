@@ -8,6 +8,7 @@ import com.example.managementadmissionwf.dto.common.ImportResult;
 import com.example.managementadmissionwf.dto.common.Paging;
 import com.example.managementadmissionwf.mapper.CandidateMapper;
 import com.example.managementadmissionwf.util.ExcelUtil;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -16,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -29,6 +31,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Validated
 public class CandidateServiceImpl implements CandidateService {
     
 	private final CandidateRepository candidateRepository;
@@ -39,8 +42,8 @@ public class CandidateServiceImpl implements CandidateService {
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
         
         String kw = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
-        String kv = (khuVuc != null && !khuVuc.trim().isEmpty()) ? khuVuc.trim() : null;
-        String dt = (doiTuong != null && !doiTuong.trim().isEmpty()) ? doiTuong.trim() : null;
+        String kv = (khuVuc != null && !khuVuc.trim().isEmpty() && !khuVuc.equals("Tất cả")) ? khuVuc.trim() : null;
+        String dt = (doiTuong != null && !doiTuong.trim().isEmpty() && !doiTuong.equals("Tất cả")) ? doiTuong.trim() : null;
 
         Page<XtThisinhxettuyen25> entityPage = candidateRepository.search(kw, kv, dt, pageable);
         List<CandidateDTO> dtoList = candidateMapper.toDTOList(entityPage.getContent());
@@ -65,12 +68,22 @@ public class CandidateServiceImpl implements CandidateService {
     @Override
     @Transactional
     public CandidateDTO createCandidate(CandidateDTO dto) {
-        if (candidateRepository.existsByCccd(dto.getCccd())) {
-            throw new RuntimeException("CCCD đã tồn tại: " + dto.getCccd());
+    	Optional<XtThisinhxettuyen25> existingOpt = candidateRepository.findByCccdIncludingDeleted(dto.getCccd());
+    	XtThisinhxettuyen25 entity;
+    	
+    	if (existingOpt.isPresent()) {
+            entity = existingOpt.get();
+            if (!entity.getIsDeleted()) {
+                throw new RuntimeException("CCCD đã tồn tại: " + dto.getCccd());
+            }
+            
+            candidateMapper.updateEntity(entity, dto);
+            entity.setIsDeleted(false);
+        } else {     
+            entity = candidateMapper.toEntity(dto);
         }
-        
-        XtThisinhxettuyen25 entity = candidateMapper.toEntity(dto);
-        entity.setHoVaTen(dto.getHo() + " " + dto.getTen());
+    	
+    	entity.setHoVaTen(dto.getHo() + " " + dto.getTen());
         entity = candidateRepository.save(entity);
         return candidateMapper.toDTO(entity);
     }
@@ -135,17 +148,18 @@ public class CandidateServiceImpl implements CandidateService {
                         continue;
                     }
 
-                    Optional<XtThisinhxettuyen25> existingOpt = candidateRepository.findByCccd(dto.getCccd());
+                    Optional<XtThisinhxettuyen25> existingOpt = candidateRepository.findByCccdIncludingDeleted(dto.getCccd());
                     XtThisinhxettuyen25 entity;
 
                     if (existingOpt.isPresent()) {
-                        entity = existingOpt.get();
+                        entity = existingOpt.get();  
                         candidateMapper.updateEntity(entity, dto);
+                        entity.setIsDeleted(false); 
                     } else {
                         entity = candidateMapper.toEntity(dto);
                     }
+                    
                     entity.setHoVaTen(dto.getHo() + " " + dto.getTen());
-
                     candidateRepository.save(entity);
                     validData.add(dto);
 

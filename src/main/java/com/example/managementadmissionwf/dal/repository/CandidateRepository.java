@@ -29,9 +29,12 @@ public interface CandidateRepository extends JpaRepository<XtThisinhxettuyen25, 
 
     Optional<XtThisinhxettuyen25> findByCccd(String cccd);
 
+    @Query(value = "SELECT * FROM xt_thisinhxettuyen25 WHERE cccd = :cccd", nativeQuery = true)
+    Optional<XtThisinhxettuyen25> findByCccdIncludingDeleted(@Param("cccd") String cccd);
+    
     boolean existsByCccd(String cccd);
 
     @Modifying
-    @Query("UPDATE XtThisinhxettuyen25 c SET c.isDeleted = true WHERE c.cccd = :cccd")
+    @Query("UPDATE XtThisinhxettuyen25 c SET c.isDeleted = true WHERE c.cccd = :cccd AND c.isDeleted = false")
     void softDeleteByCccd(@Param("cccd") String cccd);
 }

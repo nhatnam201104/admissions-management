@@ -34,13 +34,14 @@ public interface CandidateMapper {
     @Mapping(target = "hoVaTen", ignore = true)
     void updateEntity(@MappingTarget XtThisinhxettuyen25 entity, CandidateDTO dto);
 
-    default LocalDate map(Date date) {
+    static LocalDate toLocalDate(Date date) {
         if (date == null) return null;
         return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
-    default Date map(LocalDate localDate) {
+    static Date toDate(LocalDate localDate) {
         if (localDate == null) return null;
         return Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
+    
 }
