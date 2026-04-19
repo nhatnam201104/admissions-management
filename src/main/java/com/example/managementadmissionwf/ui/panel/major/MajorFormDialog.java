@@ -220,13 +220,21 @@ public class MajorFormDialog extends JDialog {
         dto.setThpt(chkTHPT.isSelected());
         dto.setVsat(chkVSAT.isSelected());
 
-        if (currentDto == null) {
-            controller.addMajor(dto);
-        } else {
-            controller.updateMajor(currentDto.getMaNganh(), dto);
+        try {
+            if (currentDto == null) {
+                controller.addMajor(dto);
+                JOptionPane.showMessageDialog(this, "Thêm mới ngành học: " + dto.getTenNganh() + " thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                controller.updateMajor(currentDto.getMaNganh(), dto);
+                JOptionPane.showMessageDialog(this, "Cập nhật ngành " + dto.getTenNganh() + " thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+            }
+            dispose();                    // ← Chỉ đóng khi THÀNH CÔNG
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Lỗi: " + e.getMessage(),
+                    "Lỗi hệ thống",
+                    JOptionPane.ERROR_MESSAGE);
         }
-
-        dispose(); // Đóng form sau khi bảo Controller xử lý
     }
 
     private JTextField createModernTextField() {

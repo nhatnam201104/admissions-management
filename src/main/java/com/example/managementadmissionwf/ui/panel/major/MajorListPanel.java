@@ -9,8 +9,8 @@ import java.awt.*;
 
 public class MajorListPanel extends JPanel {
 
-    private JTable masterTable, detailTable;
-    private DefaultTableModel masterModel, detailModel;
+    private JTable masterTable;
+    private DefaultTableModel masterModel;
     private final MajorController controller;
 
     public MajorListPanel(MajorController controller) {
@@ -24,33 +24,33 @@ public class MajorListPanel extends JPanel {
         setBackground(new Color(248, 250, 252));
 
         String[] mCols = {"Mã ngành", "Tên ngành", "Chỉ tiêu", "Điểm sàn", "Phương thức"};
-        masterModel = new DefaultTableModel(mCols, 0) { @Override public boolean isCellEditable(int r, int c) { return false; } };
-        masterTable = UIFactory.createStandardTable(masterModel);
-        masterTable.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting() && masterTable.getSelectedRow() != -1) {
-                controller.refreshDetail((String) masterTable.getValueAt(masterTable.getSelectedRow(), 0), detailModel);
+        masterModel = new DefaultTableModel(mCols, 0) {
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
             }
-        });
+        };
 
-        String[] dCols = {"Tổ hợp", "Môn 1", "Môn 2", "Môn 3"};
-        detailModel = new DefaultTableModel(dCols, 0) { @Override public boolean isCellEditable(int r, int c) { return false; } };
-        detailTable = UIFactory.createStandardTable(detailModel);
+        masterTable = UIFactory.createStandardTable(masterModel);
+        // Không còn selection listener vì đã xóa bảng chi tiết
 
-        JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, UIFactory.createStandardScrollPane(masterTable), UIFactory.createStandardScrollPane(detailTable));
-        split.setDividerLocation(340);
-        add(split, BorderLayout.CENTER);
+        add(UIFactory.createStandardScrollPane(masterTable), BorderLayout.CENTER);
     }
 
     public void refreshData() {
         Container p = getParent();
         while (p != null && !(p instanceof AbstractFeaturePanel)) p = p.getParent();
-        if (p instanceof AbstractFeaturePanel) ((AbstractFeaturePanel) p).refreshData();
+        if (p instanceof AbstractFeaturePanel) {
+            ((AbstractFeaturePanel) p).refreshData();
+        }
     }
 
     public void updatePagination(Paging<?> paging) {
         Container p = getParent();
         while (p != null && !(p instanceof AbstractFeaturePanel)) p = p.getParent();
-        if (p instanceof AbstractFeaturePanel) ((AbstractFeaturePanel) p).updatePagination(paging);
+        if (p instanceof AbstractFeaturePanel) {
+            ((AbstractFeaturePanel) p).updatePagination(paging);
+        }
     }
 
     public String getSelectedMaNganh() {
@@ -58,6 +58,7 @@ public class MajorListPanel extends JPanel {
         return (r >= 0) ? (String) masterTable.getValueAt(r, 0) : null;
     }
 
-    public DefaultTableModel getMasterModel() { return masterModel; }
-    public DefaultTableModel getDetailModel() { return detailModel; }
+    public DefaultTableModel getMasterModel() {
+        return masterModel;
+    }
 }

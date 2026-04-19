@@ -29,4 +29,6 @@ public interface MajorService {
     void exportExcel(OutputStream outputStream, String keyword);
 
     ImportResult<MajorDTO> importExcel(InputStream inputStream);
+
+    void refreshAllStatistics();
 }

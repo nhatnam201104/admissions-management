@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -18,11 +19,13 @@ public interface MajorRepository extends JpaRepository<XtNganh, Integer> {
             "LOWER(n.tennganh) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<XtNganh> search(@Param("keyword") String keyword, Pageable pageable);
 
+    Page<XtNganh> findByIsDeletedFalse(Pageable pageable);
+
+    List<XtNganh> findByIsDeletedFalse();
+
     Optional<XtNganh> findByManganhAndIsDeletedFalse(String manganh);
 
-    // dùng cho Import Excel (restore soft-deleted)
-    @Query("SELECT n FROM XtNganh n WHERE n.manganh = :manganh")
-    Optional<XtNganh> findByManganh(@Param("manganh") String manganh);
+    Optional<XtNganh> findByManganh(String manganh);
 
     boolean existsByManganhAndIsDeletedFalse(String manganh);
 

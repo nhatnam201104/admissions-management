@@ -2,7 +2,6 @@ package com.example.managementadmissionwf.ui.panel.major;
 
 import com.example.managementadmissionwf.bus.interfaces.MajorService;
 import com.example.managementadmissionwf.dto.major.MajorDTO;
-import com.example.managementadmissionwf.dto.major.MajorTohopDTO;
 import com.example.managementadmissionwf.dto.common.Paging;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -31,53 +30,17 @@ public class MajorController {
         }
     }
 
-    public void refreshDetail(String maNganh, DefaultTableModel detailModel) {
-        detailModel.setRowCount(0);
-        try {
-            Paging<MajorTohopDTO> paging = majorService.getTohopByMaNganh(maNganh, 1, 100);
-            for (MajorTohopDTO th : paging.getData()) {
-                detailModel.addRow(new Object[]{
-                        th.getMaToHop(),
-                        th.getThMon1() + " (" + th.getHsMon1() + ")",
-                        th.getThMon2() + " (" + th.getHsMon2() + ")",
-                        th.getThMon3() + " (" + th.getHsMon3() + ")"
-                });
-            }
-        } catch (Exception e) {
-            System.err.println("Lỗi tải tổ hợp: " + e.getMessage());
-        }
-    }
-
     public void addMajor(MajorDTO dto) {
-        try {
-            majorService.create(dto);
-            // Thông báo chi tiết
-            JOptionPane.showMessageDialog(view,
-                    "Thêm mới ngành học: " + dto.getTenNganh() + " thành công!",
-                    "Thành công", JOptionPane.INFORMATION_MESSAGE);
-
-            if (view != null) view.refreshData();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(view, "Lỗi khi thêm ngành: " + e.getMessage(), "Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
-        }
+        majorService.create(dto);           // ← để exception lan lên form
+        if (view != null) view.refreshData();
     }
 
     public void updateMajor(String maNganhCu, MajorDTO dto) {
-        try {
-            majorService.update(maNganhCu, dto);
-            // Thông báo chi tiết
-            JOptionPane.showMessageDialog(view,
-                    "Cập nhật thông tin ngành " + dto.getTenNganh() + " thành công!",
-                    "Thành công", JOptionPane.INFORMATION_MESSAGE);
-
-            if (view != null) view.refreshData();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(view, "Lỗi khi cập nhật: " + e.getMessage(), "Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
-        }
+        majorService.update(maNganhCu, dto); // ← để exception lan lên form
+        if (view != null) view.refreshData();
     }
 
-    public void deleteMajor(String maNganh, DefaultTableModel detailModel) {
-        // Hỏi xác nhận trước khi xóa
+    public void deleteMajor(String maNganh) {
         int confirm = JOptionPane.showConfirmDialog(view,
                 "Bạn có chắc chắn muốn xóa ngành học mã [" + maNganh + "] không?\nLưu ý: Thao tác này sẽ đánh dấu xóa ngành trong hệ thống.",
                 "Xác nhận xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
@@ -86,11 +49,7 @@ public class MajorController {
             try {
                 majorService.delete(maNganh);
                 JOptionPane.showMessageDialog(view, "Đã xóa ngành [" + maNganh + "] thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-
-                if (view != null) {
-                    view.refreshData();
-                    detailModel.setRowCount(0); // Clear bảng tổ hợp bên dưới
-                }
+                if (view != null) view.refreshData();
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(view, "Không thể xóa ngành: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
@@ -106,7 +65,6 @@ public class MajorController {
             if (Boolean.TRUE.equals(m.getTuyenThang())) pt.append("T.Thẳng, ");
             if (Boolean.TRUE.equals(m.getVsat())) pt.append("VSAT, ");
             String ptStr = pt.length() > 0 ? pt.substring(0, pt.length() - 2) : "Chưa có";
-
             model.addRow(new Object[]{ m.getMaNganh(), m.getTenNganh(), m.getChiTieu(), m.getDiemSan(), ptStr });
         }
     }

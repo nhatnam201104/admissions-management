@@ -9,7 +9,6 @@ import com.example.managementadmissionwf.ui.util.ToolbarAction;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import javax.swing.*;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -58,7 +57,8 @@ public class MajorPanel extends AbstractFeaturePanel {
 
     @Override
     protected Set<ToolbarAction> getToolbarActions() {
-        return EnumSet.of(ToolbarAction.ADD, ToolbarAction.EDIT, ToolbarAction.DELETE, ToolbarAction.REFRESH, ToolbarAction.EXPORT_EXCEL, ToolbarAction.IMPORT_EXCEL);
+        return EnumSet.of(ToolbarAction.ADD, ToolbarAction.EDIT, ToolbarAction.DELETE,
+                ToolbarAction.REFRESH, ToolbarAction.EXPORT_EXCEL, ToolbarAction.IMPORT_EXCEL);
     }
 
     @Override
@@ -94,7 +94,7 @@ public class MajorPanel extends AbstractFeaturePanel {
     private void deleteSelectedMajor() {
         String maNganh = listPanel.getSelectedMaNganh();
         if (maNganh != null) {
-            controller.deleteMajor(maNganh, listPanel.getDetailModel());
+            controller.deleteMajor(maNganh);   // ← đã sửa, không truyền detailModel nữa
         }
     }
 

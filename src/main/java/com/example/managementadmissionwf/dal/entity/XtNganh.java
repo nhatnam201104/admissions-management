@@ -3,7 +3,6 @@ package com.example.managementadmissionwf.dal.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
 
@@ -19,7 +18,6 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@SQLRestriction("is_deleted = false")
 public class XtNganh {
     
     @Id
