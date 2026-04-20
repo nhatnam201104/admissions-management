@@ -1,6 +1,8 @@
 package com.example.managementadmissionwf.dal.repository;
 
 import com.example.managementadmissionwf.dal.entity.XtDiemthixettuyen;
+import com.example.managementadmissionwf.dal.entity.XtThisinhxettuyen25;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,5 +25,15 @@ public interface ScoreRepository extends JpaRepository<XtDiemthixettuyen, Intege
     XtDiemthixettuyen findByCccdIncludeDeleted(@Param("cccd") String cccd);
     Optional<XtDiemthixettuyen> findByCccd(String cccd);
 
+
+    @Query(value = """
+        SELECT * 
+        FROM xt_thisinhxettuyen25 
+        WHERE cccd = :cccd AND is_deleted = false 
+        LIMIT 1
+    """, nativeQuery = true)
+    XtThisinhxettuyen25 findCandidateByCccd(@Param("cccd") String cccd);
+    
     boolean existsByCccd(String cccd);
+    boolean existsByCccdAndIsDeletedFalse(String cccd);
 }

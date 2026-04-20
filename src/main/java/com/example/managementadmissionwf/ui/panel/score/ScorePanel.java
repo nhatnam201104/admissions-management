@@ -1,5 +1,6 @@
 package com.example.managementadmissionwf.ui.panel.score;
 
+import com.example.managementadmissionwf.dal.entity.XtThisinhxettuyen25;
 import com.example.managementadmissionwf.dto.score.BonusScoreDTO;
 import com.example.managementadmissionwf.dto.score.ScoreDTO;
 import com.example.managementadmissionwf.ui.util.ToolbarAction;
@@ -185,8 +186,33 @@ public class ScorePanel extends AbstractFeaturePanel {
             return;
         }
 
+        try {
+            if (!controller.existsCandidateByCccd(cccd)) {
+                showError("CCCD không tồn tại trong hệ thống thí sinh!");
+                return;
+            }
+
+            if (controller.existsScoreByCccd(cccd)) {
+                showWarning("Thí sinh này đã có điểm! Vui lòng dùng chức năng sửa.");
+                return;
+            }
+
+        } catch (Exception e) {
+            showError("Lỗi kiểm tra CCCD: " + e.getMessage());
+            return;
+        }
+        
+        XtThisinhxettuyen25 candidate = controller.getCandidateByCccd(cccd);
+
+        if (candidate == null) {
+            showError("Không tìm thấy thí sinh!");
+            return;
+        }
+
         ScoreDTO score = new ScoreDTO();
         score.setCccd(cccd);
+
+        score.setSobaodanh(candidate.getSobaodanh());
 
         ScoreFormDialog dialog = new ScoreFormDialog(
             (Frame) SwingUtilities.getWindowAncestor(this),

@@ -2,6 +2,8 @@ package com.example.managementadmissionwf.bus.impl;
 
 import com.example.managementadmissionwf.bus.interfaces.ScoreService;
 import com.example.managementadmissionwf.dal.entity.XtDiemthixettuyen;
+import com.example.managementadmissionwf.dal.entity.XtThisinhxettuyen25;
+import com.example.managementadmissionwf.dal.repository.CandidateRepository;
 import com.example.managementadmissionwf.dal.repository.ScoreRepository;
 import com.example.managementadmissionwf.dto.score.ScoreDTO;
 import com.example.managementadmissionwf.mapper.ScoreMapper;
@@ -20,7 +22,7 @@ public class ScoreServiceImpl implements ScoreService {
 
     private final ScoreRepository scoreRepository;
     private final ScoreMapper scoreMapper;
-
+    private final CandidateRepository candidateRepository;
     // ================= GET =================
     @Override
     @Transactional(readOnly = true)
@@ -55,18 +57,35 @@ public class ScoreServiceImpl implements ScoreService {
                         new RuntimeException("Không tìm thấy thí sinh với CCCD: " + cleanCccd));
     }
 
+    @Override
+    public boolean existsCandidateByCccd(String cccd) {
+        return candidateRepository.existsByCccd(cccd.trim());
+    }
+
+    @Override
+    public XtThisinhxettuyen25 getCandidateByCccd(String cccd) {
+        return scoreRepository.findCandidateByCccd(cccd.trim());
+    }
     // ================= CREATE =================
     @Override
     @Transactional
     public ScoreDTO createScore(ScoreDTO dto) {
         String cccd = normalizeCccd(dto.getCccd());
         dto.setCccd(cccd);
+
+        if (!candidateRepository.existsByCccd(cccd)) {
+            throw new RuntimeException("CCCD không tồn tại trong hệ thống thí sinh!");
+        }
+
+        if (scoreRepository.existsByCccdAndIsDeletedFalse(cccd)) {
+            throw new RuntimeException("Thí sinh này đã có điểm!");
+        }
+
         XtDiemthixettuyen existing = scoreRepository.findByCccdIncludeDeleted(cccd);
 
         if (existing != null) {
             existing.setIsDeleted(false);
             scoreMapper.updateEntityFromDto(dto, existing);
-
             return scoreMapper.toDto(scoreRepository.save(existing));
         }
 
@@ -74,6 +93,11 @@ public class ScoreServiceImpl implements ScoreService {
         entity.setIsDeleted(false);
 
         return scoreMapper.toDto(scoreRepository.save(entity));
+    }
+
+    @Override
+    public boolean existsByCccd(String cccd) {
+        return scoreRepository.existsByCccdAndIsDeletedFalse(cccd);
     }
 
     // ================= UPDATE =================

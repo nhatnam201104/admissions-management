@@ -1,17 +1,10 @@
 package com.example.managementadmissionwf.ui.panel.score;
 
 import com.example.managementadmissionwf.dto.score.BonusScoreDTO;
-import com.example.managementadmissionwf.dto.score.ScoreDTO;
-
 import javax.swing.*;
-import javax.swing.text.AbstractDocument;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.DocumentFilter;
 import javax.swing.text.NumberFormatter;
 import java.awt.*;
 import java.text.DecimalFormat;
-
 public class BonusScoreFormDialog extends JDialog {
     private BonusScoreDTO bonusScore;
     private boolean saved = false;
@@ -30,16 +23,8 @@ public class BonusScoreFormDialog extends JDialog {
         initComponents();
         loadBonusData();
         setLocationRelativeTo(parent);
-        ((AbstractDocument) txtCccd.getDocument()).setDocumentFilter(new DocumentFilter() {
-            @Override
-            public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
-                // Chỉ cho phép nhập số và tổng độ dài không quá 12
-                if (text.matches("\\d*") && (fb.getDocument().getLength() + text.length() - length <= 12)) {
-                    super.replace(fb, offset, length, text, attrs);
-                }
-            }
-        });
     }
+
     private void initComponents() {
         setSize(450, 380);
         setLayout(new BorderLayout());
@@ -52,6 +37,7 @@ public class BonusScoreFormDialog extends JDialog {
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
+        // CCCD
         gbc.gridx = 0; gbc.gridy = 0;
         mainPanel.add(createLabel("CCCD:"), gbc);
         gbc.gridx = 1;
@@ -61,18 +47,23 @@ public class BonusScoreFormDialog extends JDialog {
         txtCccd.setFont(new Font("Segoe UI", Font.BOLD, 14));
         mainPanel.add(txtCccd, gbc);
 
+        // Điểm CC
         gbc.gridx = 0; gbc.gridy = 1;
         mainPanel.add(createLabel("Điểm CC:"), gbc);
         gbc.gridx = 1;
         txtDiemCc = createFormattedTextField();
+        addPlaceholder(txtDiemCc, "Nhập điểm...");
         mainPanel.add(txtDiemCc, gbc);
 
+        // Điểm UTXT
         gbc.gridx = 0; gbc.gridy = 2;
         mainPanel.add(createLabel("Điểm UTXT:"), gbc);
         gbc.gridx = 1;
         txtDiemUtxt = createFormattedTextField();
+        addPlaceholder(txtDiemUtxt, "Nhập điểm...");
         mainPanel.add(txtDiemUtxt, gbc);
 
+        // Tổng điểm
         gbc.gridx = 0; gbc.gridy = 3;
         mainPanel.add(createLabel("Tổng điểm cộng:"), gbc);
         gbc.gridx = 1;
@@ -82,7 +73,6 @@ public class BonusScoreFormDialog extends JDialog {
         mainPanel.add(txtDiemTong, gbc);
 
         add(mainPanel, BorderLayout.CENTER);
-
         add(createButtonPanel(), BorderLayout.SOUTH);
 
         addCalculationListeners();
@@ -90,9 +80,11 @@ public class BonusScoreFormDialog extends JDialog {
 
     private void addCalculationListeners() {
         java.beans.PropertyChangeListener calcAction = e -> {
-            double cc = getDoubleValue(txtDiemCc);
-            double utxt = getDoubleValue(txtDiemUtxt);
-            txtDiemTong.setValue(cc + utxt);
+            Double cc = getDoubleValue(txtDiemCc);
+            Double utxt = getDoubleValue(txtDiemUtxt);
+
+            double total = (cc != null ? cc : 0.0) + (utxt != null ? utxt : 0.0);
+            txtDiemTong.setValue(total);
         };
 
         txtDiemCc.addPropertyChangeListener("value", calcAction);
@@ -114,14 +106,16 @@ public class BonusScoreFormDialog extends JDialog {
             JOptionPane.showMessageDialog(this, "Không xác định được CCCD!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             return false;
         }
-        
-        // Formatter đã chặn số âm, ta có thể chặn ngưỡng tối đa hợp lý nếu cần
-        double cc = getDoubleValue(txtDiemCc);
-        double utxt = getDoubleValue(txtDiemUtxt);
-        if (cc > 10.0 || utxt > 10.0) { // Tùy quy chế tuyển sinh của trường
-            JOptionPane.showMessageDialog(this, "Điểm cộng có vẻ không hợp lý (quá cao)!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-            // Có thể return false nếu muốn chặn cứng
+
+        Double cc = getDoubleValue(txtDiemCc);
+        Double utxt = getDoubleValue(txtDiemUtxt);
+
+        if ((cc != null && cc > 10.0) || (utxt != null && utxt > 10.0)) {
+            JOptionPane.showMessageDialog(this,
+                    "Điểm cộng có vẻ không hợp lý (quá cao)!",
+                    "Cảnh báo", JOptionPane.WARNING_MESSAGE);
         }
+
         return true;
     }
 
@@ -132,6 +126,7 @@ public class BonusScoreFormDialog extends JDialog {
             if (bonusScore == null) {
                 bonusScore = new BonusScoreDTO();
             }
+
             bonusScore.setCccd(txtCccd.getText());
             bonusScore.setDiemCc(getDoubleValue(txtDiemCc));
             bonusScore.setDiemUtxt(getDoubleValue(txtDiemUtxt));
@@ -140,10 +135,11 @@ public class BonusScoreFormDialog extends JDialog {
             saved = true;
             dispose();
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi lưu dữ liệu: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    "Lỗi lưu dữ liệu: " + e.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
-
 
     private JPanel createButtonPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 15));
@@ -169,14 +165,41 @@ public class BonusScoreFormDialog extends JDialog {
     private JFormattedTextField createFormattedTextField() {
         DecimalFormat format = new DecimalFormat("#0.0#");
         NumberFormatter formatter = new NumberFormatter(format);
+
         formatter.setValueClass(Double.class);
         formatter.setMinimum(0.0);
+        formatter.setAllowsInvalid(true);
 
         JFormattedTextField field = new JFormattedTextField(formatter);
         field.setPreferredSize(new Dimension(200, 30));
         field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        field.setValue(0.0);
+
+        field.setValue(null); 
+
         return field;
+    }
+
+    private void addPlaceholder(JFormattedTextField field, String placeholder) {
+        field.setForeground(Color.GRAY);
+        field.setText(placeholder);
+
+        field.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent e) {
+                if (field.getText().equals(placeholder)) {
+                    field.setText("");
+                    field.setForeground(Color.BLACK);
+                }
+            }
+
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (field.getText().trim().isEmpty()) {
+                    field.setText(placeholder);
+                    field.setForeground(Color.GRAY);
+                }
+            }
+        });
     }
 
     private JButton createButton(String text, Color bgColor) {
@@ -192,14 +215,29 @@ public class BonusScoreFormDialog extends JDialog {
     }
 
     private void setFieldValue(JFormattedTextField field, Double value) {
-        if (value != null) field.setValue(value);
+        if (value != null) {
+            field.setValue(value);
+        } else {
+            field.setValue(null);
+            field.setText("");
+        }
     }
 
-    private double getDoubleValue(JFormattedTextField field) {
-        Object value = field.getValue();
-        return (value instanceof Number) ? ((Number) value).doubleValue() : 0.0;
+    private Double getDoubleValue(JFormattedTextField field) {
+        try {
+            String text = field.getText().trim();
+            if (text.isEmpty() || text.equals("Nhập điểm...")) return null;
+            return Double.parseDouble(text);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
-    public BonusScoreDTO getBonusScore() { return bonusScore; }
-    public boolean isSaved() { return saved; }
+    public BonusScoreDTO getBonusScore() {
+        return bonusScore;
+    }
+
+    public boolean isSaved() {
+        return saved;
+    }
 }

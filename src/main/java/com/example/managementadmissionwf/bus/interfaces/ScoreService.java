@@ -1,5 +1,6 @@
 package com.example.managementadmissionwf.bus.interfaces;
 
+import com.example.managementadmissionwf.dal.entity.XtThisinhxettuyen25;
 import com.example.managementadmissionwf.dto.score.ScoreDTO;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -20,4 +21,8 @@ public interface ScoreService {
     ScoreDTO updateScore(@Valid ScoreDTO dto);
     
     void deleteScore(@NotBlank(message = "CCCD không được để trống") String cccd);
+
+    boolean existsByCccd(String cccd);
+    boolean existsCandidateByCccd(String cccd);
+    XtThisinhxettuyen25 getCandidateByCccd(String cccd);
 }

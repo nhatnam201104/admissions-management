@@ -2,6 +2,7 @@ package com.example.managementadmissionwf.ui.panel.score;
 
 import com.example.managementadmissionwf.bus.interfaces.BonusScoreService;
 import com.example.managementadmissionwf.bus.interfaces.ScoreService;
+import com.example.managementadmissionwf.dal.entity.XtThisinhxettuyen25;
 import com.example.managementadmissionwf.dto.score.BonusScoreDTO;
 import com.example.managementadmissionwf.dto.score.ScoreDTO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,7 @@ public class ScoreController {
     @Autowired
     private BonusScoreService bonusScoreService;
 
-    // QUẢN LÝ ĐIỂM THI
+    // ================= SCORE =================
     public Page<ScoreDTO> getScores(String keyword, String phuongThuc, int page, int size) {
         String pt = "Tất cả".equals(phuongThuc) ? null : phuongThuc;
         Pageable pageable = PageRequest.of(page, size);
@@ -38,7 +39,19 @@ public class ScoreController {
         scoreService.deleteScore(cccd);
     }
 
-    // QUẢN LÝ ĐIỂM ƯU TIÊN
+    public boolean existsScoreByCccd(String cccd) {
+        return scoreService.existsByCccd(cccd);
+    }
+
+    public boolean existsCandidateByCccd(String cccd) {
+        return scoreService.existsCandidateByCccd(cccd);
+    }
+
+    public XtThisinhxettuyen25 getCandidateByCccd(String cccd) {
+        return scoreService.getCandidateByCccd(cccd);
+    }
+
+    // ================= BONUS =================
     public Page<BonusScoreDTO> getBonusScores(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         return bonusScoreService.getAllBonusScores(pageable);
@@ -47,7 +60,6 @@ public class ScoreController {
         if (cccd == null || cccd.trim().isEmpty()) {
             throw new RuntimeException("CCCD không hợp lệ");
         }
-
         return bonusScoreService.getBonusScoreByCccd(cccd.trim());
     }
 
