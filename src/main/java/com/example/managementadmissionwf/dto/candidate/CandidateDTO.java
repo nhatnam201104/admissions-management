@@ -35,10 +35,12 @@ public class CandidateDTO {
     private String sobaodanh;
     
     @NotBlank(message = "Họ không được để trống")
+    @Pattern(regexp = "^[\\p{L}\\s]+$", message = "Họ không được chứa số hoặc ký tự đặc biệt")
     @ExcelColumn(name = "Họ")
     private String ho;
     
     @NotBlank(message = "Tên không được để trống")
+    @Pattern(regexp = "^[\\p{L}\\s]+$", message = "Tên không được chứa số hoặc ký tự đặc biệt")
     @ExcelColumn(name = "Tên")
     private String ten;
     

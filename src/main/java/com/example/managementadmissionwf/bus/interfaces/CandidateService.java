@@ -27,4 +27,6 @@ public interface CandidateService {
     void exportExcel(OutputStream outputStream, String keyword);
 
     ImportResult<CandidateDTO> importExcel(InputStream inputStream);
+    
+    boolean existsByCccdIncludingDeleted(String cccd);
 }

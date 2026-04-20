@@ -45,7 +45,7 @@ public class XtThisinhxettuyen25 {
     @Column(name = "dien_thoai", length = 15)
     String dienThoai; // phone
     
-    @Column(nullable = false, length = 100)
+    @Column(name = "email",length = 100)
     String email; // email
     
     @Column(name = "gioi_tinh", length = 10)

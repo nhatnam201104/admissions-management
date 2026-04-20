@@ -68,15 +68,61 @@ public class CandidateServiceImpl implements CandidateService {
     @Override
     @Transactional
     public CandidateDTO createCandidate(CandidateDTO dto) {
+    	if (dto.getEmail() != null && dto.getEmail().trim().isEmpty()) {
+            dto.setEmail(null);
+        }
+        if (dto.getDienThoai() != null && dto.getDienThoai().trim().isEmpty()) {
+            dto.setDienThoai(null);
+        }
+    	
+        Optional<XtThisinhxettuyen25> sbdCheck = candidateRepository.findBySobaodanhIncludingDeleted(dto.getSobaodanh());
+        if (sbdCheck.isPresent()) {
+            XtThisinhxettuyen25 duplicateEntity = sbdCheck.get();
+            if (!duplicateEntity.getCccd().equals(dto.getCccd())) { 
+                if (duplicateEntity.getIsDeleted()) {
+                    throw new RuntimeException("Số báo danh này thuộc về một thí sinh đã bị xóa. Vui lòng sử dụng SBD khác!");
+                } else {
+                    throw new RuntimeException("Số báo danh này đã được sử dụng cho một thí sinh khác!");
+                }
+            }
+        }
+        
+        if (dto.getEmail() != null) {
+            Optional<XtThisinhxettuyen25> emailCheck = candidateRepository.findByEmailIncludingDeleted(dto.getEmail());
+            if (emailCheck.isPresent()) {
+                XtThisinhxettuyen25 dup = emailCheck.get();
+                if (!dup.getCccd().equals(dto.getCccd())) {
+                    if (dup.getIsDeleted() != null && dup.getIsDeleted()) {
+                        throw new RuntimeException("Địa chỉ Email này thuộc về một thí sinh đã bị xóa!");
+                    } else {
+                        throw new RuntimeException("Địa chỉ Email này đã được đăng ký cho người khác!");
+                    }
+                }
+            }
+        }
+
+        if (dto.getDienThoai() != null) {
+            Optional<XtThisinhxettuyen25> phoneCheck = candidateRepository.findByDienThoaiIncludingDeleted(dto.getDienThoai());
+            if (phoneCheck.isPresent()) {
+                XtThisinhxettuyen25 dup = phoneCheck.get();
+                if (!dup.getCccd().equals(dto.getCccd())) {
+                    if (dup.getIsDeleted() != null && dup.getIsDeleted()) {
+                        throw new RuntimeException("Số điện thoại này thuộc về một thí sinh đã bị xóa!");
+                    } else {
+                        throw new RuntimeException("Số điện thoại này đã tồn tại trong hệ thống!");
+                    }
+                }
+            }
+        }
     	Optional<XtThisinhxettuyen25> existingOpt = candidateRepository.findByCccdIncludingDeleted(dto.getCccd());
     	XtThisinhxettuyen25 entity;
     	
     	if (existingOpt.isPresent()) {
             entity = existingOpt.get();
-            if (!entity.getIsDeleted()) {
-                throw new RuntimeException("CCCD đã tồn tại: " + dto.getCccd());
+            if (entity.getIsDeleted() == null || entity.getIsDeleted() == false) {
+                throw new RuntimeException("CCCD này đã tồn tại trong hệ thống: " + dto.getCccd());
             }
-            
+            candidateRepository.restoreSoftDeleteByCccd(entity.getCccd());
             candidateMapper.updateEntity(entity, dto);
             entity.setIsDeleted(false);
         } else {     
@@ -91,10 +137,56 @@ public class CandidateServiceImpl implements CandidateService {
     @Override
     @Transactional
     public CandidateDTO updateCandidate(CandidateDTO dto) {
+        if (dto.getEmail() != null && dto.getEmail().trim().isEmpty()) {
+            dto.setEmail(null);
+        }
+        if (dto.getDienThoai() != null && dto.getDienThoai().trim().isEmpty()) {
+            dto.setDienThoai(null);
+        }
+
         XtThisinhxettuyen25 entity = candidateRepository.findByCccd(dto.getCccd())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thí sinh với CCCD: " + dto.getCccd()));
+          
+        if (dto.getSobaodanh() != null && !dto.getSobaodanh().equals(entity.getSobaodanh())) {
+            Optional<XtThisinhxettuyen25> sbdCheck = candidateRepository.findBySobaodanhIncludingDeleted(dto.getSobaodanh());
+            if (sbdCheck.isPresent()) {
+                XtThisinhxettuyen25 duplicateEntity = sbdCheck.get();
+                if (duplicateEntity.getIsDeleted()) {
+                    throw new RuntimeException("Số báo danh này thuộc về một thí sinh đã bị xóa. Vui lòng sử dụng SBD khác!");
+                } else {
+                    throw new RuntimeException("Số báo danh này đã được sử dụng cho một thí sinh khác!");
+                }
+            }
+        }
         
+        if (dto.getEmail() != null && !dto.getEmail().equals(entity.getEmail())) {
+            Optional<XtThisinhxettuyen25> emailCheck = candidateRepository.findByEmailIncludingDeleted(dto.getEmail());
+            if (emailCheck.isPresent()) {
+                XtThisinhxettuyen25 dup = emailCheck.get();
+                if (dup.getIsDeleted() != null && dup.getIsDeleted()) {
+                    throw new RuntimeException("Địa chỉ Email này thuộc về một thí sinh đã bị xóa!");
+                } else {
+                    throw new RuntimeException("Địa chỉ Email này đã được đăng ký cho người khác!");
+                }
+            }
+        }
+        
+        if (dto.getDienThoai() != null && !dto.getDienThoai().equals(entity.getDienThoai())) {
+            Optional<XtThisinhxettuyen25> phoneCheck = candidateRepository.findByDienThoaiIncludingDeleted(dto.getDienThoai());
+            if (phoneCheck.isPresent()) {
+                XtThisinhxettuyen25 dup = phoneCheck.get();
+                if (dup.getIsDeleted() != null && dup.getIsDeleted()) {
+                    throw new RuntimeException("Số điện thoại này thuộc về một thí sinh đã bị xóa!");
+                } else {
+                    throw new RuntimeException("Số điện thoại này đã tồn tại trong hệ thống!");
+                }
+            }
+        }
+
         candidateMapper.updateEntity(entity, dto);
+        
+        entity.setEmail(dto.getEmail());
+        entity.setDienThoai(dto.getDienThoai());
         entity.setHoVaTen(dto.getHo() + " " + dto.getTen());
         
         entity = candidateRepository.save(entity);
@@ -123,7 +215,8 @@ public class CandidateServiceImpl implements CandidateService {
             throw new RuntimeException("Lỗi khi xuất file Excel: " + e.getMessage());
         }
     }
-
+    
+    @Transactional
     @Override
     public ImportResult<CandidateDTO> importExcel(InputStream inputStream) {
         ImportResult<CandidateDTO> result = new ImportResult<>();
@@ -132,39 +225,19 @@ public class CandidateServiceImpl implements CandidateService {
 
         try {
             List<CandidateDTO> importedData = ExcelUtil.importExcel(inputStream, CandidateDTO.class);
-            result.setTotalRows(importedData.size());
-
             int rowIndex = 2;
             for (CandidateDTO dto : importedData) {
                 try {
                     if (dto.getCccd() == null || dto.getCccd().trim().isEmpty()) {
-                        errors.add("Dòng " + rowIndex + ": CCCD không được để trống");
-                        rowIndex++;
-                        continue;
-                    }
-                    if (dto.getHo() == null || dto.getTen() == null) {
-                        errors.add("Dòng " + rowIndex + ": Họ và tên không được để trống");
-                        rowIndex++;
-                        continue;
+                        errors.add("Dòng " + rowIndex + ": CCCD trống");
+                        rowIndex++; continue;
                     }
 
-                    Optional<XtThisinhxettuyen25> existingOpt = candidateRepository.findByCccdIncludingDeleted(dto.getCccd());
-                    XtThisinhxettuyen25 entity;
-
-                    if (existingOpt.isPresent()) {
-                        entity = existingOpt.get();  
-                        candidateMapper.updateEntity(entity, dto);
-                        entity.setIsDeleted(false); 
-                    } else {
-                        entity = candidateMapper.toEntity(dto);
-                    }
-                    
-                    entity.setHoVaTen(dto.getHo() + " " + dto.getTen());
-                    candidateRepository.save(entity);
+                    this.createCandidate(dto);
                     validData.add(dto);
 
                 } catch (Exception e) {
-                    errors.add("Dòng " + rowIndex + ": Lỗi xử lý - " + e.getMessage());
+                    errors.add("Dòng " + rowIndex + ": " + e.getMessage());
                 }
                 rowIndex++;
             }
@@ -173,12 +246,18 @@ public class CandidateServiceImpl implements CandidateService {
             result.setErrorCount(errors.size());
             result.setErrors(errors);
             result.setValidData(validData);
-
+            result.setTotalRows(importedData.size());
+            
         } catch (Exception e) {
             log.error("Error importing excel", e);
             throw new RuntimeException("Lỗi khi đọc file Excel: " + e.getMessage());
         }
 
         return result;
+    }
+    
+    @Override
+    public boolean existsByCccdIncludingDeleted(String cccd) {
+        return candidateRepository.findByCccdIncludingDeleted(cccd).isPresent();
     }
 }

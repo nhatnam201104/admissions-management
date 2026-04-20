@@ -19,7 +19,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.List;
 
 /**
  * Controller for Candidate Management
@@ -62,22 +61,48 @@ public class CandidateController {
             "Thêm Thí Sinh Mới",
             null
         );
-        dialog.setVisible(true);
         
-        if (dialog.isSaved()) {
+        while (true) {
+            dialog.setVisible(true); 
+            
+            if (!dialog.isSaved()) {
+                dialog.dispose();
+                break; 
+            }
+            
             try {
                 CandidateDTO newCandidate = dialog.getCandidate();
-                candidateService.createCandidate(newCandidate);
+                
+                if (candidateService.existsByCccdIncludingDeleted(newCandidate.getCccd())) {
+                    JOptionPane.showMessageDialog(candidatePanel, 
+                        "CCCD này đã tồn tại trong hệ thống (có thể đã bị xóa trước đó).\nVui lòng sử dụng CCCD khác!", 
+                        "Cảnh báo trùng lặp", JOptionPane.WARNING_MESSAGE);
+                    dialog.setSaved(false);
+                    continue;
+                }
+                
+                candidateService.createCandidate(newCandidate); 
+                
+                dialog.dispose(); 
                 candidatePanel.refreshData();
                 JOptionPane.showMessageDialog(candidatePanel, "Thêm thí sinh thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                break; 
+                
             } catch (ConstraintViolationException cve) {
                 StringBuilder errorMsg = new StringBuilder("Dữ liệu không hợp lệ:\n");
                 for (ConstraintViolation<?> violation : cve.getConstraintViolations()) {
                     errorMsg.append("- ").append(violation.getMessage()).append("\n");
                 }
                 JOptionPane.showMessageDialog(candidatePanel, errorMsg.toString(), "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
+                dialog.setSaved(false); 
+                
+            } catch (RuntimeException re) {
+                JOptionPane.showMessageDialog(candidatePanel, re.getMessage(), "Cảnh báo trùng lặp", JOptionPane.WARNING_MESSAGE);
+                dialog.setSaved(false);
+                
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(candidatePanel, "Lỗi: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(candidatePanel, "Lỗi: " + e.getMessage(), "Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
+                dialog.setSaved(false);
             }
         }
     }
@@ -97,22 +122,39 @@ public class CandidateController {
             "Sửa Thông Tin Thí Sinh",
             selected
         );
-        dialog.setVisible(true);
         
-        if (dialog.isSaved()) {
+        while (true) {
+            dialog.setVisible(true);
+            
+            if (!dialog.isSaved()) {
+                dialog.dispose(); 
+                break;
+            }
+            
             try {
-                CandidateDTO updatedCandidate = dialog.getCandidate();
+                CandidateDTO updatedCandidate = dialog.getCandidate();      
                 candidateService.updateCandidate(updatedCandidate);
+                
+                dialog.dispose();
                 candidatePanel.refreshData();
                 JOptionPane.showMessageDialog(candidatePanel, "Cập nhật thí sinh thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                break; 
+                
             } catch (ConstraintViolationException cve) {
                 StringBuilder errorMsg = new StringBuilder("Dữ liệu không hợp lệ:\n");
                 for (ConstraintViolation<?> violation : cve.getConstraintViolations()) {
                     errorMsg.append("- ").append(violation.getMessage()).append("\n");
                 }
                 JOptionPane.showMessageDialog(candidatePanel, errorMsg.toString(), "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
+                dialog.setSaved(false); 
+                
+            } catch (RuntimeException re) {
+                JOptionPane.showMessageDialog(candidatePanel, re.getMessage(), "Cảnh báo trùng lặp", JOptionPane.WARNING_MESSAGE);
+                dialog.setSaved(false);
+                
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(candidatePanel, "Lỗi: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(candidatePanel, "Lỗi: " + e.getMessage(), "Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
+                dialog.setSaved(false);
             }
         }
     }

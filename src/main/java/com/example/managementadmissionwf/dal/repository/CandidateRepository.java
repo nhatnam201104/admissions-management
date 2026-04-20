@@ -2,6 +2,8 @@ package com.example.managementadmissionwf.dal.repository;
 
 import com.example.managementadmissionwf.dal.entity.XtThisinhxettuyen25;
 
+import jakarta.transaction.Transactional;
+
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -10,7 +12,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -34,7 +35,25 @@ public interface CandidateRepository extends JpaRepository<XtThisinhxettuyen25, 
     
     boolean existsByCccd(String cccd);
 
+    @Transactional
     @Modifying
     @Query("UPDATE XtThisinhxettuyen25 c SET c.isDeleted = true WHERE c.cccd = :cccd AND c.isDeleted = false")
     void softDeleteByCccd(@Param("cccd") String cccd);
+    
+    @Transactional
+    @Modifying
+    @Query(value = "UPDATE xt_thisinhxettuyen25 SET is_deleted = false WHERE cccd = :cccd", nativeQuery = true)
+    void restoreSoftDeleteByCccd(@Param("cccd") String cccd);
+    
+    @Query(value = "SELECT * FROM xt_thisinhxettuyen25 WHERE sobaodanh = :sobaodanh LIMIT 1", nativeQuery = true)
+    Optional<XtThisinhxettuyen25> findBySobaodanhIncludingDeleted(@Param("sobaodanh") String sobaodanh);
+    
+    @Query(value = "SELECT * FROM xt_thisinhxettuyen25 WHERE email = :email LIMIT 1", nativeQuery = true)
+    Optional<XtThisinhxettuyen25> findByEmailIncludingDeleted(@Param("email") String email);
+
+    @Query(value = "SELECT * FROM xt_thisinhxettuyen25 WHERE dien_thoai = :dienThoai LIMIT 1", nativeQuery = true)
+    Optional<XtThisinhxettuyen25> findByDienThoaiIncludingDeleted(@Param("dienThoai") String dienThoai);
+   
+
+    
 }
