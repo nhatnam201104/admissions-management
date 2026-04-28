@@ -6,433 +6,141 @@ import javax.swing.*;
 import javax.swing.text.NumberFormatter;
 import java.awt.*;
 import java.text.DecimalFormat;
+import java.text.ParseException;
 
-/**
- * Form Dialog for Add/Edit Score
- */
 public class ScoreFormDialog extends JDialog {
+
+    public interface SaveHandler {
+        void save(ScoreDTO score) throws Exception;
+    }
+
     private ScoreDTO score;
     private boolean saved = false;
-    
-    // Form fields
+    private SaveHandler saveHandler;
+
     private JTextField txtCccd;
     private JTextField txtSobaodanh;
     private JComboBox<String> cboPhuongThuc;
-    
-    // Điểm thi chính
-    private JFormattedTextField txtToan;
-    private JFormattedTextField txtLy;
-    private JFormattedTextField txtHoa;
-    private JFormattedTextField txtSinh;
-    private JFormattedTextField txtSu;
-    private JFormattedTextField txtDia;
-    private JFormattedTextField txtVan;
-    
-    // Ngoại ngữ & Bài thi khác
-    private JFormattedTextField txtN1Thi;
-    private JFormattedTextField txtN1Cc;
-    private JFormattedTextField txtNl1;
-    private JFormattedTextField txtNk1;
-    private JFormattedTextField txtNk2;
-    
-    // Điểm cộng
-    private JFormattedTextField txtDiemCc;
-    private JFormattedTextField txtDiemUtxt;
-    private JFormattedTextField txtDiemTong;
-    
-    private JTabbedPane tabbedPane;
-    private JButton btnSave;
-    private JButton btnCancel;
-    
+
+    private JLabel lblErrorCccd;
+    private JLabel lblErrorSbd;
+    private JLabel lblGeneralError;
+
+    private JFormattedTextField txtToan, txtLy, txtHoa, txtSinh, txtSu, txtDia, txtVan;
+    private JFormattedTextField txtN1Thi, txtN1Cc, txtNl1, txtNk1, txtNk2;
+
+    private final java.util.List<JFormattedTextField> numberFields = new java.util.ArrayList<>();
+
+    private JButton btnSave, btnCancel;
+
     public ScoreFormDialog(Frame parent, String title, ScoreDTO score) {
         super(parent, title, true);
         this.score = score;
-        initComponents();
-        loadScoreData();
+
+        initUI();
+        loadData();
+
+        setSize(650, 450);
         setLocationRelativeTo(parent);
     }
-    
-    private void initComponents() {
-        setSize(650, 450);
+
+    // ================= UI =================
+    private void initUI() {
         setLayout(new BorderLayout());
-        
-        // Create tabbed pane
-        tabbedPane = new JTabbedPane();
-        tabbedPane.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        
-        // Tab 1: Điểm thi chính
-        JPanel tab1 = createExamScoresPanel();
-        tabbedPane.addTab("Điểm thi chính", tab1);
-        
-        // Tab 2: Ngoại ngữ & Bài thi khác
-        JPanel tab2 = createOtherScoresPanel();
-        tabbedPane.addTab("Ngoại ngữ & Khác", tab2);
-        
-        // Tab 3: Điểm cộng ưu tiên
-        JPanel tab3 = createBonusScoresPanel();
-        tabbedPane.addTab("Điểm cộng ưu tiên", tab3);
-        
-        // Add tabbed pane
-        add(tabbedPane, BorderLayout.CENTER);
-        
-        // Button panel
-        JPanel buttonPanel = createButtonPanel();
-        add(buttonPanel, BorderLayout.SOUTH);
-    }
-    
-    private JPanel createExamScoresPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        panel.setBackground(Color.WHITE);
-        
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 8, 8, 8);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        
-        // Info fields
-        gbc.gridx = 0; gbc.gridy = 0;
-        panel.add(createLabel("CCCD:"), gbc);
-        gbc.gridx = 1;
-        txtCccd = createTextField();
+
+        txtCccd = new JTextField();
         txtCccd.setEditable(false);
-        panel.add(txtCccd, gbc);
-        
-        gbc.gridx = 2;
-        panel.add(createLabel("SBD:"), gbc);
-        gbc.gridx = 3;
-        txtSobaodanh = createTextField();
+
+        txtSobaodanh = new JTextField();
         txtSobaodanh.setEditable(false);
-        panel.add(txtSobaodanh, gbc);
-        
-        // Separator
-        gbc.gridx = 0; gbc.gridy = 1;
-        gbc.gridwidth = 4;
-        panel.add(createSeparator(), gbc);
-        gbc.gridwidth = 1;
-        
-        // Scores - 3 columns
-        gbc.gridx = 0; gbc.gridy = 2;
-        panel.add(createLabel("Toán (TO):"), gbc);
-        gbc.gridx = 1;
-        txtToan = createFormattedTextField();
-        panel.add(txtToan, gbc);
-        
-        gbc.gridx = 2;
-        panel.add(createLabel("Lý (LI):"), gbc);
-        gbc.gridx = 3;
-        txtLy = createFormattedTextField();
-        panel.add(txtLy, gbc);
-        
-        gbc.gridx = 0; gbc.gridy = 3;
-        panel.add(createLabel("Hóa (HO):"), gbc);
-        gbc.gridx = 1;
-        txtHoa = createFormattedTextField();
-        panel.add(txtHoa, gbc);
-        
-        gbc.gridx = 2;
-        panel.add(createLabel("Sinh (SI):"), gbc);
-        gbc.gridx = 3;
-        txtSinh = createFormattedTextField();
-        panel.add(txtSinh, gbc);
-        
-        gbc.gridx = 0; gbc.gridy = 4;
-        panel.add(createLabel("Sử (SU):"), gbc);
-        gbc.gridx = 1;
-        txtSu = createFormattedTextField();
-        panel.add(txtSu, gbc);
-        
-        gbc.gridx = 2;
-        panel.add(createLabel("Địa (DI):"), gbc);
-        gbc.gridx = 3;
-        txtDia = createFormattedTextField();
-        panel.add(txtDia, gbc);
-        
-        gbc.gridx = 0; gbc.gridy = 5;
-        panel.add(createLabel("Văn (VA):"), gbc);
-        gbc.gridx = 1;
-        txtVan = createFormattedTextField();
-        panel.add(txtVan, gbc);
-        
-        return panel;
+
+        JTabbedPane tab = new JTabbedPane();
+        tab.addTab("Điểm thi chính", createExamPanel());
+        tab.addTab("Ngoại ngữ & Khác", createOtherPanel());
+
+        add(tab, BorderLayout.CENTER);
+        add(createFooterPanel(), BorderLayout.SOUTH);
     }
-    
-    private JPanel createOtherScoresPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        panel.setBackground(Color.WHITE);
-        
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 8, 8, 8);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        
-        // Phương thức
-        gbc.gridx = 0; gbc.gridy = 0;
-        panel.add(createLabel("Phương thức:"), gbc);
-        gbc.gridx = 1;
-        cboPhuongThuc = createComboBox(new String[]{"THPT", "DGNL", "VSAT"});
-        panel.add(cboPhuongThuc, gbc);
-        
-        // Separator
-        gbc.gridx = 0; gbc.gridy = 1;
-        gbc.gridwidth = 2;
-        panel.add(createSeparator(), gbc);
-        gbc.gridwidth = 1;
-        
-        // Ngoại ngữ
-        gbc.gridx = 0; gbc.gridy = 2;
-        panel.add(createLabel("N1_Thị:"), gbc);
-        gbc.gridx = 1;
-        txtN1Thi = createFormattedTextField();
-        panel.add(txtN1Thi, gbc);
-        
-        gbc.gridx = 0; gbc.gridy = 3;
-        panel.add(createLabel("N1_CC:"), gbc);
-        gbc.gridx = 1;
-        txtN1Cc = createFormattedTextField();
-        txtN1Cc.setToolTipText("N1_CC = max(N1_Thị, N1_CC)");
-        panel.add(txtN1Cc, gbc);
-        
-        // Separator
-        gbc.gridx = 0; gbc.gridy = 4;
-        gbc.gridwidth = 2;
-        panel.add(createSeparator(), gbc);
-        gbc.gridwidth = 1;
-        
-        // Bài thi khác
-        gbc.gridx = 0; gbc.gridy = 5;
-        panel.add(createLabel("NL1:"), gbc);
-        gbc.gridx = 1;
-        txtNl1 = createFormattedTextField();
-        panel.add(txtNl1, gbc);
-        
-        gbc.gridx = 0; gbc.gridy = 6;
-        panel.add(createLabel("NK1:"), gbc);
-        gbc.gridx = 1;
-        txtNk1 = createFormattedTextField();
-        panel.add(txtNk1, gbc);
-        
-        gbc.gridx = 0; gbc.gridy = 7;
-        panel.add(createLabel("NK2:"), gbc);
-        gbc.gridx = 1;
-        txtNk2 = createFormattedTextField();
-        panel.add(txtNk2, gbc);
-        
-        return panel;
+
+    private JPanel createExamPanel() {
+        JPanel p = basePanel();
+
+        addRow(p, 0, "CCCD:", txtCccd, "SBD:", txtSobaodanh);
+
+        lblErrorCccd = createErrorLabel();
+        lblErrorSbd = createErrorLabel();
+
+        GridBagConstraints g = new GridBagConstraints();
+        g.insets = new Insets(0, 5, 0, 5);
+        g.gridx = 1; g.gridy = 1; g.gridwidth = 1;
+        p.add(lblErrorCccd, g);
+        g.gridx = 3; g.gridy = 1;
+        p.add(lblErrorSbd, g);
+
+        txtToan = createNumberField();
+        txtLy = createNumberField();
+        txtHoa = createNumberField();
+        txtSinh = createNumberField();
+        txtSu = createNumberField();
+        txtDia = createNumberField();
+        txtVan = createNumberField();
+
+        addRow(p, 2, "Toán:", txtToan, "Lý:", txtLy);
+        addRow(p, 3, "Hóa:", txtHoa, "Sinh:", txtSinh);
+        addRow(p, 4, "Sử:", txtSu, "Địa:", txtDia);
+        addRow(p, 5, "Văn:", txtVan, null, null);
+
+        return p;
     }
-    
-    private JPanel createBonusScoresPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        panel.setBackground(Color.WHITE);
-        
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(15, 8, 15, 8);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        
-        gbc.gridx = 0; gbc.gridy = 0;
-        panel.add(createLabel("Điểm CC:"), gbc);
-        gbc.gridx = 1;
-        txtDiemCc = createFormattedTextField();
-        panel.add(txtDiemCc, gbc);
-        
-        gbc.gridx = 0; gbc.gridy = 1;
-        panel.add(createLabel("Điểm ƯuTXT:"), gbc);
-        gbc.gridx = 1;
-        txtDiemUtxt = createFormattedTextField();
-        panel.add(txtDiemUtxt, gbc);
-        
-        gbc.gridx = 0; gbc.gridy = 2;
-        panel.add(createLabel("Tổng điểm cộng:"), gbc);
-        gbc.gridx = 1;
-        txtDiemTong = createFormattedTextField();
-        txtDiemTong.setEditable(false);
-        txtDiemTong.setBackground(new Color(230, 230, 230));
-        panel.add(txtDiemTong, gbc);
-        
-        // Auto-calculate
-        txtDiemCc.addPropertyChangeListener("value", e -> calculateTotalBonus());
-        txtDiemUtxt.addPropertyChangeListener("value", e -> calculateTotalBonus());
-        
-        return panel;
+
+    private JPanel createOtherPanel() {
+        JPanel p = basePanel();
+
+        cboPhuongThuc = new JComboBox<>(new String[]{"THPT", "DGNL", "VSAT"});
+
+        txtN1Thi = createNumberField();
+        txtN1Cc = createNumberField();
+        txtNl1 = createNumberField();
+        txtNk1 = createNumberField();
+        txtNk2 = createNumberField();
+
+        addRow(p, 0, "Phương thức:", cboPhuongThuc, null, null);
+        addRow(p, 2, "N1 Thi:", txtN1Thi, "N1 CC:", txtN1Cc);
+        addRow(p, 4, "NL1:", txtNl1, "NK1:", txtNk1);
+        addRow(p, 5, "NK2:", txtNk2, null, null);
+
+        return p;
     }
-    
-    private void calculateTotalBonus() {
-        double cc = getDoubleValue(txtDiemCc);
-        double utxt = getDoubleValue(txtDiemUtxt);
-        double total = cc + utxt;
-        
-        try {
-            txtDiemTong.setValue(total);
-        } catch (Exception e) {
-            // Ignore
-        }
+
+    // ================= BUTTON (GIỮ NGUYÊN) =================
+    private JPanel createFooterPanel() {
+        JPanel footer = new JPanel(new BorderLayout());
+        footer.setBackground(new Color(240, 240, 240));
+
+        lblGeneralError = createErrorLabel();
+        lblGeneralError.setBorder(BorderFactory.createEmptyBorder(8, 20, 0, 20));
+
+        footer.add(lblGeneralError, BorderLayout.NORTH);
+        footer.add(createButtonPanel(), BorderLayout.SOUTH);
+        return footer;
     }
-    
-    private double getDoubleValue(JFormattedTextField field) {
-        try {
-            Object value = field.getValue();
-            if (value instanceof Number) {
-                return ((Number) value).doubleValue();
-            }
-            String text = field.getText().trim();
-            if (text.isEmpty()) {
-                return 0.0;
-            }
-            return Double.parseDouble(text);
-        } catch (Exception e) {
-            return 0.0;
-        }
-    }
-    
-    private void loadScoreData() {
-        if (score != null) {
-            txtCccd.setText(score.getCccd());
-            txtSobaodanh.setText(score.getSobaodanh());
-            cboPhuongThuc.setSelectedItem(score.getPhuongThuc());
-            
-            setFieldValue(txtToan, score.getToan());
-            setFieldValue(txtLy, score.getLy());
-            setFieldValue(txtHoa, score.getHoa());
-            setFieldValue(txtSinh, score.getSinh());
-            setFieldValue(txtSu, score.getSu());
-            setFieldValue(txtDia, score.getDia());
-            setFieldValue(txtVan, score.getVan());
-            
-            setFieldValue(txtN1Thi, score.getN1Thi());
-            setFieldValue(txtN1Cc, score.getN1Cc());
-            setFieldValue(txtNl1, score.getNl1());
-            setFieldValue(txtNk1, score.getNk1());
-            setFieldValue(txtNk2, score.getNk2());
-            
-            setFieldValue(txtDiemCc, score.getDiemCc());
-            setFieldValue(txtDiemUtxt, score.getDiemUtxt());
-            setFieldValue(txtDiemTong, score.getDiemTong());
-        }
-    }
-    
-    private void setFieldValue(JFormattedTextField field, Double value) {
-        if (value != null) {
-            try {
-                field.setValue(value);
-            } catch (Exception e) {
-                // Ignore
-            }
-        }
-    }
-    
+
     private JPanel createButtonPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         panel.setBackground(new Color(240, 240, 240));
-        
+
         btnSave = createButton("Lưu", new Color(46, 204, 113));
         btnCancel = createButton("Hủy", new Color(231, 76, 60));
-        
-        btnSave.addActionListener(e -> saveData());
+
+        btnSave.addActionListener(e -> save());
         btnCancel.addActionListener(e -> dispose());
-        
+
         panel.add(btnSave);
         panel.add(btnCancel);
-        
+
         return panel;
     }
-    
-    private void saveData() {
-        if (!validateForm()) {
-            return;
-        }
-        
-        try {
-            if (score == null) {
-                score = new ScoreDTO();
-            }
-            
-            score.setCccd(txtCccd.getText().trim());
-            score.setSobaodanh(txtSobaodanh.getText().trim());
-            score.setPhuongThuc((String) cboPhuongThuc.getSelectedItem());
-            
-            score.setToan(getDoubleValue(txtToan));
-            score.setLy(getDoubleValue(txtLy));
-            score.setHoa(getDoubleValue(txtHoa));
-            score.setSinh(getDoubleValue(txtSinh));
-            score.setSu(getDoubleValue(txtSu));
-            score.setDia(getDoubleValue(txtDia));
-            score.setVan(getDoubleValue(txtVan));
-            
-            score.setN1Thi(getDoubleValue(txtN1Thi));
-            score.setN1Cc(getDoubleValue(txtN1Cc));
-            score.setNl1(getDoubleValue(txtNl1));
-            score.setNk1(getDoubleValue(txtNk1));
-            score.setNk2(getDoubleValue(txtNk2));
-            
-            score.setDiemCc(getDoubleValue(txtDiemCc));
-            score.setDiemUtxt(getDoubleValue(txtDiemUtxt));
-            score.setDiemTong(getDoubleValue(txtDiemTong));
-            
-            saved = true;
-            dispose();
-            
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-    
-    private boolean validateForm() {
-        if (txtCccd.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "CCCD không được để trống", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
-        return true;
-    }
-    
-    public ScoreDTO getScore() {
-        return score;
-    }
-    
-    public boolean isSaved() {
-        return saved;
-    }
-    
-    // Helper methods
-    private JLabel createLabel(String text) {
-        JLabel label = new JLabel(text);
-        label.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        return label;
-    }
-    
-    private JTextField createTextField() {
-        JTextField field = new JTextField();
-        field.setPreferredSize(new Dimension(150, 30));
-        field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        return field;
-    }
-    
-    private JFormattedTextField createFormattedTextField() {
-        DecimalFormat format = new DecimalFormat("#0.0#");
-        NumberFormatter formatter = new NumberFormatter(format);
-        formatter.setValueClass(Double.class);
-        formatter.setAllowsInvalid(false);
-        formatter.setMinimum(0.0);
-        formatter.setMaximum(10.0);
-        
-        JFormattedTextField field = new JFormattedTextField(formatter);
-        field.setPreferredSize(new Dimension(150, 30));
-        field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        field.setValue(0.0);
-        return field;
-    }
-    
-    private JComboBox<String> createComboBox(String[] items) {
-        JComboBox<String> comboBox = new JComboBox<>(items);
-        comboBox.setPreferredSize(new Dimension(150, 30));
-        comboBox.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        return comboBox;
-    }
-    
-    private JSeparator createSeparator() {
-        JSeparator separator = new JSeparator();
-        return separator;
-    }
-    
+
     private JButton createButton(String text, Color bgColor) {
         JButton button = new JButton(text);
         button.setPreferredSize(new Dimension(100, 35));
@@ -444,4 +152,344 @@ public class ScoreFormDialog extends JDialog {
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return button;
     }
+
+    // ================= LOGIC =================
+    private void loadData() {
+        if (score == null) return;
+
+        txtCccd.setText(score.getCccd());
+        txtSobaodanh.setText(score.getSobaodanh());
+
+        cboPhuongThuc.setSelectedItem(score.getPhuongThuc());
+
+        setValue(txtToan, score.getToan());
+        setValue(txtLy, score.getLy());
+        setValue(txtHoa, score.getHoa());
+        setValue(txtSinh, score.getSinh());
+        setValue(txtSu, score.getSu());
+        setValue(txtDia, score.getDia());
+        setValue(txtVan, score.getVan());
+
+        setValue(txtN1Thi, score.getN1Thi());
+        setValue(txtN1Cc, score.getN1Cc());
+        setValue(txtNl1, score.getNl1());
+        setValue(txtNk1, score.getNk1());
+        setValue(txtNk2, score.getNk2());
+    }
+
+    private void save() {
+        if (!validateFormWithScoreFields()) return;
+
+        if (score == null) score = new ScoreDTO();
+
+        applyFormValues();
+
+        if (saveHandler != null) {
+            try {
+                setSaving(true);
+                saveHandler.save(score);
+            } catch (Exception e) {
+                showGeneralError(getErrorMessage(e));
+                SwingUtilities.invokeLater(btnSave::requestFocusInWindow);
+                return;
+            } finally {
+                setSaving(false);
+            }
+        }
+
+        saved = true;
+        dispose();
+    }
+
+    private void applyFormValues() {
+        score.setCccd(txtCccd.getText());
+        score.setSobaodanh(txtSobaodanh.getText());
+        score.setPhuongThuc((String) cboPhuongThuc.getSelectedItem());
+
+        score.setToan(getValue(txtToan));
+        score.setLy(getValue(txtLy));
+        score.setHoa(getValue(txtHoa));
+        score.setSinh(getValue(txtSinh));
+        score.setSu(getValue(txtSu));
+        score.setDia(getValue(txtDia));
+        score.setVan(getValue(txtVan));
+
+        score.setN1Thi(getValue(txtN1Thi));
+        score.setN1Cc(getValue(txtN1Cc));
+        score.setNl1(getValue(txtNl1));
+        score.setNk1(getValue(txtNk1));
+        score.setNk2(getValue(txtNk2));
+    }
+
+    private boolean validateFormWithScoreFields() {
+        clearAllErrors();
+
+        java.util.List<String> errors = new java.util.ArrayList<>();
+        JComponent[] firstInvalidField = new JComponent[1];
+        boolean valid = true;
+
+        if (txtCccd.getText().length() != 12) {
+            String message = "CCCD phải gồm đúng 12 chữ số!";
+            showFieldErrorMessageWithLabel(txtCccd, lblErrorCccd, message);
+            addError(errors, firstInvalidField, txtCccd, message);
+            valid = false;
+        }
+
+        if (txtSobaodanh.getText().isEmpty()) {
+            String message = "Số báo danh không được để trống!";
+            showFieldErrorMessageWithLabel(txtSobaodanh, lblErrorSbd, message);
+            addError(errors, firstInvalidField, txtSobaodanh, message);
+            valid = false;
+        }
+
+        valid &= validateScoreField(txtToan, "Toán", 0, 10, errors, firstInvalidField);
+        valid &= validateScoreField(txtLy, "Lý", 0, 10, errors, firstInvalidField);
+        valid &= validateScoreField(txtHoa, "Hóa", 0, 10, errors, firstInvalidField);
+        valid &= validateScoreField(txtSinh, "Sinh", 0, 10, errors, firstInvalidField);
+        valid &= validateScoreField(txtSu, "Sử", 0, 10, errors, firstInvalidField);
+        valid &= validateScoreField(txtDia, "Địa", 0, 10, errors, firstInvalidField);
+        valid &= validateScoreField(txtVan, "Văn", 0, 10, errors, firstInvalidField);
+        valid &= validateScoreField(txtN1Thi, "N1 Thi", 0, 10, errors, firstInvalidField);
+        valid &= validateScoreField(txtN1Cc, "N1 CC", 0, 10, errors, firstInvalidField);
+        valid &= validateScoreField(txtNl1, "NL1", 0, 1200, errors, firstInvalidField);
+        valid &= validateScoreField(txtNk1, "NK1", 0, 100, errors, firstInvalidField);
+        valid &= validateScoreField(txtNk2, "NK2", 0, 100, errors, firstInvalidField);
+
+        if (!valid && !errors.isEmpty()) {
+            lblGeneralError.setText(errors.size() == 1
+                    ? errors.get(0)
+                    : errors.get(0) + " (" + errors.size() + " lỗi)");
+
+            if (firstInvalidField[0] != null) {
+                SwingUtilities.invokeLater(firstInvalidField[0]::requestFocusInWindow);
+            }
+        }
+
+        return valid;
+    }
+
+    private boolean validateScoreField(JFormattedTextField field, String fieldName, double min, double max,
+                                       java.util.List<String> errors, JComponent[] firstInvalidField) {
+        Double value = parseNumberText(field.getText());
+
+        if (value == null) {
+            String message = fieldName + " phải là số hợp lệ!";
+            showFieldErrorMessage(field, message);
+            addError(errors, firstInvalidField, field, message);
+            return false;
+        }
+
+        if (value < min || value > max) {
+            String message = fieldName + " phải từ " + formatLimit(min) + " đến " + formatLimit(max) + "!";
+            showFieldErrorMessage(field, message);
+            addError(errors, firstInvalidField, field, message);
+            return false;
+        }
+
+        return true;
+    }
+
+    private void addError(java.util.List<String> errors, JComponent[] firstInvalidField,
+                          JComponent field, String message) {
+        errors.add(message);
+        if (firstInvalidField[0] == null) {
+            firstInvalidField[0] = field;
+        }
+    }
+
+    private void showFieldErrorMessageWithLabel(JComponent field, JLabel label, String message) {
+        showFieldErrorMessage(field, message);
+        label.setText(message);
+    }
+
+    private void showFieldErrorMessage(JComponent field, String message) {
+        field.setBorder(BorderFactory.createLineBorder(new Color(231, 76, 60), 2));
+        field.setToolTipText(message);
+    }
+
+    private void showGeneralError(String message) {
+        String text = (message == null || message.trim().isEmpty())
+                ? "Lưu dữ liệu thất bại. Vui lòng kiểm tra lại thông tin!"
+                : message.trim();
+        lblGeneralError.setText(text);
+        lblGeneralError.setToolTipText(text);
+        Toolkit.getDefaultToolkit().beep();
+    }
+
+    private void setSaving(boolean saving) {
+        btnSave.setEnabled(!saving);
+        btnCancel.setEnabled(!saving);
+        btnSave.setText(saving ? "Đang lưu..." : "Lưu");
+    }
+
+    private String getErrorMessage(Exception e) {
+        return e.getMessage() != null ? e.getMessage() : e.toString();
+    }
+
+    private void clearAllErrors() {
+        txtCccd.setBorder(UIManager.getBorder("TextField.border"));
+        txtCccd.setToolTipText(null);
+        txtSobaodanh.setBorder(UIManager.getBorder("TextField.border"));
+        txtSobaodanh.setToolTipText(null);
+
+        for (JFormattedTextField field : numberFields) {
+            field.setBorder(UIManager.getBorder("FormattedTextField.border"));
+            field.setToolTipText(null);
+        }
+
+        lblErrorCccd.setText("");
+        lblErrorSbd.setText("");
+        lblGeneralError.setText("");
+        lblGeneralError.setToolTipText(null);
+    }
+
+    private JLabel createErrorLabel() {
+        JLabel label = new JLabel();
+        label.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        label.setForeground(new Color(231, 76, 60));
+        return label;
+    }
+
+    // ================= HELPER =================
+    private JPanel basePanel() {
+        JPanel p = new JPanel(new GridBagLayout());
+        p.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        return p;
+    }
+
+    private void addRow(JPanel p, int y, String l1, JComponent c1, String l2, JComponent c2) {
+        GridBagConstraints g = new GridBagConstraints();
+        g.insets = new Insets(5,5,5,5);
+        g.fill = GridBagConstraints.HORIZONTAL;
+
+        g.gridx = 0; g.gridy = y;
+        if (l1 != null) p.add(new JLabel(l1), g);
+
+        g.gridx = 1;
+        if (c1 != null) p.add(c1, g);
+
+        if (l2 != null) {
+            g.gridx = 2;
+            p.add(new JLabel(l2), g);
+
+            g.gridx = 3;
+            p.add(c2, g);
+        }
+    }
+
+    private JFormattedTextField createNumberField() {
+        DecimalFormat format = new DecimalFormat("#0.0#");
+        NumberFormatter formatter = new NumberFormatter(format);
+        formatter.setValueClass(Double.class);
+        formatter.setAllowsInvalid(true);
+        formatter.setCommitsOnValidEdit(true);
+
+        JFormattedTextField f = new JFormattedTextField(formatter);
+        f.setColumns(10);
+
+        addPlaceholder(f, "0.0");
+        numberFields.add(f);
+
+        return f;
+    }
+
+    @Override
+    public void dispose() {
+        for (JFormattedTextField f : numberFields) {
+            for (java.awt.event.FocusListener l : f.getFocusListeners()) {
+                f.removeFocusListener(l);
+            }
+        }
+        super.dispose();
+    }
+
+    private void addPlaceholder(JFormattedTextField field, String text) {
+        field.setForeground(Color.GRAY);
+        field.setText(text);
+
+        field.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent e) {
+                if (field.getText().equals(text)) {
+                    field.setText("");
+                    field.setForeground(Color.BLACK);
+                }
+            }
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (field.getText().isEmpty()) {
+                    field.setText(text);
+                    field.setForeground(Color.GRAY);
+                }
+            }
+        });
+    }
+
+    private Double getValue(JFormattedTextField f) {
+        String t = f.getText() == null ? "" : f.getText().trim();
+        if (t.isEmpty()) return 0.0;
+
+        try {
+            f.commitEdit();
+            Object value = f.getValue();
+            if (value instanceof Number number) {
+                return number.doubleValue();
+            }
+        } catch (ParseException ignored) {
+            // Fallback below accepts both "8.5" and "8,5".
+        }
+
+        try {
+            Double value = parseNumberText(t);
+            return value != null ? value : 0.0;
+        } catch (NumberFormatException e) {
+            return 0.0;
+        }
+    }
+
+    private Double parseNumberText(String text) {
+        String t = text == null ? "" : text.trim();
+        if (t.isEmpty()) return 0.0;
+
+        try {
+            return Double.parseDouble(normalizeDecimalText(t));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private String normalizeDecimalText(String text) {
+        String normalized = text.replace(" ", "");
+        int lastComma = normalized.lastIndexOf(',');
+        int lastDot = normalized.lastIndexOf('.');
+
+        if (lastComma >= 0 && lastDot >= 0) {
+            if (lastComma > lastDot) {
+                return normalized.replace(".", "").replace(',', '.');
+            }
+            return normalized.replace(",", "");
+        }
+
+        if (lastComma >= 0) {
+            return normalized.replace(',', '.');
+        }
+
+        return normalized;
+    }
+
+    private String formatLimit(double value) {
+        if (value == Math.rint(value)) {
+            return String.valueOf((long) value);
+        }
+        return String.valueOf(value);
+    }
+
+    private void setValue(JFormattedTextField f, Double v) {
+        if (v != null) {
+            f.setText(String.valueOf(v));
+            f.setForeground(Color.BLACK);
+        }
+    }
+
+    public boolean isSaved() { return saved; }
+    public ScoreDTO getScore() { return score; }
+    public void setSaveHandler(SaveHandler saveHandler) { this.saveHandler = saveHandler; }
 }

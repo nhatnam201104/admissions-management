@@ -11,7 +11,8 @@ public enum ToolbarAction {
     IMPORT_EXCEL("Nhập Excel", "import", new Color(243, 156, 18), 130),
     EXPORT_PDF("Xuất PDF", "picture_as_pdf", new Color(231, 76, 60), 120),
     PRINT("In danh sách", "print", new Color(52, 152, 219), 135),
-    UPDATE("Cập nhật KQ", "refresh", new Color(243, 156, 18), 145);
+    UPDATE("Cập nhật KQ", "refresh", new Color(243, 156, 18), 145), 
+    BONUS_SCORE("Điểm cộng", "stars", new Color(155, 89, 182), 120);
 
     private final String text;
     private final String iconName;

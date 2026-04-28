@@ -40,7 +40,7 @@ public class XtDiemthixettuyen {
     String dPhuongthuc; // phương thức xét tuyển
     
     // Điểm các môn
-    @Column(name = "TOAN")
+    @Column(name = "`TO`")
     Double to; // Toán
     
     @Column(name = "LI")
@@ -82,7 +82,9 @@ public class XtDiemthixettuyen {
     @Builder.Default
     Boolean isDeleted = false;
 
+    @Builder.Default
     LocalDate createdAt = LocalDate.now();
+    @Builder.Default
     LocalDate updatedAt = LocalDate.now();
     
     @PreUpdate

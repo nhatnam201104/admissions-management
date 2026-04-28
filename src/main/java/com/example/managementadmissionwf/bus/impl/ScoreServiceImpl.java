@@ -1,212 +1,306 @@
 package com.example.managementadmissionwf.bus.impl;
 
 import com.example.managementadmissionwf.bus.interfaces.ScoreService;
+import com.example.managementadmissionwf.dal.entity.XtDiemthixettuyen;
+import com.example.managementadmissionwf.dal.entity.XtThisinhxettuyen25;
+import com.example.managementadmissionwf.dal.repository.CandidateRepository;
+import com.example.managementadmissionwf.dal.repository.ScoreRepository;
+import com.example.managementadmissionwf.dto.common.ImportResult;
 import com.example.managementadmissionwf.dto.score.ScoreDTO;
-import org.springframework.stereotype.Service;
+import com.example.managementadmissionwf.mapper.ScoreMapper;
+import com.example.managementadmissionwf.util.ExcelUtil;
+import lombok.RequiredArgsConstructor;
 
+import org.springframework.core.NestedRuntimeException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Set;
 
-/**
- * Service Implementation for Score Management
- * Uses mock data (Java List)
- */
 @Service
+@RequiredArgsConstructor
 public class ScoreServiceImpl implements ScoreService {
-    
-    private final List<ScoreDTO> mockData = new ArrayList<>();
-    
-    public ScoreServiceImpl() {
-        initializeMockData();
-    }
-    
-    private void initializeMockData() {
-        // Mock scores for candidates
-        mockData.add(ScoreDTO.builder()
-                .cccd("001234567890")
-                .sobaodanh("BD001001")
-                .phuongThuc("THPT")
-                .toan(8.5)
-                .ly(7.5)
-                .hoa(8.0)
-                .sinh(null)
-                .su(null)
-                .dia(null)
-                .van(7.0)
-                .n1Thi(6.5)
-                .n1Cc(null)
-                .nl1(null)
-                .nk1(null)
-                .nk2(null)
-                .diemCc(0.0)
-                .diemUtxt(0.0)
-                .diemTong(0.0)
-                .build());
-        
-        mockData.add(ScoreDTO.builder()
-                .cccd("001234567891")
-                .sobaodanh("BD001002")
-                .phuongThuc("THPT")
-                .toan(9.0)
-                .ly(null)
-                .hoa(null)
-                .sinh(8.5)
-                .su(null)
-                .dia(null)
-                .van(8.0)
-                .n1Thi(7.5)
-                .n1Cc(null)
-                .nl1(null)
-                .nk1(null)
-                .nk2(null)
-                .diemCc(0.5)
-                .diemUtxt(0.0)
-                .diemTong(0.5)
-                .build());
-        
-        mockData.add(ScoreDTO.builder()
-                .cccd("001234567892")
-                .sobaodanh("BD001003")
-                .phuongThuc("DGNL")
-                .toan(null)
-                .ly(null)
-                .hoa(null)
-                .sinh(null)
-                .su(null)
-                .dia(null)
-                .van(null)
-                .n1Thi(null)
-                .n1Cc(7.0)
-                .nl1(8.0)
-                .nk1(null)
-                .nk2(null)
-                .diemCc(0.0)
-                .diemUtxt(1.0)
-                .diemTong(1.0)
-                .build());
-        
-        mockData.add(ScoreDTO.builder()
-                .cccd("001234567893")
-                .sobaodanh("BD001004")
-                .phuongThuc("THPT")
-                .toan(7.0)
-                .ly(6.5)
-                .hoa(7.0)
-                .sinh(null)
-                .su(null)
-                .dia(null)
-                .van(6.0)
-                .n1Thi(5.5)
-                .n1Cc(null)
-                .nl1(null)
-                .nk1(null)
-                .nk2(null)
-                .diemCc(0.0)
-                .diemUtxt(2.0)
-                .diemTong(2.0)
-                .build());
-        
-        mockData.add(ScoreDTO.builder()
-                .cccd("001234567894")
-                .sobaodanh("BD001005")
-                .phuongThuc("VSAT")
-                .toan(null)
-                .ly(null)
-                .hoa(null)
-                .sinh(null)
-                .su(null)
-                .dia(null)
-                .van(null)
-                .n1Thi(null)
-                .n1Cc(null)
-                .nl1(null)
-                .nk1(7.5)
-                .nk2(6.5)
-                .diemCc(1.0)
-                .diemUtxt(0.0)
-                .diemTong(1.0)
-                .build());
-    }
-    
+
+    private static final String FILTER_ALL = "Tất cả";
+
+    private static final Set<String> VALID_METHODS = Set.of("THPT", "DGNL", "VSAT");
+
+    private final ScoreRepository scoreRepository;
+    private final ScoreMapper scoreMapper;
+    private final CandidateRepository candidateRepository;
+    // ================= GET =================
     @Override
-    public List<ScoreDTO> getAllScores() {
-        return new ArrayList<>(mockData);
+    @Transactional(readOnly = true)
+    public Page<ScoreDTO> getAllScores(Pageable pageable) {
+        return scoreRepository.findAll(pageable)
+                .map(scoreMapper::toDto);
     }
-    
+
     @Override
+    @Transactional(readOnly = true)
+    public Page<ScoreDTO> searchScores(String keyword, String phuongThuc, Pageable pageable) {
+        String searchKey = (keyword == null || keyword.trim().isEmpty())
+                ? null
+                : "%" + keyword.trim() + "%";
+
+        String filterPhuongThuc = (FILTER_ALL.equals(phuongThuc) || phuongThuc == null)
+                ? null
+                : phuongThuc;
+
+        return scoreRepository.searchScores(searchKey, filterPhuongThuc, pageable)
+                .map(scoreMapper::toDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public ScoreDTO getScoreByCccd(String cccd) {
-        return mockData.stream()
-                .filter(score -> score.getCccd().equals(cccd))
-                .findFirst()
-                .orElse(null);
+        String cleanCccd = normalizeCccd(cccd);
+
+        return scoreRepository.findByCccd(cleanCccd)
+                .map(scoreMapper::toDto)
+                .orElseThrow(() ->
+                        new RuntimeException("Không tìm thấy thí sinh với CCCD: " + cleanCccd));
     }
-    
+
     @Override
+    public boolean existsCandidateByCccd(String cccd) {
+        return candidateRepository.existsByCccd(cccd.trim());
+    }
+
+    @Override
+    public XtThisinhxettuyen25 getCandidateByCccd(String cccd) {
+        return scoreRepository.findCandidateByCccd(cccd.trim());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void exportExcel(OutputStream outputStream, String keyword, String phuongThuc) {
+        try {
+            String searchKey = (keyword == null || keyword.trim().isEmpty())
+                    ? null
+                    : "%" + keyword.trim() + "%";
+            String filterPhuongThuc = (FILTER_ALL.equals(phuongThuc) || phuongThuc == null)
+                    ? null
+                    : phuongThuc;
+
+            List<ScoreDTO> data = scoreRepository
+                    .searchScores(searchKey, filterPhuongThuc, Pageable.unpaged())
+                    .getContent()
+                    .stream()
+                    .map(scoreMapper::toDto)
+                    .toList();
+
+            ExcelUtil.exportExcel(data, ScoreDTO.class, outputStream);
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi xuất file Excel: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public ImportResult<ScoreDTO> importExcel(InputStream inputStream) {
+        ImportResult<ScoreDTO> result = new ImportResult<>();
+        List<String> errors = new ArrayList<>();
+        List<ScoreDTO> validData = new ArrayList<>();
+
+        try {
+            List<ScoreDTO> importedData = ExcelUtil.importExcel(inputStream, ScoreDTO.class);
+            result.setTotalRows(importedData.size());
+
+            int rowIndex = 2;
+            for (ScoreDTO dto : importedData) {
+                try {
+                    prepareImportedScore(dto);
+                    validateImportedScore(dto);
+
+                    if (scoreRepository.existsByCccdAndIsDeletedFalse(dto.getCccd())) {
+                        updateScore(dto);
+                    } else {
+                        createScore(dto);
+                    }
+
+                    validData.add(dto);
+                } catch (Exception e) {
+                    errors.add("Dòng " + rowIndex + ": " + e.getMessage());
+                }
+                rowIndex++;
+            }
+
+            result.setSuccessCount(validData.size());
+            result.setErrorCount(errors.size());
+            result.setErrors(errors);
+            result.setValidData(validData);
+            return result;
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi đọc file Excel: " + e.getMessage(), e);
+        }
+    }
+    // ================= CREATE =================
+    @Override
+    @Transactional
     public ScoreDTO createScore(ScoreDTO dto) {
-        // Check if CCCD already exists
-        if (getScoreByCccd(dto.getCccd()) != null) {
-            throw new IllegalArgumentException("Điểm của thí sinh đã tồn tại: " + dto.getCccd());
+        String cccd = normalizeCccd(dto.getCccd());
+        dto.setCccd(cccd);
+
+        validateRequiredFields(dto);
+
+        if (!candidateRepository.existsByCccd(cccd)) {
+            throw new RuntimeException("CCCD không tồn tại trong hệ thống thí sinh!");
         }
-        mockData.add(dto);
-        return dto;
+
+        if (scoreRepository.existsByCccdAndIsDeletedFalse(cccd)) {
+            throw new RuntimeException("Thí sinh này đã có điểm!");
+        }
+
+        XtDiemthixettuyen existing = scoreRepository.findByCccdIncludeDeleted(cccd);
+
+        if (existing != null) {
+            existing.setIsDeleted(false);
+            scoreMapper.updateEntityFromDto(dto, existing);
+            return scoreMapper.toDto(scoreRepository.save(existing));
+        }
+
+        XtDiemthixettuyen entity = scoreMapper.toEntity(dto);
+        entity.setIsDeleted(false);
+        
+        return scoreMapper.toDto(scoreRepository.save(entity));
     }
-    
+
     @Override
+    public boolean existsByCccd(String cccd) {
+        return scoreRepository.existsByCccdAndIsDeletedFalse(cccd);
+    }
+
+    // ================= UPDATE =================
+    @Override
+    @Transactional
     public ScoreDTO updateScore(ScoreDTO dto) {
-        ScoreDTO existing = getScoreByCccd(dto.getCccd());
-        if (existing == null) {
-            throw new IllegalArgumentException("Không tìm thấy điểm của thí sinh với CCCD: " + dto.getCccd());
+        String cccd = normalizeCccd(dto.getCccd());
+        dto.setCccd(cccd);
+
+        validateRequiredFields(dto);
+
+        XtDiemthixettuyen existing = scoreRepository.findByCccd(cccd)
+                .orElseThrow(() ->
+                        new RuntimeException("Không tìm thấy thí sinh với CCCD: " + cccd));
+
+        try {
+            scoreMapper.updateEntityFromDto(dto, existing);
+            return scoreMapper.toDto(scoreRepository.save(existing));
+
+        } catch (DataIntegrityViolationException e) {
+            throw new RuntimeException("Cập nhật thất bại: " + getRootCause(e));
         }
-        
-        // Update fields
-        existing.setSobaodanh(dto.getSobaodanh());
-        existing.setPhuongThuc(dto.getPhuongThuc());
-        existing.setToan(dto.getToan());
-        existing.setLy(dto.getLy());
-        existing.setHoa(dto.getHoa());
-        existing.setSinh(dto.getSinh());
-        existing.setSu(dto.getSu());
-        existing.setDia(dto.getDia());
-        existing.setVan(dto.getVan());
-        existing.setN1Thi(dto.getN1Thi());
-        existing.setN1Cc(dto.getN1Cc());
-        existing.setNl1(dto.getNl1());
-        existing.setNk1(dto.getNk1());
-        existing.setNk2(dto.getNk2());
-        existing.setDiemCc(dto.getDiemCc());
-        existing.setDiemUtxt(dto.getDiemUtxt());
-        existing.setDiemTong(dto.getDiemTong());
-        
-        return existing;
     }
-    
+
+    // ================= DELETE (SOFT) =================
     @Override
+    @Transactional
     public void deleteScore(String cccd) {
-        mockData.removeIf(score -> score.getCccd().equals(cccd));
+        String cleanCccd = normalizeCccd(cccd);
+
+        XtDiemthixettuyen entity = scoreRepository.findByCccd(cleanCccd)
+                .orElseThrow(() ->
+                        new RuntimeException("Không tìm thấy thí sinh với CCCD: " + cleanCccd));
+
+        entity.setIsDeleted(true);
+        scoreRepository.save(entity);
     }
-    
-    @Override
-    public Double calculateTotalScore(ScoreDTO dto) {
-        // Simple calculation - just sum of all non-null scores
-        double total = 0.0;
-        
-        if (dto.getToan() != null) total += dto.getToan();
-        if (dto.getLy() != null) total += dto.getLy();
-        if (dto.getHoa() != null) total += dto.getHoa();
-        if (dto.getSinh() != null) total += dto.getSinh();
-        if (dto.getSu() != null) total += dto.getSu();
-        if (dto.getDia() != null) total += dto.getDia();
-        if (dto.getVan() != null) total += dto.getVan();
-        if (dto.getN1CcCalculated() != null) total += dto.getN1CcCalculated();
-        if (dto.getNl1() != null) total += dto.getNl1();
-        if (dto.getNk1() != null) total += dto.getNk1();
-        if (dto.getNk2() != null) total += dto.getNk2();
-        
-        // Add bonus points
-        if (dto.getDiemCc() != null) total += dto.getDiemCc();
-        if (dto.getDiemUtxt() != null) total += dto.getDiemUtxt();
-        
-        return total;
+
+    // ================= UTIL =================
+    private String normalizeCccd(String cccd) {
+        if (cccd == null || cccd.trim().isEmpty()) {
+            throw new RuntimeException("CCCD không được để trống");
+        }
+        return cccd.trim();
+    }
+
+    private void validateRequiredFields(ScoreDTO dto) {
+        if (dto.getSobaodanh() == null || dto.getSobaodanh().trim().isEmpty()) {
+            throw new RuntimeException("Số báo danh không được để trống");
+        }
+
+        if (dto.getPhuongThuc() == null || dto.getPhuongThuc().trim().isEmpty()) {
+            throw new RuntimeException("Phương thức không được để trống");
+        }
+    }
+
+    private void prepareImportedScore(ScoreDTO dto) {
+        if (dto.getCccd() != null) {
+            dto.setCccd(dto.getCccd().trim());
+        }
+        if (dto.getSobaodanh() != null) {
+            dto.setSobaodanh(dto.getSobaodanh().trim());
+        }
+        if (dto.getPhuongThuc() != null) {
+            dto.setPhuongThuc(dto.getPhuongThuc().trim().toUpperCase());
+        }
+
+        if (dto.getCccd() != null && (dto.getSobaodanh() == null || dto.getSobaodanh().isBlank())) {
+            XtThisinhxettuyen25 candidate = scoreRepository.findCandidateByCccd(dto.getCccd());
+            if (candidate != null) {
+                dto.setSobaodanh(candidate.getSobaodanh());
+            }
+        }
+
+    }
+
+    private void validateImportedScore(ScoreDTO dto) {
+        String cccd = normalizeCccd(dto.getCccd());
+        dto.setCccd(cccd);
+
+        if (!cccd.matches("\\d{12}")) {
+            throw new RuntimeException("CCCD phải gồm đúng 12 chữ số");
+        }
+        if (!candidateRepository.existsByCccd(cccd)) {
+            throw new RuntimeException("CCCD không tồn tại trong hệ thống thí sinh");
+        }
+
+        validateRequiredFields(dto);
+
+        if (!VALID_METHODS.contains(dto.getPhuongThuc())) {
+            throw new RuntimeException("Phương thức phải là THPT, DGNL hoặc VSAT");
+        }
+
+        validateRange("Toán", dto.getToan(), 0, 10);
+        validateRange("Lý", dto.getLy(), 0, 10);
+        validateRange("Hóa", dto.getHoa(), 0, 10);
+        validateRange("Sinh", dto.getSinh(), 0, 10);
+        validateRange("Sử", dto.getSu(), 0, 10);
+        validateRange("Địa", dto.getDia(), 0, 10);
+        validateRange("Văn", dto.getVan(), 0, 10);
+        validateRange("N1 Thi", dto.getN1Thi(), 0, 10);
+        validateRange("N1 CC", dto.getN1Cc(), 0, 10);
+        validateRange("NL1", dto.getNl1(), 0, 1200);
+        validateRange("NK1", dto.getNk1(), 0, 100);
+        validateRange("NK2", dto.getNk2(), 0, 100);
+    }
+
+    private void validateRange(String fieldName, Double value, double min, double max) {
+        if (value == null) {
+            return;
+        }
+        if (value < min || value > max) {
+            throw new RuntimeException(fieldName + " phải từ " + formatLimit(min) + " đến " + formatLimit(max));
+        }
+    }
+
+    private String formatLimit(double value) {
+        if (value == Math.rint(value)) {
+            return String.valueOf((long) value);
+        }
+        return String.valueOf(value);
+    }
+
+    private String getRootCause(Exception e) {
+        Throwable cause = ((NestedRuntimeException) e).getMostSpecificCause();
+        return (cause != null) ? cause.getMessage() : e.getMessage();
     }
 }
