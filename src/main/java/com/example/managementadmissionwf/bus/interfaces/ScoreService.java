@@ -1,12 +1,16 @@
 package com.example.managementadmissionwf.bus.interfaces;
 
 import com.example.managementadmissionwf.dal.entity.XtThisinhxettuyen25;
+import com.example.managementadmissionwf.dto.common.ImportResult;
 import com.example.managementadmissionwf.dto.score.ScoreDTO;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.validation.annotation.Validated;
+
+import java.io.InputStream;
+import java.io.OutputStream;
 
 @Validated
 public interface ScoreService {
@@ -25,4 +29,8 @@ public interface ScoreService {
     boolean existsByCccd(String cccd);
     boolean existsCandidateByCccd(String cccd);
     XtThisinhxettuyen25 getCandidateByCccd(String cccd);
+
+    void exportExcel(OutputStream outputStream, String keyword, String phuongThuc);
+
+    ImportResult<ScoreDTO> importExcel(InputStream inputStream);
 }

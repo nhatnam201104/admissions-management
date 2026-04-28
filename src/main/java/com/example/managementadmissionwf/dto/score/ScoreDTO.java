@@ -80,6 +80,7 @@ public class ScoreDTO {
     @Min(0) @Max(100) 
     private Double nk1;
     @ExcelColumn(name = "NK2")
+    @Min(0) @Max(100)
     private Double nk2;
     
     public Double getN1CcCalculated() {

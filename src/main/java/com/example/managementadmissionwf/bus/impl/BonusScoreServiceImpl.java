@@ -54,11 +54,6 @@ public class BonusScoreServiceImpl implements BonusScoreService {
             XtDiemcongxettuyen entity = bonusScoreMapper.toEntity(dto);
             entity.setCccd(cccd);
 
-            // tính tổng
-            double cc = dto.getDiemCc() != null ? dto.getDiemCc() : 0.0;
-            double utxt = dto.getDiemUtxt() != null ? dto.getDiemUtxt() : 0.0;
-            entity.setDiemTong(cc + utxt);
-
             return bonusScoreMapper.toDto(bonusScoreRepository.save(entity));
 
         } catch (DataIntegrityViolationException e) {
@@ -76,11 +71,6 @@ public class BonusScoreServiceImpl implements BonusScoreService {
                         new RuntimeException("Không tìm thấy điểm cộng cho CCCD: " + cccd));
 
         bonusScoreMapper.updateEntityFromDto(dto, entity);
-
-        // tính lại tổng
-        double cc = entity.getDiemCc() != null ? entity.getDiemCc() : 0.0;
-        double utxt = entity.getDiemUtxt() != null ? entity.getDiemUtxt() : 0.0;
-        entity.setDiemTong(cc + utxt);
 
         return bonusScoreMapper.toDto(bonusScoreRepository.save(entity));
     }

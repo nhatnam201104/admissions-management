@@ -3,6 +3,7 @@ package com.example.managementadmissionwf.ui.panel.score;
 import com.example.managementadmissionwf.bus.interfaces.BonusScoreService;
 import com.example.managementadmissionwf.bus.interfaces.ScoreService;
 import com.example.managementadmissionwf.dal.entity.XtThisinhxettuyen25;
+import com.example.managementadmissionwf.dto.common.ImportResult;
 import com.example.managementadmissionwf.dto.score.BonusScoreDTO;
 import com.example.managementadmissionwf.dto.score.ScoreDTO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+
+import java.io.InputStream;
+import java.io.OutputStream;
 
 @Component
 public class ScoreController {
@@ -49,6 +53,14 @@ public class ScoreController {
 
     public XtThisinhxettuyen25 getCandidateByCccd(String cccd) {
         return scoreService.getCandidateByCccd(cccd);
+    }
+
+    public void exportScores(OutputStream outputStream, String keyword, String phuongThuc) {
+        scoreService.exportExcel(outputStream, keyword, phuongThuc);
+    }
+
+    public ImportResult<ScoreDTO> importScores(InputStream inputStream) {
+        return scoreService.importExcel(inputStream);
     }
 
     // ================= BONUS =================

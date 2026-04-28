@@ -157,7 +157,7 @@ public class ExcelUtil {
                     if (fieldType == Long.class || fieldType == long.class)
                         return Long.parseLong(strValue);
                     if (fieldType == Double.class || fieldType == double.class)
-                        return Double.parseDouble(strValue);
+                        return Double.parseDouble(normalizeNumberText(strValue));
                     if (fieldType == Boolean.class || fieldType == boolean.class)
                         return Boolean.parseBoolean(strValue);
                     if (fieldType == LocalDate.class)
@@ -212,6 +212,25 @@ public class ExcelUtil {
             // Ignore format issues, return null
         }
         return null;
+    }
+
+    private static String normalizeNumberText(String text) {
+        String normalized = text == null ? "" : text.trim().replace(" ", "");
+        int lastComma = normalized.lastIndexOf(',');
+        int lastDot = normalized.lastIndexOf('.');
+
+        if (lastComma >= 0 && lastDot >= 0) {
+            if (lastComma > lastDot) {
+                return normalized.replace(".", "").replace(',', '.');
+            }
+            return normalized.replace(",", "");
+        }
+
+        if (lastComma >= 0) {
+            return normalized.replace(',', '.');
+        }
+
+        return normalized;
     }
 
     private static void setCellValue(Cell cell, Object value) {

@@ -30,5 +30,6 @@ public class BonusScoreDTO {
     private Double diemUtxt;
 
     @ExcelColumn(name = "Tổng điểm cộng")
+    @Min(value = 0, message = "Tổng điểm cộng không được âm")
     private Double diemTong;
 }

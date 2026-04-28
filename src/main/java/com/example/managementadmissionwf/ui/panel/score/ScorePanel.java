@@ -1,6 +1,7 @@
 package com.example.managementadmissionwf.ui.panel.score;
 
 import com.example.managementadmissionwf.dal.entity.XtThisinhxettuyen25;
+import com.example.managementadmissionwf.dto.common.ImportResult;
 import com.example.managementadmissionwf.dto.score.BonusScoreDTO;
 import com.example.managementadmissionwf.dto.score.ScoreDTO;
 import com.example.managementadmissionwf.ui.util.ToolbarAction;
@@ -12,7 +13,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -65,7 +72,7 @@ public class ScorePanel extends AbstractFeaturePanel {
                 super.currentPage = 1; 
                 loadData();
             }
-            case EXPORT_EXCEL -> showInfo("Chức năng xuất Excel đang thực hiện...");
+            case EXPORT_EXCEL -> handleExportExcel();
             case IMPORT_EXCEL -> handleImportExcel();
             case BONUS_SCORE -> handleBonusScore();
             default -> {}
@@ -119,8 +126,78 @@ public class ScorePanel extends AbstractFeaturePanel {
         }
     }
 
+    private void handleExportExcel() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Chọn vị trí lưu file Excel");
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files (*.xlsx)", "xlsx"));
+        fileChooser.setSelectedFile(new File("Danh_sach_diem_thi.xlsx"));
+
+        int userSelection = fileChooser.showSaveDialog(this);
+        if (userSelection != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        File fileToSave = fileChooser.getSelectedFile();
+        String filePath = fileToSave.getAbsolutePath();
+        if (!filePath.toLowerCase().endsWith(".xlsx")) {
+            filePath += ".xlsx";
+        }
+
+        try (OutputStream os = new FileOutputStream(filePath)) {
+            String keyword = getSearchField().getText().trim();
+            String phuongThuc = (String) cboPhuongThuc.getSelectedItem();
+            controller.exportScores(os, keyword, phuongThuc);
+            showInfo("Đã xuất dữ liệu ra file Excel thành công!\n" + filePath);
+        } catch (Exception e) {
+            showError("Lỗi khi xuất file Excel: " + e.getMessage());
+        }
+    }
+
     private void handleImportExcel() {
-        showInfo("Chức năng Import Excel đang được phát triển...");
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Chọn file Excel để nhập điểm thi");
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files (*.xlsx)", "xlsx"));
+
+        int userSelection = fileChooser.showOpenDialog(this);
+        if (userSelection != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        File fileToOpen = fileChooser.getSelectedFile();
+
+        try (InputStream is = new FileInputStream(fileToOpen)) {
+            ImportResult<ScoreDTO> result = controller.importScores(is);
+
+            StringBuilder msg = new StringBuilder();
+            msg.append("Kết quả nhập dữ liệu:\n");
+            msg.append("- Tổng số dòng: ").append(result.getTotalRows()).append("\n");
+            msg.append("- Thành công: ").append(result.getSuccessCount()).append("\n");
+            msg.append("- Thất bại: ").append(result.getErrorCount()).append("\n");
+
+            if (result.getErrorCount() > 0 && result.getErrors() != null && !result.getErrors().isEmpty()) {
+                msg.append("\nChi tiết lỗi (5 lỗi đầu tiên):\n");
+                int count = 0;
+                for (String error : result.getErrors()) {
+                    msg.append("- ").append(error).append("\n");
+                    if (++count >= 5) {
+                        break;
+                    }
+                }
+            }
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    msg.toString(),
+                    "Kết quả nhập Excel",
+                    result.getErrorCount() > 0 ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE);
+
+            if (result.getSuccessCount() > 0) {
+                super.currentPage = 1;
+                loadData();
+            }
+        } catch (Exception e) {
+            showError("Lỗi khi đọc file Excel: " + e.getMessage());
+        }
     }
 
     private void handleBonusScore() {
@@ -153,25 +230,19 @@ public class ScorePanel extends AbstractFeaturePanel {
             "Quản lý Điểm Cộng",
             bonus
         );
+        boolean finalIsUpdate = isUpdate;
+        dialog.setSaveHandler(result -> {
+            result.setCccd(result.getCccd().trim());
+            controller.saveBonusScore(result, finalIsUpdate);
+        });
 
         dialog.setVisible(true);
 
         if (dialog.isSaved()) {
-            try {
-                BonusScoreDTO result = dialog.getBonusScore();
-
-                result.setCccd(result.getCccd().trim());
-
-                controller.saveBonusScore(result, isUpdate);
-                loadData();
-
-                showInfo(isUpdate 
-                    ? "Cập nhật điểm cộng thành công!" 
-                    : "Thêm điểm cộng thành công!");
-
-            } catch (Exception e) {
-                showError(e.getMessage());
-            }
+            loadData();
+            showInfo(isUpdate 
+                ? "Cập nhật điểm cộng thành công!" 
+                : "Thêm điểm cộng thành công!");
         }
     }
 
@@ -219,16 +290,12 @@ public class ScorePanel extends AbstractFeaturePanel {
             "Thêm Điểm Thi",
             score
         );
+        dialog.setSaveHandler(dto -> controller.saveScore(dto, false));
         dialog.setVisible(true);
 
         if (dialog.isSaved()) {
-            try {
-                controller.saveScore(dialog.getScore(), false);
-                loadData();
-                showInfo("Thêm thành công!");
-            } catch (Exception e) {
-                showError(e.getMessage());
-            }
+            loadData();
+            showInfo("Thêm thành công!");
         }
     }
 
@@ -240,16 +307,12 @@ public class ScorePanel extends AbstractFeaturePanel {
         }
 
         ScoreFormDialog dialog = new ScoreFormDialog((Frame) SwingUtilities.getWindowAncestor(this), "Sửa Điểm Thi", selected);
+        dialog.setSaveHandler(dto -> controller.saveScore(dto, true));
         dialog.setVisible(true);
 
         if (dialog.isSaved()) {
-            try {
-                controller.saveScore(dialog.getScore(), true);
-                loadData();
-                showInfo("Cập nhật thành công!");
-            } catch (Exception e) {
-                showError(e.getMessage());
-            }
+            loadData();
+            showInfo("Cập nhật thành công!");
         }
     }
 

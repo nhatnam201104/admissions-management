@@ -6,18 +6,30 @@ import javax.swing.*;
 import javax.swing.text.NumberFormatter;
 import java.awt.*;
 import java.text.DecimalFormat;
+import java.text.ParseException;
 
 public class ScoreFormDialog extends JDialog {
 
+    public interface SaveHandler {
+        void save(ScoreDTO score) throws Exception;
+    }
+
     private ScoreDTO score;
     private boolean saved = false;
+    private SaveHandler saveHandler;
 
     private JTextField txtCccd;
     private JTextField txtSobaodanh;
     private JComboBox<String> cboPhuongThuc;
 
+    private JLabel lblErrorCccd;
+    private JLabel lblErrorSbd;
+    private JLabel lblGeneralError;
+
     private JFormattedTextField txtToan, txtLy, txtHoa, txtSinh, txtSu, txtDia, txtVan;
     private JFormattedTextField txtN1Thi, txtN1Cc, txtNl1, txtNk1, txtNk2;
+
+    private final java.util.List<JFormattedTextField> numberFields = new java.util.ArrayList<>();
 
     private JButton btnSave, btnCancel;
 
@@ -47,13 +59,23 @@ public class ScoreFormDialog extends JDialog {
         tab.addTab("Ngoại ngữ & Khác", createOtherPanel());
 
         add(tab, BorderLayout.CENTER);
-        add(createButtonPanel(), BorderLayout.SOUTH);
+        add(createFooterPanel(), BorderLayout.SOUTH);
     }
 
     private JPanel createExamPanel() {
         JPanel p = basePanel();
 
         addRow(p, 0, "CCCD:", txtCccd, "SBD:", txtSobaodanh);
+
+        lblErrorCccd = createErrorLabel();
+        lblErrorSbd = createErrorLabel();
+
+        GridBagConstraints g = new GridBagConstraints();
+        g.insets = new Insets(0, 5, 0, 5);
+        g.gridx = 1; g.gridy = 1; g.gridwidth = 1;
+        p.add(lblErrorCccd, g);
+        g.gridx = 3; g.gridy = 1;
+        p.add(lblErrorSbd, g);
 
         txtToan = createNumberField();
         txtLy = createNumberField();
@@ -91,6 +113,18 @@ public class ScoreFormDialog extends JDialog {
     }
 
     // ================= BUTTON (GIỮ NGUYÊN) =================
+    private JPanel createFooterPanel() {
+        JPanel footer = new JPanel(new BorderLayout());
+        footer.setBackground(new Color(240, 240, 240));
+
+        lblGeneralError = createErrorLabel();
+        lblGeneralError.setBorder(BorderFactory.createEmptyBorder(8, 20, 0, 20));
+
+        footer.add(lblGeneralError, BorderLayout.NORTH);
+        footer.add(createButtonPanel(), BorderLayout.SOUTH);
+        return footer;
+    }
+
     private JPanel createButtonPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         panel.setBackground(new Color(240, 240, 240));
@@ -144,10 +178,30 @@ public class ScoreFormDialog extends JDialog {
     }
 
     private void save() {
-        if (!validateForm()) return;
+        if (!validateFormWithScoreFields()) return;
 
         if (score == null) score = new ScoreDTO();
 
+        applyFormValues();
+
+        if (saveHandler != null) {
+            try {
+                setSaving(true);
+                saveHandler.save(score);
+            } catch (Exception e) {
+                showGeneralError(getErrorMessage(e));
+                SwingUtilities.invokeLater(btnSave::requestFocusInWindow);
+                return;
+            } finally {
+                setSaving(false);
+            }
+        }
+
+        saved = true;
+        dispose();
+    }
+
+    private void applyFormValues() {
         score.setCccd(txtCccd.getText());
         score.setSobaodanh(txtSobaodanh.getText());
         score.setPhuongThuc((String) cboPhuongThuc.getSelectedItem());
@@ -165,21 +219,135 @@ public class ScoreFormDialog extends JDialog {
         score.setNl1(getValue(txtNl1));
         score.setNk1(getValue(txtNk1));
         score.setNk2(getValue(txtNk2));
-
-        saved = true;
-        dispose();
     }
 
-    private boolean validateForm() {
+    private boolean validateFormWithScoreFields() {
+        clearAllErrors();
+
+        java.util.List<String> errors = new java.util.ArrayList<>();
+        JComponent[] firstInvalidField = new JComponent[1];
+        boolean valid = true;
+
         if (txtCccd.getText().length() != 12) {
-            JOptionPane.showMessageDialog(this, "CCCD không hợp lệ");
-            return false;
+            String message = "CCCD phải gồm đúng 12 chữ số!";
+            showFieldErrorMessageWithLabel(txtCccd, lblErrorCccd, message);
+            addError(errors, firstInvalidField, txtCccd, message);
+            valid = false;
         }
+
         if (txtSobaodanh.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Không có SBD");
+            String message = "Số báo danh không được để trống!";
+            showFieldErrorMessageWithLabel(txtSobaodanh, lblErrorSbd, message);
+            addError(errors, firstInvalidField, txtSobaodanh, message);
+            valid = false;
+        }
+
+        valid &= validateScoreField(txtToan, "Toán", 0, 10, errors, firstInvalidField);
+        valid &= validateScoreField(txtLy, "Lý", 0, 10, errors, firstInvalidField);
+        valid &= validateScoreField(txtHoa, "Hóa", 0, 10, errors, firstInvalidField);
+        valid &= validateScoreField(txtSinh, "Sinh", 0, 10, errors, firstInvalidField);
+        valid &= validateScoreField(txtSu, "Sử", 0, 10, errors, firstInvalidField);
+        valid &= validateScoreField(txtDia, "Địa", 0, 10, errors, firstInvalidField);
+        valid &= validateScoreField(txtVan, "Văn", 0, 10, errors, firstInvalidField);
+        valid &= validateScoreField(txtN1Thi, "N1 Thi", 0, 10, errors, firstInvalidField);
+        valid &= validateScoreField(txtN1Cc, "N1 CC", 0, 10, errors, firstInvalidField);
+        valid &= validateScoreField(txtNl1, "NL1", 0, 1200, errors, firstInvalidField);
+        valid &= validateScoreField(txtNk1, "NK1", 0, 100, errors, firstInvalidField);
+        valid &= validateScoreField(txtNk2, "NK2", 0, 100, errors, firstInvalidField);
+
+        if (!valid && !errors.isEmpty()) {
+            lblGeneralError.setText(errors.size() == 1
+                    ? errors.get(0)
+                    : errors.get(0) + " (" + errors.size() + " lỗi)");
+
+            if (firstInvalidField[0] != null) {
+                SwingUtilities.invokeLater(firstInvalidField[0]::requestFocusInWindow);
+            }
+        }
+
+        return valid;
+    }
+
+    private boolean validateScoreField(JFormattedTextField field, String fieldName, double min, double max,
+                                       java.util.List<String> errors, JComponent[] firstInvalidField) {
+        Double value = parseNumberText(field.getText());
+
+        if (value == null) {
+            String message = fieldName + " phải là số hợp lệ!";
+            showFieldErrorMessage(field, message);
+            addError(errors, firstInvalidField, field, message);
             return false;
         }
+
+        if (value < min || value > max) {
+            String message = fieldName + " phải từ " + formatLimit(min) + " đến " + formatLimit(max) + "!";
+            showFieldErrorMessage(field, message);
+            addError(errors, firstInvalidField, field, message);
+            return false;
+        }
+
         return true;
+    }
+
+    private void addError(java.util.List<String> errors, JComponent[] firstInvalidField,
+                          JComponent field, String message) {
+        errors.add(message);
+        if (firstInvalidField[0] == null) {
+            firstInvalidField[0] = field;
+        }
+    }
+
+    private void showFieldErrorMessageWithLabel(JComponent field, JLabel label, String message) {
+        showFieldErrorMessage(field, message);
+        label.setText(message);
+    }
+
+    private void showFieldErrorMessage(JComponent field, String message) {
+        field.setBorder(BorderFactory.createLineBorder(new Color(231, 76, 60), 2));
+        field.setToolTipText(message);
+    }
+
+    private void showGeneralError(String message) {
+        String text = (message == null || message.trim().isEmpty())
+                ? "Lưu dữ liệu thất bại. Vui lòng kiểm tra lại thông tin!"
+                : message.trim();
+        lblGeneralError.setText(text);
+        lblGeneralError.setToolTipText(text);
+        Toolkit.getDefaultToolkit().beep();
+    }
+
+    private void setSaving(boolean saving) {
+        btnSave.setEnabled(!saving);
+        btnCancel.setEnabled(!saving);
+        btnSave.setText(saving ? "Đang lưu..." : "Lưu");
+    }
+
+    private String getErrorMessage(Exception e) {
+        return e.getMessage() != null ? e.getMessage() : e.toString();
+    }
+
+    private void clearAllErrors() {
+        txtCccd.setBorder(UIManager.getBorder("TextField.border"));
+        txtCccd.setToolTipText(null);
+        txtSobaodanh.setBorder(UIManager.getBorder("TextField.border"));
+        txtSobaodanh.setToolTipText(null);
+
+        for (JFormattedTextField field : numberFields) {
+            field.setBorder(UIManager.getBorder("FormattedTextField.border"));
+            field.setToolTipText(null);
+        }
+
+        lblErrorCccd.setText("");
+        lblErrorSbd.setText("");
+        lblGeneralError.setText("");
+        lblGeneralError.setToolTipText(null);
+    }
+
+    private JLabel createErrorLabel() {
+        JLabel label = new JLabel();
+        label.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        label.setForeground(new Color(231, 76, 60));
+        return label;
     }
 
     // ================= HELPER =================
@@ -212,14 +380,27 @@ public class ScoreFormDialog extends JDialog {
     private JFormattedTextField createNumberField() {
         DecimalFormat format = new DecimalFormat("#0.0#");
         NumberFormatter formatter = new NumberFormatter(format);
+        formatter.setValueClass(Double.class);
         formatter.setAllowsInvalid(true);
+        formatter.setCommitsOnValidEdit(true);
 
         JFormattedTextField f = new JFormattedTextField(formatter);
         f.setColumns(10);
 
         addPlaceholder(f, "0.0");
+        numberFields.add(f);
 
         return f;
+    }
+
+    @Override
+    public void dispose() {
+        for (JFormattedTextField f : numberFields) {
+            for (java.awt.event.FocusListener l : f.getFocusListeners()) {
+                f.removeFocusListener(l);
+            }
+        }
+        super.dispose();
     }
 
     private void addPlaceholder(JFormattedTextField field, String text) {
@@ -243,13 +424,62 @@ public class ScoreFormDialog extends JDialog {
     }
 
     private Double getValue(JFormattedTextField f) {
+        String t = f.getText() == null ? "" : f.getText().trim();
+        if (t.isEmpty()) return 0.0;
+
         try {
-            String t = f.getText().trim();
-            if (t.isEmpty() || t.equals("0.0")) return 0.0;
-            return Double.parseDouble(t);
-        } catch (Exception e) {
+            f.commitEdit();
+            Object value = f.getValue();
+            if (value instanceof Number number) {
+                return number.doubleValue();
+            }
+        } catch (ParseException ignored) {
+            // Fallback below accepts both "8.5" and "8,5".
+        }
+
+        try {
+            Double value = parseNumberText(t);
+            return value != null ? value : 0.0;
+        } catch (NumberFormatException e) {
             return 0.0;
         }
+    }
+
+    private Double parseNumberText(String text) {
+        String t = text == null ? "" : text.trim();
+        if (t.isEmpty()) return 0.0;
+
+        try {
+            return Double.parseDouble(normalizeDecimalText(t));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private String normalizeDecimalText(String text) {
+        String normalized = text.replace(" ", "");
+        int lastComma = normalized.lastIndexOf(',');
+        int lastDot = normalized.lastIndexOf('.');
+
+        if (lastComma >= 0 && lastDot >= 0) {
+            if (lastComma > lastDot) {
+                return normalized.replace(".", "").replace(',', '.');
+            }
+            return normalized.replace(",", "");
+        }
+
+        if (lastComma >= 0) {
+            return normalized.replace(',', '.');
+        }
+
+        return normalized;
+    }
+
+    private String formatLimit(double value) {
+        if (value == Math.rint(value)) {
+            return String.valueOf((long) value);
+        }
+        return String.valueOf(value);
     }
 
     private void setValue(JFormattedTextField f, Double v) {
@@ -261,4 +491,5 @@ public class ScoreFormDialog extends JDialog {
 
     public boolean isSaved() { return saved; }
     public ScoreDTO getScore() { return score; }
+    public void setSaveHandler(SaveHandler saveHandler) { this.saveHandler = saveHandler; }
 }
