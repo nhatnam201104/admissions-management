@@ -1,181 +1,302 @@
 package com.example.managementadmissionwf.bus.impl;
 
 import com.example.managementadmissionwf.bus.interfaces.CandidateService;
+import com.example.managementadmissionwf.dal.entity.XtThisinhxettuyen25;
+import com.example.managementadmissionwf.dal.repository.CandidateRepository;
 import com.example.managementadmissionwf.dto.candidate.CandidateDTO;
+import com.example.managementadmissionwf.dto.common.ImportResult;
+import com.example.managementadmissionwf.dto.common.Paging;
+import com.example.managementadmissionwf.mapper.CandidateMapper;
+import com.example.managementadmissionwf.util.ExcelUtil;
+
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
-import java.text.SimpleDateFormat;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
-
+import java.util.Optional;
+import java.util.Set;
 /**
  * Service Implementation for Candidate Management
  * Uses mock data (Java List)
  */
 @Service
+@RequiredArgsConstructor
+@Slf4j
+@Validated
 public class CandidateServiceImpl implements CandidateService {
     
-    private final List<CandidateDTO> mockData = new ArrayList<>();
-    private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-    
-    public CandidateServiceImpl() {
-        initializeMockData();
-    }
-    
-    private void initializeMockData() {
-        try {
-            mockData.add(CandidateDTO.builder()
-                    .cccd("001234567890")
-                    .sobaodanh("BD001001")
-                    .ho("Nguyễn")
-                    .ten("Văn An")
-                    .ngaySinh(sdf.parse("2005-05-15"))
-                    .dienThoai("0912345678")
-                    .email("an.nguyen@example.com")
-                    .gioiTinh("Nam")
-                    .noiSinh("Hà Nội")
-                    .doiTuong("Không")
-                    .khuVuc("KV1")
-                    .build());
-            
-            mockData.add(CandidateDTO.builder()
-                    .cccd("001234567891")
-                    .sobaodanh("BD001002")
-                    .ho("Trần")
-                    .ten("Thị Bình")
-                    .ngaySinh(sdf.parse("2005-08-20"))
-                    .dienThoai("0923456789")
-                    .email("binh.tran@example.com")
-                    .gioiTinh("Nữ")
-                    .noiSinh("TP Hồ Chí Minh")
-                    .doiTuong("KV1")
-                    .khuVuc("KV1")
-                    .build());
-            
-            mockData.add(CandidateDTO.builder()
-                    .cccd("001234567892")
-                    .sobaodanh("BD001003")
-                    .ho("Lê")
-                    .ten("Minh Cường")
-                    .ngaySinh(sdf.parse("2005-03-10"))
-                    .dienThoai("0934567890")
-                    .email("cuong.le@example.com")
-                    .gioiTinh("Nam")
-                    .noiSinh("Đà Nẵng")
-                    .doiTuong("KV2-NT")
-                    .khuVuc("KV2")
-                    .build());
-            
-            mockData.add(CandidateDTO.builder()
-                    .cccd("001234567893")
-                    .sobaodanh("BD001004")
-                    .ho("Phạm")
-                    .ten("Thảo Dung")
-                    .ngaySinh(sdf.parse("2005-11-25"))
-                    .dienThoai("0945678901")
-                    .email("dung.pham@example.com")
-                    .gioiTinh("Nữ")
-                    .noiSinh("Hải Phòng")
-                    .doiTuong("Con thương binh")
-                    .khuVuc("KV1")
-                    .build());
-            
-            mockData.add(CandidateDTO.builder()
-                    .cccd("001234567894")
-                    .sobaodanh("BD001005")
-                    .ho("Hoàng")
-                    .ten("Văn Em")
-                    .ngaySinh(sdf.parse("2005-07-05"))
-                    .dienThoai("0956789012")
-                    .email("em.hoang@example.com")
-                    .gioiTinh("Nam")
-                    .noiSinh("Cần Thơ")
-                    .doiTuong("Không")
-                    .khuVuc("KV3")
-                    .build());
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+	private final CandidateRepository candidateRepository;
+    private final CandidateMapper candidateMapper;
+    private final Validator validator;
     
     @Override
-    public List<CandidateDTO> getAllCandidates() {
-        return new ArrayList<>(mockData);
-    }
-    
-    @Override
-    public List<CandidateDTO> searchCandidates(String keyword, String khuVuc, String doiTuong) {
-        return mockData.stream()
-                .filter(candidate -> {
-                    boolean matches = true;
-                    
-                    if (keyword != null && !keyword.isEmpty()) {
-                        String searchTerm = keyword.toLowerCase();
-                        matches = matches && (
-                            candidate.getCccd().toLowerCase().contains(searchTerm) ||
-                            candidate.getSobaodanh().toLowerCase().contains(searchTerm) ||
-                            candidate.getHoTen().toLowerCase().contains(searchTerm)
-                        );
-                    }
-                    
-                    if (khuVuc != null && !khuVuc.equals("Tất cả")) {
-                        matches = matches && khuVuc.equals(candidate.getKhuVuc());
-                    }
-                    
-                    if (doiTuong != null && !doiTuong.equals("Tất cả")) {
-                        matches = matches && doiTuong.equals(candidate.getDoiTuong());
-                    }
-                    
-                    return matches;
-                })
-                .collect(Collectors.toList());
+    public Paging<CandidateDTO> searchCandidates(String keyword, String khuVuc, String doiTuong, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
+        
+        String kw = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
+        String kv = (khuVuc != null && !khuVuc.trim().isEmpty() && !khuVuc.equals("Tất cả")) ? khuVuc.trim() : null;
+        String dt = (doiTuong != null && !doiTuong.trim().isEmpty() && !doiTuong.equals("Tất cả")) ? doiTuong.trim() : null;
+
+        Page<XtThisinhxettuyen25> entityPage = candidateRepository.search(kw, kv, dt, pageable);
+        List<CandidateDTO> dtoList = candidateMapper.toDTOList(entityPage.getContent());
+        
+        return Paging.<CandidateDTO>builder()
+                .data(dtoList)
+                .totalItems(entityPage.getTotalElements())
+                .totalPages(entityPage.getTotalPages())
+                .page(entityPage.getNumber() + 1)
+                .limit(entityPage.getSize())
+                .hasNext(entityPage.hasNext())
+                .build();
     }
     
     @Override
     public CandidateDTO getCandidateByCccd(String cccd) {
-        return mockData.stream()
-                .filter(candidate -> candidate.getCccd().equals(cccd))
-                .findFirst()
+        return candidateRepository.findByCccd(cccd)
+                .map(candidateMapper::toDTO)
                 .orElse(null);
     }
     
     @Override
+    @Transactional
     public CandidateDTO createCandidate(CandidateDTO dto) {
-        // Check if CCCD already exists
-        if (getCandidateByCccd(dto.getCccd()) != null) {
-            throw new IllegalArgumentException("CCCD đã tồn tại: " + dto.getCccd());
+        normalizeAndValidate(dto);
+    	
+        Optional<XtThisinhxettuyen25> sbdCheck = candidateRepository.findBySobaodanhIncludingDeleted(dto.getSobaodanh());
+        if (sbdCheck.isPresent()) {
+            XtThisinhxettuyen25 duplicateEntity = sbdCheck.get();
+            if (!duplicateEntity.getCccd().equals(dto.getCccd())) { 
+                if (duplicateEntity.getIsDeleted()) {
+                    throw new RuntimeException("Số báo danh này thuộc về một thí sinh đã bị xóa. Vui lòng sử dụng SBD khác!");
+                } else {
+                    throw new RuntimeException("Số báo danh này đã được sử dụng cho một thí sinh khác!");
+                }
+            }
         }
-        mockData.add(dto);
-        return dto;
+        
+        if (dto.getEmail() != null) {
+            Optional<XtThisinhxettuyen25> emailCheck = candidateRepository.findByEmailIncludingDeleted(dto.getEmail());
+            if (emailCheck.isPresent()) {
+                XtThisinhxettuyen25 dup = emailCheck.get();
+                if (!dup.getCccd().equals(dto.getCccd())) {
+                    if (dup.getIsDeleted() != null && dup.getIsDeleted()) {
+                        throw new RuntimeException("Địa chỉ Email này thuộc về một thí sinh đã bị xóa!");
+                    } else {
+                        throw new RuntimeException("Địa chỉ Email này đã được đăng ký cho người khác!");
+                    }
+                }
+            }
+        }
+
+        if (dto.getDienThoai() != null) {
+            Optional<XtThisinhxettuyen25> phoneCheck = candidateRepository.findByDienThoaiIncludingDeleted(dto.getDienThoai());
+            if (phoneCheck.isPresent()) {
+                XtThisinhxettuyen25 dup = phoneCheck.get();
+                if (!dup.getCccd().equals(dto.getCccd())) {
+                    if (dup.getIsDeleted() != null && dup.getIsDeleted()) {
+                        throw new RuntimeException("Số điện thoại này thuộc về một thí sinh đã bị xóa!");
+                    } else {
+                        throw new RuntimeException("Số điện thoại này đã tồn tại trong hệ thống!");
+                    }
+                }
+            }
+        }
+    	Optional<XtThisinhxettuyen25> existingOpt = candidateRepository.findByCccdIncludingDeleted(dto.getCccd());
+    	XtThisinhxettuyen25 entity;
+    	
+    	if (existingOpt.isPresent()) {
+            entity = existingOpt.get();
+            if (entity.getIsDeleted() == null || entity.getIsDeleted() == false) {
+                throw new RuntimeException("CCCD này đã tồn tại trong hệ thống: " + dto.getCccd());
+            }
+            candidateRepository.restoreSoftDeleteByCccd(entity.getCccd());
+            candidateMapper.updateEntity(entity, dto);
+            entity.setIsDeleted(false);
+        } else {     
+            entity = candidateMapper.toEntity(dto);
+        }
+    	
+    	entity.setHoVaTen(dto.getHo() + " " + dto.getTen());
+        entity = candidateRepository.save(entity);
+        return candidateMapper.toDTO(entity);
     }
     
     @Override
+    @Transactional
     public CandidateDTO updateCandidate(CandidateDTO dto) {
-        CandidateDTO existing = getCandidateByCccd(dto.getCccd());
-        if (existing == null) {
-            throw new IllegalArgumentException("Không tìm thấy thí sinh với CCCD: " + dto.getCccd());
+        normalizeAndValidate(dto);
+
+        XtThisinhxettuyen25 entity = candidateRepository.findByCccd(dto.getCccd())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thí sinh với CCCD: " + dto.getCccd()));
+          
+        if (dto.getSobaodanh() != null && !dto.getSobaodanh().equals(entity.getSobaodanh())) {
+            Optional<XtThisinhxettuyen25> sbdCheck = candidateRepository.findBySobaodanhIncludingDeleted(dto.getSobaodanh());
+            if (sbdCheck.isPresent()) {
+                XtThisinhxettuyen25 duplicateEntity = sbdCheck.get();
+                if (duplicateEntity.getIsDeleted()) {
+                    throw new RuntimeException("Số báo danh này thuộc về một thí sinh đã bị xóa. Vui lòng sử dụng SBD khác!");
+                } else {
+                    throw new RuntimeException("Số báo danh này đã được sử dụng cho một thí sinh khác!");
+                }
+            }
         }
         
-        // Update fields
-        existing.setSobaodanh(dto.getSobaodanh());
-        existing.setHo(dto.getHo());
-        existing.setTen(dto.getTen());
-        existing.setNgaySinh(dto.getNgaySinh());
-        existing.setDienThoai(dto.getDienThoai());
-        existing.setEmail(dto.getEmail());
-        existing.setGioiTinh(dto.getGioiTinh());
-        existing.setNoiSinh(dto.getNoiSinh());
-        existing.setDoiTuong(dto.getDoiTuong());
-        existing.setKhuVuc(dto.getKhuVuc());
+        if (dto.getEmail() != null && !dto.getEmail().equals(entity.getEmail())) {
+            Optional<XtThisinhxettuyen25> emailCheck = candidateRepository.findByEmailIncludingDeleted(dto.getEmail());
+            if (emailCheck.isPresent()) {
+                XtThisinhxettuyen25 dup = emailCheck.get();
+                if (dup.getIsDeleted() != null && dup.getIsDeleted()) {
+                    throw new RuntimeException("Địa chỉ Email này thuộc về một thí sinh đã bị xóa!");
+                } else {
+                    throw new RuntimeException("Địa chỉ Email này đã được đăng ký cho người khác!");
+                }
+            }
+        }
         
-        return existing;
+        if (dto.getDienThoai() != null && !dto.getDienThoai().equals(entity.getDienThoai())) {
+            Optional<XtThisinhxettuyen25> phoneCheck = candidateRepository.findByDienThoaiIncludingDeleted(dto.getDienThoai());
+            if (phoneCheck.isPresent()) {
+                XtThisinhxettuyen25 dup = phoneCheck.get();
+                if (dup.getIsDeleted() != null && dup.getIsDeleted()) {
+                    throw new RuntimeException("Số điện thoại này thuộc về một thí sinh đã bị xóa!");
+                } else {
+                    throw new RuntimeException("Số điện thoại này đã tồn tại trong hệ thống!");
+                }
+            }
+        }
+
+        candidateMapper.updateEntity(entity, dto);
+        
+        entity.setEmail(dto.getEmail());
+        entity.setDienThoai(dto.getDienThoai());
+        entity.setHoVaTen(dto.getHo() + " " + dto.getTen());
+        
+        entity = candidateRepository.save(entity);
+        return candidateMapper.toDTO(entity);
     }
     
     @Override
+    @Transactional
     public void deleteCandidate(String cccd) {
-        mockData.removeIf(candidate -> candidate.getCccd().equals(cccd));
+        String cleanCccd = normalizeCccd(cccd);
+
+        if (!candidateRepository.existsByCccd(cleanCccd)) {
+            throw new RuntimeException("Không tìm thấy thí sinh với CCCD: " + cleanCccd);
+        }
+        candidateRepository.softDeleteScoresByCccd(cleanCccd);
+        candidateRepository.softDeleteBonusScoresByCccd(cleanCccd);
+        candidateRepository.softDeleteAspirationsByCccd(cleanCccd);
+        candidateRepository.softDeleteByCccd(cleanCccd);
+    }
+
+    @Override
+    public void exportExcel(OutputStream outputStream, String keyword) {
+        try {
+            String kw = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
+            
+            List<XtThisinhxettuyen25> entities = candidateRepository.search(kw, null, null, Pageable.unpaged()).getContent();
+            List<CandidateDTO> data = candidateMapper.toDTOList(entities);
+            ExcelUtil.exportExcel(data, CandidateDTO.class, outputStream);
+        } catch (Exception e) {
+            log.error("Error exporting excel", e);
+            throw new RuntimeException("Lỗi khi xuất file Excel: " + e.getMessage());
+        }
+    }
+    
+    @Transactional
+    @Override
+    public ImportResult<CandidateDTO> importExcel(InputStream inputStream) {
+        ImportResult<CandidateDTO> result = new ImportResult<>();
+        List<String> errors = new ArrayList<>();
+        List<CandidateDTO> validData = new ArrayList<>();
+
+        try {
+            List<CandidateDTO> importedData = ExcelUtil.importExcel(inputStream, CandidateDTO.class);
+            int rowIndex = 2;
+            for (CandidateDTO dto : importedData) {
+                try {
+                    if (dto.getCccd() == null || dto.getCccd().trim().isEmpty()) {
+                        errors.add("Dòng " + rowIndex + ": CCCD trống");
+                        rowIndex++; continue;
+                    }
+
+                    this.createCandidate(dto);
+                    validData.add(dto);
+
+                } catch (Exception e) {
+                    errors.add("Dòng " + rowIndex + ": " + e.getMessage());
+                }
+                rowIndex++;
+            }
+
+            result.setSuccessCount(validData.size());
+            result.setErrorCount(errors.size());
+            result.setErrors(errors);
+            result.setValidData(validData);
+            result.setTotalRows(importedData.size());
+            
+        } catch (Exception e) {
+            log.error("Error importing excel", e);
+            throw new RuntimeException("Lỗi khi đọc file Excel: " + e.getMessage());
+        }
+
+        return result;
+    }
+    
+    @Override
+    public boolean existsByCccdIncludingDeleted(String cccd) {
+        return candidateRepository.findByCccdIncludingDeleted(normalizeCccd(cccd)).isPresent();
+    }
+
+    private void normalizeAndValidate(CandidateDTO dto) {
+        if (dto == null) {
+            throw new RuntimeException("Candidate data must not be null");
+        }
+
+        dto.setCccd(trimToNull(dto.getCccd()));
+        dto.setSobaodanh(trimToNull(dto.getSobaodanh()));
+        dto.setHo(trimToNull(dto.getHo()));
+        dto.setTen(trimToNull(dto.getTen()));
+        dto.setDienThoai(trimToNull(dto.getDienThoai()));
+        dto.setEmail(trimToNull(dto.getEmail()));
+        dto.setGioiTinh(trimToNull(dto.getGioiTinh()));
+        dto.setNoiSinh(trimToNull(dto.getNoiSinh()));
+        dto.setDoiTuong(trimToNull(dto.getDoiTuong()));
+        dto.setKhuVuc(trimToNull(dto.getKhuVuc()));
+
+        Set<ConstraintViolation<CandidateDTO>> violations = validator.validate(dto);
+        if (!violations.isEmpty()) {
+            throw new ConstraintViolationException(violations);
+        }
+    }
+
+    private String normalizeCccd(String cccd) {
+        String cleanCccd = trimToNull(cccd);
+        if (cleanCccd == null) {
+            throw new RuntimeException("CCCD must not be blank");
+        }
+        return cleanCccd;
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

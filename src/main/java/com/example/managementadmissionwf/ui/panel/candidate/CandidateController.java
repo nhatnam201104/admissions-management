@@ -2,6 +2,12 @@ package com.example.managementadmissionwf.ui.panel.candidate;
 
 import com.example.managementadmissionwf.bus.interfaces.CandidateService;
 import com.example.managementadmissionwf.dto.candidate.CandidateDTO;
+import com.example.managementadmissionwf.dto.common.ImportResult;
+import com.example.managementadmissionwf.dto.common.Paging;
+
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +19,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.List;
 
 /**
  * Controller for Candidate Management
@@ -32,21 +37,19 @@ public class CandidateController {
         this.candidatePanel = candidatePanel;
         this.listPanel = candidatePanel.getListPanel();
     }
-    
+
     /**
-     * Load all candidates to table
-     */
-    public void loadAllCandidates() {
-        List<CandidateDTO> candidates = candidateService.getAllCandidates();
-        listPanel.loadData(candidates);
-    }
-    
-    /**
-     * Search candidates
+     * Search candidates and update UI pagination
      */
     public void searchCandidates(String keyword, String khuVuc, String doiTuong) {
-        List<CandidateDTO> candidates = candidateService.searchCandidates(keyword, khuVuc, doiTuong);
-        listPanel.loadData(candidates);
+        int page = candidatePanel.getCurrentPage();
+        int size = candidatePanel.getPageSize();
+
+        Paging<CandidateDTO> paging = candidateService.searchCandidates(keyword, khuVuc, doiTuong, page, size);
+        
+        listPanel.loadData(paging.getData());
+        
+        candidatePanel.updatePagination(paging);
     }
     
     /**
@@ -58,16 +61,48 @@ public class CandidateController {
             "Thêm Thí Sinh Mới",
             null
         );
-        dialog.setVisible(true);
         
-        if (dialog.isSaved()) {
+        while (true) {
+            dialog.setVisible(true); 
+            
+            if (!dialog.isSaved()) {
+                dialog.dispose();
+                break; 
+            }
+            
             try {
                 CandidateDTO newCandidate = dialog.getCandidate();
-                candidateService.createCandidate(newCandidate);
-                loadAllCandidates();
+                
+                if (candidateService.existsByCccdIncludingDeleted(newCandidate.getCccd())) {
+                    JOptionPane.showMessageDialog(candidatePanel, 
+                        "CCCD này đã tồn tại trong hệ thống (có thể đã bị xóa trước đó).\nVui lòng sử dụng CCCD khác!", 
+                        "Cảnh báo trùng lặp", JOptionPane.WARNING_MESSAGE);
+                    dialog.setSaved(false);
+                    continue;
+                }
+                
+                candidateService.createCandidate(newCandidate); 
+                
+                dialog.dispose(); 
+                candidatePanel.refreshData();
                 JOptionPane.showMessageDialog(candidatePanel, "Thêm thí sinh thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                break; 
+                
+            } catch (ConstraintViolationException cve) {
+                StringBuilder errorMsg = new StringBuilder("Dữ liệu không hợp lệ:\n");
+                for (ConstraintViolation<?> violation : cve.getConstraintViolations()) {
+                    errorMsg.append("- ").append(violation.getMessage()).append("\n");
+                }
+                JOptionPane.showMessageDialog(candidatePanel, errorMsg.toString(), "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
+                dialog.setSaved(false); 
+                
+            } catch (RuntimeException re) {
+                JOptionPane.showMessageDialog(candidatePanel, re.getMessage(), "Cảnh báo trùng lặp", JOptionPane.WARNING_MESSAGE);
+                dialog.setSaved(false);
+                
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(candidatePanel, "Lỗi: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(candidatePanel, "Lỗi: " + e.getMessage(), "Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
+                dialog.setSaved(false);
             }
         }
     }
@@ -87,16 +122,39 @@ public class CandidateController {
             "Sửa Thông Tin Thí Sinh",
             selected
         );
-        dialog.setVisible(true);
         
-        if (dialog.isSaved()) {
+        while (true) {
+            dialog.setVisible(true);
+            
+            if (!dialog.isSaved()) {
+                dialog.dispose(); 
+                break;
+            }
+            
             try {
-                CandidateDTO updatedCandidate = dialog.getCandidate();
+                CandidateDTO updatedCandidate = dialog.getCandidate();      
                 candidateService.updateCandidate(updatedCandidate);
-                loadAllCandidates();
+                
+                dialog.dispose();
+                candidatePanel.refreshData();
                 JOptionPane.showMessageDialog(candidatePanel, "Cập nhật thí sinh thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                break; 
+                
+            } catch (ConstraintViolationException cve) {
+                StringBuilder errorMsg = new StringBuilder("Dữ liệu không hợp lệ:\n");
+                for (ConstraintViolation<?> violation : cve.getConstraintViolations()) {
+                    errorMsg.append("- ").append(violation.getMessage()).append("\n");
+                }
+                JOptionPane.showMessageDialog(candidatePanel, errorMsg.toString(), "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
+                dialog.setSaved(false); 
+                
+            } catch (RuntimeException re) {
+                JOptionPane.showMessageDialog(candidatePanel, re.getMessage(), "Cảnh báo trùng lặp", JOptionPane.WARNING_MESSAGE);
+                dialog.setSaved(false);
+                
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(candidatePanel, "Lỗi: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(candidatePanel, "Lỗi: " + e.getMessage(), "Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
+                dialog.setSaved(false);
             }
         }
     }
@@ -122,19 +180,12 @@ public class CandidateController {
         if (confirm == JOptionPane.YES_OPTION) {
             try {
                 candidateService.deleteCandidate(selected.getCccd());
-                loadAllCandidates();
+                candidatePanel.refreshData();
                 JOptionPane.showMessageDialog(candidatePanel, "Xóa thí sinh thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(candidatePanel, "Lỗi: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
-    }
-    
-    /**
-     * Refresh data
-     */
-    public void refreshData() {
-        loadAllCandidates();
     }
 
     public void exportExcel(String keyword) {
@@ -151,7 +202,7 @@ public class CandidateController {
                 filePath += ".xlsx";
             }
             try (OutputStream os = new FileOutputStream(filePath)) {
-                // TODO: candidateService.exportExcel(os, keyword);
+                candidateService.exportExcel(os, keyword);
                 JOptionPane.showMessageDialog(candidatePanel,
                         "Đã xuất dữ liệu ra file Excel thành công!\n" + filePath,
                         "Thông báo", JOptionPane.INFORMATION_MESSAGE);
@@ -172,10 +223,18 @@ public class CandidateController {
         if (userSelection == JFileChooser.APPROVE_OPTION) {
             File fileToOpen = fileChooser.getSelectedFile();
             try (InputStream is = new FileInputStream(fileToOpen)) {
-                // TODO: candidateService.importExcel(is)
-                JOptionPane.showMessageDialog(candidatePanel,
-                        "Nhập dữ liệu từ Excel thành công!",
-                        "Kết quả nhập Excel", JOptionPane.INFORMATION_MESSAGE);
+                ImportResult<CandidateDTO> result = candidateService.importExcel(is);
+                
+                String msg = String.format("Kết quả xử lý:\n- Tổng số dòng: %d\n- Thành công: %d\n- Lỗi: %d",
+                        result.getTotalRows(), result.getSuccessCount(), result.getErrorCount());
+                
+                if (result.getErrorCount() > 0) {
+                    msg += "\n\nChi tiết lỗi:\n" + String.join("\n", result.getErrors().subList(0, Math.min(5, result.getErrors().size())));
+                    if (result.getErrors().size() > 5) msg += "\n...";
+                    JOptionPane.showMessageDialog(candidatePanel, msg, "Nhập dữ liệu (Có lỗi)", JOptionPane.WARNING_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(candidatePanel, msg, "Nhập dữ liệu thành công", JOptionPane.INFORMATION_MESSAGE);
+                }
                 candidatePanel.refreshData();
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(candidatePanel,

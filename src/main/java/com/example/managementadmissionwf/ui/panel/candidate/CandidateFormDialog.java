@@ -1,12 +1,15 @@
 package com.example.managementadmissionwf.ui.panel.candidate;
 
 import com.example.managementadmissionwf.dto.candidate.CandidateDTO;
+import com.example.managementadmissionwf.mapper.CandidateMapper;
 import com.example.managementadmissionwf.ui.util.UIConstants;
 
 import javax.swing.*;
 import java.awt.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Date;
 
 /**
@@ -21,7 +24,7 @@ public class CandidateFormDialog extends JDialog {
     private JTextField txtSobaodanh;
     private JTextField txtHo;
     private JTextField txtTen;
-    private JFormattedTextField txtNgaySinh;
+    private JSpinner spnNgaySinh;
     private JTextField txtDienThoai;
     private JTextField txtEmail;
     private JComboBox<String> cboGioiTinh;
@@ -94,49 +97,49 @@ public class CandidateFormDialog extends JDialog {
         
         // Ngày sinh
         gbc.gridx = 0; gbc.gridy = 2;
-        panel.add(createLabel("Ngày sinh:"), gbc);
+        panel.add(createLabel("Ngày sinh *:"), gbc);
         gbc.gridx = 1;
-        txtNgaySinh = createFormattedTextField();
-        panel.add(txtNgaySinh, gbc);
+        spnNgaySinh = createDateSpinner();
+        panel.add(spnNgaySinh, gbc);
         
         // Giới tính
         gbc.gridx = 2;
-        panel.add(createLabel("Giới tính:"), gbc);
+        panel.add(createLabel("Giới tính *:"), gbc);
         gbc.gridx = 3;
         cboGioiTinh = createComboBox(new String[]{"Nam", "Nữ"});
         panel.add(cboGioiTinh, gbc);
         
         // Số điện thoại
         gbc.gridx = 0; gbc.gridy = 3;
-        panel.add(createLabel("Số điện thoại:"), gbc);
+        panel.add(createLabel("Số điện thoại *:"), gbc);
         gbc.gridx = 1;
         txtDienThoai = createTextField();
         panel.add(txtDienThoai, gbc);
         
         // Email
         gbc.gridx = 2;
-        panel.add(createLabel("Email:"), gbc);
+        panel.add(createLabel("Email *:"), gbc);
         gbc.gridx = 3;
         txtEmail = createTextField();
         panel.add(txtEmail, gbc);
         
         // Nơi sinh
         gbc.gridx = 0; gbc.gridy = 4;
-        panel.add(createLabel("Nơi sinh:"), gbc);
+        panel.add(createLabel("Nơi sinh *:"), gbc);
         gbc.gridx = 1;
         txtNoiSinh = createTextField();
         panel.add(txtNoiSinh, gbc);
         
         // Đối tượng ưu tiên
         gbc.gridx = 2;
-        panel.add(createLabel("Đối tượng:"), gbc);
+        panel.add(createLabel("Đối tượng *:"), gbc);
         gbc.gridx = 3;
         cboDoiTuong = createComboBox(new String[]{"Không", "KV1", "KV2-NT", "KV2", "KV3", "Con thương binh"});
         panel.add(cboDoiTuong, gbc);
         
         // Khu vực
         gbc.gridx = 0; gbc.gridy = 5;
-        panel.add(createLabel("Khu vực:"), gbc);
+        panel.add(createLabel("Khu vực *:"), gbc);
         gbc.gridx = 1;
         cboKhuVuc = createComboBox(new String[]{"KV1", "KV2", "KV3"});
         panel.add(cboKhuVuc, gbc);
@@ -169,7 +172,7 @@ public class CandidateFormDialog extends JDialog {
             txtTen.setText(candidate.getTen());
             
             if (candidate.getNgaySinh() != null) {
-                txtNgaySinh.setText(sdf.format(candidate.getNgaySinh()));
+            	spnNgaySinh.setValue(CandidateMapper.toDate(candidate.getNgaySinh()));
             }
             
             txtDienThoai.setText(candidate.getDienThoai());
@@ -186,65 +189,140 @@ public class CandidateFormDialog extends JDialog {
             return;
         }
         
-        try {
-            if (candidate == null) {
-                candidate = new CandidateDTO();
-            }
-            
-            candidate.setCccd(txtCccd.getText().trim());
-            candidate.setSobaodanh(txtSobaodanh.getText().trim());
-            candidate.setHo(txtHo.getText().trim());
-            candidate.setTen(txtTen.getText().trim());
-            
-            String ngaySinhStr = txtNgaySinh.getText().trim();
-            if (!ngaySinhStr.isEmpty()) {
-                candidate.setNgaySinh(sdf.parse(ngaySinhStr));
-            }
-            
-            candidate.setDienThoai(txtDienThoai.getText().trim());
-            candidate.setEmail(txtEmail.getText().trim());
-            candidate.setGioiTinh((String) cboGioiTinh.getSelectedItem());
-            candidate.setNoiSinh(txtNoiSinh.getText().trim());
-            candidate.setDoiTuong((String) cboDoiTuong.getSelectedItem());
-            candidate.setKhuVuc((String) cboKhuVuc.getSelectedItem());
-            
-            saved = true;
-            dispose();
-            
-        } catch (ParseException e) {
-            JOptionPane.showMessageDialog(this, 
-                "Định dạng ngày sinh không đúng (dd/MM/yyyy)", 
-                "Lỗi", 
-                JOptionPane.ERROR_MESSAGE);
-        }
+        if (candidate == null) {
+		    candidate = new CandidateDTO();
+		}
+		
+		candidate.setCccd(txtCccd.getText().trim());
+		candidate.setSobaodanh(txtSobaodanh.getText().trim());
+		candidate.setHo(txtHo.getText().trim());
+		candidate.setTen(txtTen.getText().trim());
+		candidate.setNgaySinh(CandidateMapper.toLocalDate((Date) spnNgaySinh.getValue()));
+		
+		candidate.setDienThoai(txtDienThoai.getText().trim());
+	    candidate.setEmail(txtEmail.getText().trim());
+	    
+		candidate.setGioiTinh((String) cboGioiTinh.getSelectedItem());
+		candidate.setNoiSinh(txtNoiSinh.getText().trim());
+		candidate.setDoiTuong((String) cboDoiTuong.getSelectedItem());
+		candidate.setKhuVuc((String) cboKhuVuc.getSelectedItem());
+		
+		saved = true;
+		dispose();
     }
     
     private boolean validateForm() {
-        if (txtCccd.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "CCCD không được để trống", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            txtCccd.requestFocus();
+        String cccd = txtCccd.getText().trim();
+        if (cccd.isEmpty()) {
+            showError("CCCD không được để trống", txtCccd);
+            return false;
+        }
+        if (!cccd.matches("^\\d{12}$")) {
+            showError("CCCD phải bao gồm đúng 12 chữ số", txtCccd);
+            return false;
+        }
+
+        String sbd = txtSobaodanh.getText().trim();
+        if (sbd.isEmpty()) {
+            showError("Số báo danh không được để trống", txtSobaodanh);
             return false;
         }
         
-        if (txtSobaodanh.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Số báo danh không được để trống", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            txtSobaodanh.requestFocus();
+        if (!sbd.matches("^\\d+$")) {
+            showError("Số báo danh chỉ được chứa các chữ số", txtSobaodanh);
             return false;
         }
         
-        if (txtHo.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Họ không được để trống", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            txtHo.requestFocus();
+        String regexName = "^[\\p{L}\\s]+$";
+
+        String ho = txtHo.getText().trim();
+        if (ho.isEmpty()) {
+            showError("Họ không được để trống!", txtHo);
+            return false;
+        }
+        if (!ho.matches(regexName)) {
+            showError("Họ không hợp lệ (không được chứa số hoặc ký tự đặc biệt)!", txtHo);
+            return false;
+        }
+
+        String ten = txtTen.getText().trim();
+        if (ten.isEmpty()) {
+            showError("Tên không được để trống!", txtTen);
+            return false;
+        }
+        if (!ten.matches(regexName)) {
+            showError("Tên không hợp lệ (không được chứa số hoặc ký tự đặc biệt)!", txtTen);
             return false;
         }
         
-        if (txtTen.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Tên không được để trống", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            txtTen.requestFocus();
+        Date selectedDate = (Date) spnNgaySinh.getValue(); 
+        
+        if (selectedDate == null) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày sinh!", "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
             return false;
         }
-        
+
+        LocalDate dob = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate today = LocalDate.now();
+
+        if (dob.isAfter(today)) {
+            JOptionPane.showMessageDialog(this, "Ngày sinh không hợp lệ (không thể là ngày trong tương lai)!", "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+
+        int age = java.time.Period.between(dob, today).getYears();
+        if (age < 15) {
+            JOptionPane.showMessageDialog(this, "Thí sinh không hợp lệ (Phải từ 15 tuổi trở lên. Tuổi hiện tại: " + age + ")", "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+
+        String sdt = txtDienThoai.getText().trim();
+        if (sdt.isEmpty()) {
+            showError("Số điện thoại không được để trống", txtDienThoai);
+            return false;
+        }
+        if (!sdt.matches("^0\\d{9}$")) {
+            showError("Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0", txtDienThoai);
+            return false;
+        }
+
+        String email = txtEmail.getText().trim();
+        if (email.isEmpty()) {
+            showError("Email không được để trống", txtEmail);
+            return false;
+        }
+        if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            showError("Email không đúng định dạng", txtEmail);
+            return false;
+        }
+
+        String noiSinh = txtNoiSinh.getText().trim();
+        if (noiSinh.isEmpty()) {
+            showError("Nơi sinh không được để trống", txtNoiSinh);
+            return false;
+        }
+
+        if (cboGioiTinh.getSelectedItem() == null) {
+            showError("Giới tính không được để trống", cboGioiTinh);
+            return false;
+        }
+
+        if (cboDoiTuong.getSelectedItem() == null) {
+            showError("Đối tượng không được để trống", cboDoiTuong);
+            return false;
+        }
+
+        if (cboKhuVuc.getSelectedItem() == null) {
+            showError("Khu vực không được để trống", cboKhuVuc);
+            return false;
+        }
+
         return true;
+    }
+
+    private void showError(String message, JComponent field) {
+        JOptionPane.showMessageDialog(this, message, "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
+        field.requestFocus();
     }
     
     public CandidateDTO getCandidate() {
@@ -255,6 +333,9 @@ public class CandidateFormDialog extends JDialog {
         return saved;
     }
     
+    public void setSaved(boolean saved) {
+        this.saved = saved;
+    }
     // Helper methods
     private JLabel createLabel(String text) {
         JLabel label = new JLabel(text);
@@ -295,5 +376,15 @@ public class CandidateFormDialog extends JDialog {
         button.setBorderPainted(false);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return button;
+    }
+    
+    private JSpinner createDateSpinner() {
+        SpinnerDateModel model = new SpinnerDateModel();
+        JSpinner spinner = new JSpinner(model);
+        JSpinner.DateEditor editor = new JSpinner.DateEditor(spinner, "dd/MM/yyyy");
+        spinner.setEditor(editor);
+        spinner.setPreferredSize(new Dimension(150, 30));
+        spinner.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        return spinner;
     }
 }
