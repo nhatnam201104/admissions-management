@@ -9,6 +9,9 @@ import com.example.managementadmissionwf.dto.common.Paging;
 import com.example.managementadmissionwf.mapper.CandidateMapper;
 import com.example.managementadmissionwf.util.ExcelUtil;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -24,6 +27,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 /**
  * Service Implementation for Candidate Management
  * Uses mock data (Java List)
@@ -36,6 +40,7 @@ public class CandidateServiceImpl implements CandidateService {
     
 	private final CandidateRepository candidateRepository;
     private final CandidateMapper candidateMapper;
+    private final Validator validator;
     
     @Override
     public Paging<CandidateDTO> searchCandidates(String keyword, String khuVuc, String doiTuong, int page, int size) {
@@ -68,12 +73,7 @@ public class CandidateServiceImpl implements CandidateService {
     @Override
     @Transactional
     public CandidateDTO createCandidate(CandidateDTO dto) {
-    	if (dto.getEmail() != null && dto.getEmail().trim().isEmpty()) {
-            dto.setEmail(null);
-        }
-        if (dto.getDienThoai() != null && dto.getDienThoai().trim().isEmpty()) {
-            dto.setDienThoai(null);
-        }
+        normalizeAndValidate(dto);
     	
         Optional<XtThisinhxettuyen25> sbdCheck = candidateRepository.findBySobaodanhIncludingDeleted(dto.getSobaodanh());
         if (sbdCheck.isPresent()) {
@@ -137,12 +137,7 @@ public class CandidateServiceImpl implements CandidateService {
     @Override
     @Transactional
     public CandidateDTO updateCandidate(CandidateDTO dto) {
-        if (dto.getEmail() != null && dto.getEmail().trim().isEmpty()) {
-            dto.setEmail(null);
-        }
-        if (dto.getDienThoai() != null && dto.getDienThoai().trim().isEmpty()) {
-            dto.setDienThoai(null);
-        }
+        normalizeAndValidate(dto);
 
         XtThisinhxettuyen25 entity = candidateRepository.findByCccd(dto.getCccd())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thí sinh với CCCD: " + dto.getCccd()));
@@ -196,10 +191,15 @@ public class CandidateServiceImpl implements CandidateService {
     @Override
     @Transactional
     public void deleteCandidate(String cccd) {
-        if (!candidateRepository.existsByCccd(cccd)) {
-            throw new RuntimeException("Không tìm thấy thí sinh với CCCD: " + cccd);
+        String cleanCccd = normalizeCccd(cccd);
+
+        if (!candidateRepository.existsByCccd(cleanCccd)) {
+            throw new RuntimeException("Không tìm thấy thí sinh với CCCD: " + cleanCccd);
         }
-        candidateRepository.softDeleteByCccd(cccd);
+        candidateRepository.softDeleteScoresByCccd(cleanCccd);
+        candidateRepository.softDeleteBonusScoresByCccd(cleanCccd);
+        candidateRepository.softDeleteAspirationsByCccd(cleanCccd);
+        candidateRepository.softDeleteByCccd(cleanCccd);
     }
 
     @Override
@@ -258,6 +258,45 @@ public class CandidateServiceImpl implements CandidateService {
     
     @Override
     public boolean existsByCccdIncludingDeleted(String cccd) {
-        return candidateRepository.findByCccdIncludingDeleted(cccd).isPresent();
+        return candidateRepository.findByCccdIncludingDeleted(normalizeCccd(cccd)).isPresent();
+    }
+
+    private void normalizeAndValidate(CandidateDTO dto) {
+        if (dto == null) {
+            throw new RuntimeException("Candidate data must not be null");
+        }
+
+        dto.setCccd(trimToNull(dto.getCccd()));
+        dto.setSobaodanh(trimToNull(dto.getSobaodanh()));
+        dto.setHo(trimToNull(dto.getHo()));
+        dto.setTen(trimToNull(dto.getTen()));
+        dto.setDienThoai(trimToNull(dto.getDienThoai()));
+        dto.setEmail(trimToNull(dto.getEmail()));
+        dto.setGioiTinh(trimToNull(dto.getGioiTinh()));
+        dto.setNoiSinh(trimToNull(dto.getNoiSinh()));
+        dto.setDoiTuong(trimToNull(dto.getDoiTuong()));
+        dto.setKhuVuc(trimToNull(dto.getKhuVuc()));
+
+        Set<ConstraintViolation<CandidateDTO>> violations = validator.validate(dto);
+        if (!violations.isEmpty()) {
+            throw new ConstraintViolationException(violations);
+        }
+    }
+
+    private String normalizeCccd(String cccd) {
+        String cleanCccd = trimToNull(cccd);
+        if (cleanCccd == null) {
+            throw new RuntimeException("CCCD must not be blank");
+        }
+        return cleanCccd;
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

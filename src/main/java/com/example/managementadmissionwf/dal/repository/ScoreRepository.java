@@ -13,7 +13,33 @@ import java.util.Optional;
 
 @Repository
 public interface ScoreRepository extends JpaRepository<XtDiemthixettuyen, Integer> {
+    @Query(
+        value = """
+            SELECT s
+            FROM XtDiemthixettuyen s
+            WHERE EXISTS (
+                SELECT 1
+                FROM XtThisinhxettuyen25 c
+                WHERE c.cccd = s.cccd
+                  AND c.isDeleted = false
+            )
+        """,
+        countQuery = """
+            SELECT COUNT(s)
+            FROM XtDiemthixettuyen s
+            WHERE EXISTS (
+                SELECT 1
+                FROM XtThisinhxettuyen25 c
+                WHERE c.cccd = s.cccd
+                  AND c.isDeleted = false
+            )
+        """
+    )
+    Page<XtDiemthixettuyen> findAllWithActiveCandidate(Pageable pageable);
+
     @Query("SELECT s FROM XtDiemthixettuyen s WHERE " +
+           "EXISTS (SELECT 1 FROM XtThisinhxettuyen25 c WHERE c.cccd = s.cccd AND c.isDeleted = false) " +
+           "AND " +
            "(:keyword IS NULL OR s.cccd LIKE :keyword OR s.sobaodanh LIKE :keyword) " +
            "AND (:phuongThuc IS NULL OR s.dPhuongthuc = :phuongThuc)")
     Page<XtDiemthixettuyen> searchScores(

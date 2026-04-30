@@ -97,49 +97,49 @@ public class CandidateFormDialog extends JDialog {
         
         // Ngày sinh
         gbc.gridx = 0; gbc.gridy = 2;
-        panel.add(createLabel("Ngày sinh:"), gbc);
+        panel.add(createLabel("Ngày sinh *:"), gbc);
         gbc.gridx = 1;
         spnNgaySinh = createDateSpinner();
         panel.add(spnNgaySinh, gbc);
         
         // Giới tính
         gbc.gridx = 2;
-        panel.add(createLabel("Giới tính:"), gbc);
+        panel.add(createLabel("Giới tính *:"), gbc);
         gbc.gridx = 3;
         cboGioiTinh = createComboBox(new String[]{"Nam", "Nữ"});
         panel.add(cboGioiTinh, gbc);
         
         // Số điện thoại
         gbc.gridx = 0; gbc.gridy = 3;
-        panel.add(createLabel("Số điện thoại:"), gbc);
+        panel.add(createLabel("Số điện thoại *:"), gbc);
         gbc.gridx = 1;
         txtDienThoai = createTextField();
         panel.add(txtDienThoai, gbc);
         
         // Email
         gbc.gridx = 2;
-        panel.add(createLabel("Email:"), gbc);
+        panel.add(createLabel("Email *:"), gbc);
         gbc.gridx = 3;
         txtEmail = createTextField();
         panel.add(txtEmail, gbc);
         
         // Nơi sinh
         gbc.gridx = 0; gbc.gridy = 4;
-        panel.add(createLabel("Nơi sinh:"), gbc);
+        panel.add(createLabel("Nơi sinh *:"), gbc);
         gbc.gridx = 1;
         txtNoiSinh = createTextField();
         panel.add(txtNoiSinh, gbc);
         
         // Đối tượng ưu tiên
         gbc.gridx = 2;
-        panel.add(createLabel("Đối tượng:"), gbc);
+        panel.add(createLabel("Đối tượng *:"), gbc);
         gbc.gridx = 3;
         cboDoiTuong = createComboBox(new String[]{"Không", "KV1", "KV2-NT", "KV2", "KV3", "Con thương binh"});
         panel.add(cboDoiTuong, gbc);
         
         // Khu vực
         gbc.gridx = 0; gbc.gridy = 5;
-        panel.add(createLabel("Khu vực:"), gbc);
+        panel.add(createLabel("Khu vực *:"), gbc);
         gbc.gridx = 1;
         cboKhuVuc = createComboBox(new String[]{"KV1", "KV2", "KV3"});
         panel.add(cboKhuVuc, gbc);
@@ -199,11 +199,8 @@ public class CandidateFormDialog extends JDialog {
 		candidate.setTen(txtTen.getText().trim());
 		candidate.setNgaySinh(CandidateMapper.toLocalDate((Date) spnNgaySinh.getValue()));
 		
-		String dt = txtDienThoai.getText().trim();
-	    candidate.setDienThoai(dt.isEmpty() ? null : dt);
-	    
-	    String mail = txtEmail.getText().trim();
-	    candidate.setEmail(mail.isEmpty() ? null : mail);
+		candidate.setDienThoai(txtDienThoai.getText().trim());
+	    candidate.setEmail(txtEmail.getText().trim());
 	    
 		candidate.setGioiTinh((String) cboGioiTinh.getSelectedItem());
 		candidate.setNoiSinh(txtNoiSinh.getText().trim());
@@ -280,21 +277,50 @@ public class CandidateFormDialog extends JDialog {
         }
 
         String sdt = txtDienThoai.getText().trim();
-        if (!sdt.isEmpty() && !sdt.matches("^0\\d{9}$")) {
+        if (sdt.isEmpty()) {
+            showError("Số điện thoại không được để trống", txtDienThoai);
+            return false;
+        }
+        if (!sdt.matches("^0\\d{9}$")) {
             showError("Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0", txtDienThoai);
             return false;
         }
 
         String email = txtEmail.getText().trim();
-        if (!email.isEmpty() && !email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+        if (email.isEmpty()) {
+            showError("Email không được để trống", txtEmail);
+            return false;
+        }
+        if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
             showError("Email không đúng định dạng", txtEmail);
+            return false;
+        }
+
+        String noiSinh = txtNoiSinh.getText().trim();
+        if (noiSinh.isEmpty()) {
+            showError("Nơi sinh không được để trống", txtNoiSinh);
+            return false;
+        }
+
+        if (cboGioiTinh.getSelectedItem() == null) {
+            showError("Giới tính không được để trống", cboGioiTinh);
+            return false;
+        }
+
+        if (cboDoiTuong.getSelectedItem() == null) {
+            showError("Đối tượng không được để trống", cboDoiTuong);
+            return false;
+        }
+
+        if (cboKhuVuc.getSelectedItem() == null) {
+            showError("Khu vực không được để trống", cboKhuVuc);
             return false;
         }
 
         return true;
     }
 
-    private void showError(String message, JTextField field) {
+    private void showError(String message, JComponent field) {
         JOptionPane.showMessageDialog(this, message, "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
         field.requestFocus();
     }

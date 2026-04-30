@@ -39,6 +39,21 @@ public interface CandidateRepository extends JpaRepository<XtThisinhxettuyen25, 
     @Modifying
     @Query("UPDATE XtThisinhxettuyen25 c SET c.isDeleted = true WHERE c.cccd = :cccd AND c.isDeleted = false")
     void softDeleteByCccd(@Param("cccd") String cccd);
+
+    @Transactional
+    @Modifying
+    @Query(value = "UPDATE xt_diemthixettuyen SET is_deleted = true WHERE cccd = :cccd AND is_deleted = false", nativeQuery = true)
+    void softDeleteScoresByCccd(@Param("cccd") String cccd);
+
+    @Transactional
+    @Modifying
+    @Query(value = "UPDATE xt_diemcongxettuyen SET is_deleted = true WHERE cccd = :cccd AND is_deleted = false", nativeQuery = true)
+    void softDeleteBonusScoresByCccd(@Param("cccd") String cccd);
+
+    @Transactional
+    @Modifying
+    @Query(value = "UPDATE xt_nguyenvongxettuyen SET is_deleted = true WHERE nn_cccd = :cccd AND is_deleted = false", nativeQuery = true)
+    void softDeleteAspirationsByCccd(@Param("cccd") String cccd);
     
     @Transactional
     @Modifying

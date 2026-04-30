@@ -39,7 +39,7 @@ public class ScoreServiceImpl implements ScoreService {
     @Override
     @Transactional(readOnly = true)
     public Page<ScoreDTO> getAllScores(Pageable pageable) {
-        return scoreRepository.findAll(pageable)
+        return scoreRepository.findAllWithActiveCandidate(pageable)
                 .map(scoreMapper::toDto);
     }
 

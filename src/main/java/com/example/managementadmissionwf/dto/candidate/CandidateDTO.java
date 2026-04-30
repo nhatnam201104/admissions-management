@@ -49,23 +49,29 @@ public class CandidateDTO {
     @ExcelColumn(name = "Ngày Sinh")
     private LocalDate ngaySinh;
     
-    @Pattern(regexp = "^(0\\d{9})?$", message = "Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0")
+    @NotBlank(message = "Số điện thoại không được để trống")
+    @Pattern(regexp = "^0\\d{9}$", message = "Số điện thoại phải có 10 chữ số và bắt đầu bằng số 0")
     @ExcelColumn(name = "SĐT")
     private String dienThoai;
     
+    @NotBlank(message = "Email không được để trống")
     @Email(message = "Email không đúng định dạng")
     @ExcelColumn(name = "Email")
     private String email;
     
+    @NotBlank(message = "Giới tính không được để trống")
     @ExcelColumn(name = "Giới Tính")
     private String gioiTinh;
     
+    @NotBlank(message = "Nơi sinh không được để trống")
     @ExcelColumn(name = "Nơi Sinh")
     private String noiSinh;
     
+    @NotBlank(message = "Đối tượng không được để trống")
     @ExcelColumn(name = "Đối Tượng")
     private String doiTuong;
     
+    @NotBlank(message = "Khu vực không được để trống")
     @ExcelColumn(name = "Khu Vực")
     private String khuVuc;
     
