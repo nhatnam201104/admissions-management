@@ -1,200 +1,337 @@
 package com.example.managementadmissionwf.bus.impl;
 
+import com.example.managementadmissionwf.bus.interfaces.AdmissionResultService;
 import com.example.managementadmissionwf.bus.interfaces.MajorService;
-import com.example.managementadmissionwf.dto.MajorDTO;
-import com.example.managementadmissionwf.dto.MajorTohopDTO;
-import jakarta.annotation.PostConstruct;
+import com.example.managementadmissionwf.dal.entity.XtNganh;
+import com.example.managementadmissionwf.dal.entity.XtNganhTohop;
+import com.example.managementadmissionwf.dal.repository.MajorRepository;
+import com.example.managementadmissionwf.dal.repository.NganhTohopRepository;
+import com.example.managementadmissionwf.dto.admission.AdmissionResultDTO;
+import com.example.managementadmissionwf.dto.common.ImportResult;
+import com.example.managementadmissionwf.dto.common.Paging;
+import com.example.managementadmissionwf.dto.major.MajorDTO;
+import com.example.managementadmissionwf.dto.major.MajorTohopDTO;
+import com.example.managementadmissionwf.mapper.MajorMapper;
+import com.example.managementadmissionwf.mapper.NganhTohopMapper;
+import com.example.managementadmissionwf.util.ExcelUtil;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
+import java.util.Optional;
+import java.util.Set;
 
-@Slf4j
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class MajorServiceImpl implements MajorService {
 
-    // 1. MOCK DATABASE
-    private final Map<Integer, MajorDTO> majorDatabase = new ConcurrentHashMap<>();
-    
-    // Bộ đếm giả lập Auto Increment ID của Database
-    private final AtomicInteger majorIdCounter = new AtomicInteger(1);
-    private final AtomicInteger tohopIdCounter = new AtomicInteger(1);
+    private static final String RESULT_TRUNG_TUYEN = "TRUNG_TUYEN";
+    private static final String METHOD_TUYEN_THANG = "TUYEN_THANG";
+    private static final String METHOD_TUYEN_THANG_SHORT = "T.THẲNG";
+    private static final String METHOD_XT_TT = "XT_TT";
+    private static final String METHOD_DGNL = "DGNL";
+    private static final String METHOD_VSAT = "VSAT";
+    private static final String METHOD_THPT = "THPT";
+    private static final String METHOD_XET_THPT = "XET_THPT";
+    private static final Set<String> TUYEN_THANG_METHODS = Set.of(
+            METHOD_TUYEN_THANG,
+            METHOD_TUYEN_THANG_SHORT,
+            METHOD_XT_TT
+    );
+    private static final Set<String> THPT_METHODS = Set.of(METHOD_THPT, METHOD_XET_THPT);
 
-    // 2. KHỞI TẠO DỮ LIỆU MẪU (Initialization)
-    @PostConstruct
-    public void init() {
-        log.info("Khởi tạo Mock Data: Bắt đầu nạp dữ liệu Ngành và Tổ hợp...");
-
-        MajorDTO cntt = new MajorDTO();
-        cntt.setIdNganh(majorIdCounter.getAndIncrement());
-        cntt.setMaNganh("7480201");
-        cntt.setTenNganh("Công nghệ thông tin");
-        cntt.setNChiTieu(500);
-        cntt.setNDiemSan(18.0);
-        cntt.setTohopList(new ArrayList<>());
-
-        MajorDTO kdqt = new MajorDTO();
-        kdqt.setIdNganh(majorIdCounter.getAndIncrement());
-        kdqt.setMaNganh("7340120");
-        kdqt.setTenNganh("Kinh doanh quốc tế");
-        kdqt.setNChiTieu(200);
-        kdqt.setNDiemSan(20.0);
-        kdqt.setTohopList(new ArrayList<>());
-
-        // Map Tổ hợp vào Ngành CNTT
-        MajorTohopDTO tohopA00 = new MajorTohopDTO(
-                tohopIdCounter.getAndIncrement(), "7480201", "A00",
-                "Toán", 2.0, "Vật lý", 1.0, "Hóa học", 1.0);
-        MajorTohopDTO tohopA01 = new MajorTohopDTO(
-                tohopIdCounter.getAndIncrement(), "7480201", "A01",
-                "Toán", 2.0, "Vật lý", 1.0, "Tiếng Anh", 1.0);
-        
-        cntt.getTohopList().add(tohopA00);
-        cntt.getTohopList().add(tohopA01);
-
-        // Lưu vào Mock Database
-        majorDatabase.put(cntt.getIdNganh(), cntt);
-        majorDatabase.put(kdqt.getIdNganh(), kdqt);
-
-        log.info("Khởi tạo Mock Data thành công. Đang có {} ngành trong hệ thống.", majorDatabase.size());
-    }
-
-    // 3. CRUD NGÀNH (MAJOR MANAGEMENT)
+    private final MajorRepository majorRepository;
+    private final NganhTohopRepository nganhTohopRepository;
+    private final MajorMapper majorMapper;
+    private final NganhTohopMapper nganhTohopMapper;
+    private final AdmissionResultService admissionResultService;
 
     @Override
-    public List<MajorDTO> getAllMajors() {
-        log.debug("Lấy danh sách toàn bộ ngành học.");
-        return new ArrayList<>(majorDatabase.values());
+    public Paging<MajorDTO> search(String keyword, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("idnganh").descending());
+        Page<XtNganh> entityPage = (keyword != null && !keyword.trim().isEmpty())
+                ? majorRepository.search(keyword.trim(), pageable)
+                : majorRepository.findByIsDeletedFalse(pageable);
+
+        List<MajorDTO> responses = majorMapper.toResponseList(entityPage.getContent());
+        return Paging.<MajorDTO>builder()
+                .data(responses)
+                .totalItems(entityPage.getTotalElements())
+                .totalPages(entityPage.getTotalPages())
+                .page(entityPage.getNumber() + 1)
+                .limit(entityPage.getSize())
+                .hasNext(entityPage.hasNext())
+                .build();
     }
 
     @Override
-    public MajorDTO getMajorByCode(String maNganh) {
-        log.debug("Tìm kiếm ngành bằng mã: {}", maNganh);
-        return majorDatabase.values().stream()
-                .filter(m -> m.getMaNganh().equalsIgnoreCase(maNganh))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Lỗi: Không tìm thấy ngành có mã " + maNganh));
+    public MajorDTO getByMaNganh(String maNganh) {
+        XtNganh entity = majorRepository.findByManganhAndIsDeletedFalse(maNganh)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ngành với mã: " + maNganh));
+        return majorMapper.toResponse(entity);
     }
 
-    @Override
-    public List<MajorDTO> searchMajors(String keyword) {
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return getAllMajors();
-        }
-        String kw = keyword.toLowerCase();
-        return majorDatabase.values().stream()
-                .filter(m -> m.getTenNganh().toLowerCase().contains(kw) || 
-                             m.getMaNganh().toLowerCase().contains(kw))
-                .collect(Collectors.toList());
+    private void updateMajorStatistics(XtNganh nganh) {
+        List<AdmissionResultDTO> results = admissionResultService.getByMajor(nganh.getManganh());
+        updateMajorStatistics(nganh, results);
     }
 
-    @Override
-    public MajorDTO createMajor(MajorDTO dto) {
-        log.info("Yêu cầu thêm mới ngành: {}", dto.getTenNganh());
-        
-        // Kiểm tra trùng mã ngành
-        boolean isDuplicate = majorDatabase.values().stream()
-                .anyMatch(m -> m.getMaNganh().equalsIgnoreCase(dto.getMaNganh()));
-        if (isDuplicate) {
-            throw new RuntimeException("Lỗi: Mã ngành " + dto.getMaNganh() + " đã tồn tại trong hệ thống.");
-        }
+    private void updateMajorStatistics(XtNganh nganh, List<AdmissionResultDTO> results) {
+        int slXtt = 0, slDgnl = 0, slVsat = 0, slThpt = 0;
 
-        // Cấp phát ID và đảm bảo list tổ hợp không bị null
-        dto.setIdNganh(majorIdCounter.getAndIncrement());
-        if (dto.getTohopList() == null) {
-            dto.setTohopList(new ArrayList<>());
-        }
+        for (AdmissionResultDTO r : results) {
+            if (!RESULT_TRUNG_TUYEN.equals(r.getKetQua())) continue;
 
-        majorDatabase.put(dto.getIdNganh(), dto);
-        log.info("Thêm mới thành công. ID cấp phát: {}", dto.getIdNganh());
-        return dto;
-    }
+            String pt = (r.getPhuongThuc() != null ? r.getPhuongThuc().toUpperCase().trim() : "");
 
-    @Override
-    public MajorDTO updateMajor(MajorDTO dto) {
-        Integer idNganh = dto.getIdNganh(); 
-        
-        log.info("Yêu cầu cập nhật thông tin ngành ID: {}", idNganh);
-
-        // 1. Kiểm tra an toàn: Đảm bảo DTO gửi lên có chứa ID
-        if (idNganh == null) {
-            throw new RuntimeException("Lỗi: Không thể cập nhật vì thiếu ID ngành (idNganh is null).");
-        }
-        
-        // 2. Kiểm tra xem ID này có tồn tại trong Database không
-        if (!majorDatabase.containsKey(idNganh)) {
-            throw new RuntimeException("Lỗi: Không tìm thấy ngành với ID " + idNganh + " để cập nhật.");
-        }
-
-        // 3. Nếu client không gửi lên tohopList, giữ nguyên tohopList cũ để không bị ghi đè mất data
-        if (dto.getTohopList() == null) {
-            dto.setTohopList(majorDatabase.get(idNganh).getTohopList());
-        }
-
-        // 4. Cập nhật vào Mock Database
-        majorDatabase.put(idNganh, dto);
-        log.info("Cập nhật thành công ngành ID: {}", idNganh);
-        
-        return dto;
-    }
-
-    @Override
-    public void deleteMajor(Integer id) {
-        log.warn("Yêu cầu xóa ngành ID: {}", id);
-        if (majorDatabase.remove(id) == null) {
-            throw new RuntimeException("Lỗi: Không thể xóa vì ID " + id + " không tồn tại.");
-        }
-        log.info("Xóa thành công ngành ID: {}", id);
-    }
-
-    // 4. QUẢN LÝ MAPPING (TỔ HỢP - NGÀNH)
-
-    @Override
-    public void addSubjectGroup(String maNganh, String maTohop) {
-        log.info("Yêu cầu thêm tổ hợp {} vào ngành {}", maTohop, maNganh);
-        MajorDTO major = getMajorByCode(maNganh);
-
-        // Chặn thêm trùng tổ hợp vào cùng 1 ngành
-        boolean isExist = major.getTohopList().stream()
-                .anyMatch(th -> th.getMaToHop().equalsIgnoreCase(maTohop));
-        if (isExist) {
-            throw new RuntimeException("Lỗi: Tổ hợp " + maTohop + " đã có sẵn trong ngành " + maNganh);
-        }
-
-        // Mock dữ liệu cho tổ hợp mới
-        MajorTohopDTO newTohop = new MajorTohopDTO();
-        newTohop.setId(tohopIdCounter.getAndIncrement());
-        newTohop.setMaNganh(maNganh);
-        newTohop.setMaToHop(maTohop);
-        newTohop.setThMon1("Môn 1"); newTohop.setHsMon1(1.0);
-        newTohop.setThMon2("Môn 2"); newTohop.setHsMon2(1.0);
-        newTohop.setThMon3("Môn 3"); newTohop.setHsMon3(1.0);
-
-        major.getTohopList().add(newTohop);
-        log.info("Thêm tổ hợp thành công.");
-    }
-
-    @Override
-    public void removeSubjectGroup(Integer tohopId) {
-        log.warn("Yêu cầu gỡ bỏ tổ hợp có ID: {}", tohopId);
-        boolean isRemoved = false;
-
-        // Quét toàn bộ database các ngành để tìm và xóa tổ hợp có ID trùng khớp
-        for (MajorDTO major : majorDatabase.values()) {
-            isRemoved = major.getTohopList().removeIf(th -> th.getId().equals(tohopId));
-            if (isRemoved) {
-                log.info("Đã gỡ bỏ tổ hợp ID {} khỏi ngành {}", tohopId, major.getMaNganh());
-                break;
+            if (TUYEN_THANG_METHODS.contains(pt)) {
+                slXtt++;
+            } else if (METHOD_DGNL.equals(pt)) {
+                slDgnl++;
+            } else if (METHOD_VSAT.equals(pt)) {
+                slVsat++;
+            } else if (THPT_METHODS.contains(pt)) {
+                slThpt++;
             }
         }
 
-        if (!isRemoved) {
-            throw new RuntimeException("Lỗi: Không tìm thấy tổ hợp với ID " + tohopId + " để xóa.");
+        nganh.setSlXtt(slXtt);
+        nganh.setSlDgnl(slDgnl);
+        nganh.setSlVsat(slVsat);
+        nganh.setSlThpt(slThpt);
+    }
+
+    private Map<String, List<AdmissionResultDTO>> groupAdmissionResultsByMajor(List<AdmissionResultDTO> results) {
+        Map<String, List<AdmissionResultDTO>> resultsByMajor = new HashMap<>();
+        for (AdmissionResultDTO result : results) {
+            addAdmissionResult(resultsByMajor, result.getManganh(), result);
+            if (result.getTennganh() != null && !result.getTennganh().equals(result.getManganh())) {
+                addAdmissionResult(resultsByMajor, result.getTennganh(), result);
+            }
         }
+        return resultsByMajor;
+    }
+
+    private void addAdmissionResult(Map<String, List<AdmissionResultDTO>> resultsByMajor,
+                                    String majorKey,
+                                    AdmissionResultDTO result) {
+        if (majorKey == null || majorKey.isBlank()) return;
+        resultsByMajor.computeIfAbsent(majorKey, key -> new ArrayList<>()).add(result);
+    }
+
+    private void validateDto(MajorDTO dto) {
+        if (dto.getTohopGoc() == null || dto.getTohopGoc().trim().isEmpty()) {
+            throw new RuntimeException("Tổ hợp gốc không được để trống");
+        }
+        boolean hasMethod = Boolean.TRUE.equals(dto.getTuyenThang()) ||
+                Boolean.TRUE.equals(dto.getDgnl()) ||
+                Boolean.TRUE.equals(dto.getThpt()) ||
+                Boolean.TRUE.equals(dto.getVsat());
+        if (!hasMethod) {
+            throw new RuntimeException("Phải chọn ít nhất một phương thức xét tuyển");
+        }
+    }
+
+    @Override
+    @Transactional
+    public MajorDTO create(MajorDTO dto) {
+        if (majorRepository.existsByManganhAndIsDeletedFalse(dto.getMaNganh())) {
+            throw new RuntimeException("Mã ngành đã tồn tại: " + dto.getMaNganh());
+        }
+        validateDto(dto);
+
+        XtNganh entity = majorMapper.toEntity(dto);
+        updateMajorStatistics(entity);
+
+        entity = majorRepository.save(entity);
+        return majorMapper.toResponse(entity);
+    }
+
+    @Override
+    @Transactional
+    public MajorDTO update(String maNganhCu, MajorDTO dto) {
+        XtNganh entity = majorRepository.findByManganhAndIsDeletedFalse(maNganhCu)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ngành với mã: " + maNganhCu));
+
+        if (majorRepository.existsByManganhAndIdnganhNotAndIsDeletedFalse(dto.getMaNganh(), entity.getIdnganh())) {
+            throw new RuntimeException("Mã ngành đã tồn tại: " + dto.getMaNganh());
+        }
+        validateDto(dto);
+
+        majorMapper.updateEntity(entity, dto);
+        updateMajorStatistics(entity);
+
+        entity = majorRepository.save(entity);
+        return majorMapper.toResponse(entity);
+    }
+
+    @Override
+    @Transactional
+    public void delete(String maNganh) {
+        XtNganh entity = majorRepository.findByManganhAndIsDeletedFalse(maNganh)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ngành với mã: " + maNganh));
+        entity.setIsDeleted(true);
+        majorRepository.save(entity);
+    }
+
+    @Override
+    public Paging<MajorTohopDTO> getTohopByMaNganh(String maNganh, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
+        Page<XtNganhTohop> entityPage = nganhTohopRepository.findByManganh(maNganh, pageable);
+        return Paging.<MajorTohopDTO>builder()
+                .data(nganhTohopMapper.toResponseList(entityPage.getContent()))
+                .totalItems(entityPage.getTotalElements())
+                .totalPages(entityPage.getTotalPages())
+                .page(entityPage.getNumber() + 1)
+                .limit(entityPage.getSize())
+                .hasNext(entityPage.hasNext())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public MajorTohopDTO addTohop(MajorTohopDTO tohopDTO) {
+        if (nganhTohopRepository.existsByManganhAndMatohopAndIsDeletedFalse(
+                tohopDTO.getMaNganh(), tohopDTO.getMaToHop())) {
+            throw new RuntimeException("Tổ hợp " + tohopDTO.getMaToHop() + " đã tồn tại cho ngành " + tohopDTO.getMaNganh());
+        }
+        XtNganhTohop entity = nganhTohopMapper.toEntity(tohopDTO);
+        entity = nganhTohopRepository.save(entity);
+        return nganhTohopMapper.toResponse(entity);
+    }
+
+    @Override
+    @Transactional
+    public void removeTohop(Integer tohopId) {
+        XtNganhTohop entity = nganhTohopRepository.findById(tohopId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy mapping tổ hợp với ID: " + tohopId));
+        entity.setIsDeleted(true);
+        nganhTohopRepository.save(entity);
+    }
+
+    @Override
+    public void exportExcel(OutputStream outputStream, String keyword) {
+        try {
+            Pageable unpaged = Pageable.unpaged();
+            Page<XtNganh> page = (keyword != null && !keyword.trim().isEmpty())
+                    ? majorRepository.search(keyword.trim(), unpaged)
+                    : majorRepository.findByIsDeletedFalse(unpaged);
+
+            List<MajorDTO> data = majorMapper.toResponseList(page.getContent());
+            ExcelUtil.exportExcel(data, MajorDTO.class, outputStream);
+        } catch (Exception e) {
+            throw new RuntimeException("Không thể xuất file Excel: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public ImportResult<MajorDTO> importExcel(InputStream inputStream) {
+        ImportResult<MajorDTO> result = new ImportResult<>();
+        List<String> errors = new ArrayList<>();
+        List<MajorDTO> validData = new ArrayList<>();
+
+        try {
+            List<MajorDTO> importedList = ExcelUtil.importExcel(inputStream, MajorDTO.class);
+            result.setTotalRows(importedList.size());
+
+            int rowNum = 2;
+            for (MajorDTO dto : importedList) {
+                String cleanMaNganh = null;
+
+                try {
+                    if (dto.getMaNganh() == null || dto.getMaNganh().trim().isEmpty()) {
+                        errors.add("Dòng " + rowNum + ": Mã ngành không được trống");
+                        rowNum++;
+                        continue;
+                    }
+
+                    dto.setTohopList(null);
+                    dto.setIdNganh(null);
+                    cleanMaNganh = dto.getMaNganh().trim().toUpperCase();
+
+                    validateDto(dto);
+
+                    XtNganh entity;
+
+                    // Tìm ngành theo mã (bất kể is_deleted = true hay false)
+                    Optional<XtNganh> optNganh = majorRepository.findByManganh(cleanMaNganh);
+
+                    if (optNganh.isPresent()) {
+                        entity = optNganh.get();
+                        // Nếu ngành đang bị soft-delete thì restore nó
+                        if (Boolean.TRUE.equals(entity.getIsDeleted())) {
+                            log.info("Import - RESTORE ngành soft-deleted: {}", cleanMaNganh);
+                            entity.setIsDeleted(false);
+                        } else {
+                            log.info("Import - UPDATE ngành tồn tại: {}", cleanMaNganh);
+                        }
+                        majorMapper.updateEntity(entity, dto);
+                    } else {
+                        // Tạo mới hoàn toàn
+                        log.info("Import - CREATE ngành mới: {}", cleanMaNganh);
+                        entity = majorMapper.toEntity(dto);
+                        entity.setManganh(cleanMaNganh);
+                        entity.setIsDeleted(false);
+                    }
+
+                    updateMajorStatistics(entity);
+                    majorRepository.save(entity);
+                    validData.add(dto);
+
+                } catch (DataIntegrityViolationException e) {
+                    errors.add("Dòng " + rowNum + ": Mã ngành '" + (cleanMaNganh != null ? cleanMaNganh : "unknown")
+                            + "' đã tồn tại và không thể cập nhật (duplicate key)");
+                } catch (Exception ex) {
+                    errors.add("Dòng " + rowNum + ": " + ex.getMessage());
+                }
+                rowNum++;
+            }
+
+            result.setSuccessCount(validData.size());
+            result.setErrorCount(errors.size());
+            result.setErrors(errors);
+            result.setValidData(validData);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi đọc file Excel: " + e.getMessage(), e);
+        }
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public void refreshAllStatistics() {
+        List<XtNganh> allMajors = majorRepository.findByIsDeletedFalse();
+        Map<String, List<AdmissionResultDTO>> resultsByMajor =
+                groupAdmissionResultsByMajor(admissionResultService.getAllResults());
+        List<XtNganh> updatedMajors = new ArrayList<>();
+        int updated = 0;
+        for (XtNganh nganh : allMajors) {
+            if (!Boolean.TRUE.equals(nganh.getIsDeleted())) {
+                List<AdmissionResultDTO> majorResults = resultsByMajor.getOrDefault(
+                        nganh.getManganh(),
+                        Collections.emptyList()
+                );
+                updateMajorStatistics(nganh, majorResults);
+                updatedMajors.add(nganh);
+                updated++;
+            }
+        }
+        majorRepository.saveAll(updatedMajors);
+        log.info("Đã refresh thống kê sl_* cho {} ngành", updated);
     }
 }

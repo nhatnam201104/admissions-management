@@ -1,54 +1,58 @@
 package com.example.managementadmissionwf.ui.panel.major;
 
-import com.example.managementadmissionwf.ui.util.ToolbarAction;
-import com.example.managementadmissionwf.ui.util.UIFactory;
+import com.example.managementadmissionwf.bus.interfaces.MajorService;
+import com.example.managementadmissionwf.bus.interfaces.SubjectGroupService;
+import com.example.managementadmissionwf.dto.common.ImportResult;
+import com.example.managementadmissionwf.dto.major.MajorDTO;
 import com.example.managementadmissionwf.ui.panel.AbstractFeaturePanel;
+import com.example.managementadmissionwf.ui.util.ToolbarAction;
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.EnumSet;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 @Component
 public class MajorPanel extends AbstractFeaturePanel {
 
-    private JTable majorTable;
-    private DefaultTableModel tableModel;
-    private JComboBox<String> cboPhuongThuc;
+    private final MajorService majorService;
+    private final SubjectGroupService subjectGroupService;
+    private MajorController controller;
+    private MajorListPanel listPanel;
 
-    // Mock data
-    private List<Object[]> allData = new ArrayList<>();
-    private List<Object[]> filteredData = new ArrayList<>();
-
-    public MajorPanel() {
-        super();
+    @Autowired
+    public MajorPanel(MajorService majorService, SubjectGroupService subjectGroupService) {
+        this.majorService = majorService;
+        this.subjectGroupService = subjectGroupService;
     }
 
     @PostConstruct
-    private void initComponents() {
-        generateMockData();
+    private void init() {
+        this.controller = new MajorController(majorService);
+        this.listPanel = new MajorListPanel(controller);
         buildUI();
-        applyFilters();
     }
 
     @Override
-    protected void createFilterFields(JPanel filterPanel) {
-        filterPanel.add(UIFactory.createFilterLabel("Phương thức:"));
-        cboPhuongThuc = UIFactory.createFilterCombo(
-                new String[]{"Tất cả", "THPT", "ĐGNL", "Tuyển thẳng", "VSAT"}, 140);
-        filterPanel.add(cboPhuongThuc);
+    protected JComponent createContentPanel() {
+        return listPanel;
     }
 
     @Override
-    protected void resetFilters() {
-        super.resetFilters();
-        if (cboPhuongThuc != null) cboPhuongThuc.setSelectedIndex(0);
-        applyFilters();
+    protected void loadData() {
+        if (controller == null || listPanel == null || txtSearch == null) return;
+        String keyword = txtSearch.getText().trim();
+        int page = currentPage;
+        int size = getPageSize();
+        controller.loadMajorsWithPaging(keyword, listPanel.getMasterModel(), page, size);
+    }
+
+    @Override
+    protected String getItemLabel() {
+        return "ngành";
     }
 
     @Override
@@ -59,97 +63,65 @@ public class MajorPanel extends AbstractFeaturePanel {
 
     @Override
     protected void onToolbarAction(ToolbarAction action) {
-        // TODO: Wire to MajorController when service layer is fully implemented
-    }
-
-    @Override
-    protected JComponent createContentPanel() {
-        String[] columnNames = {"Mã Ngành", "Tên Ngành", "Chỉ Tiêu", "Điểm Sàn", "Phương thức"};
-        tableModel = new DefaultTableModel(columnNames, 0) {
-            @Override
-            public boolean isCellEditable(int r, int c) { return false; }
-        };
-
-        majorTable = UIFactory.createStandardTable(tableModel);
-        return UIFactory.createStandardScrollPane(majorTable);
-    }
-
-    @Override
-    protected void loadData() {
-        applyFilters();
-    }
-
-    @Override
-    protected String getItemLabel() {
-        return "ngành";
-    }
-
-    // ========== Client-side filter logic ==========
-
-    private void applyFilters() {
-        String keyword = getSearchField().getText().trim().toLowerCase();
-        String phuongThuc = cboPhuongThuc != null ? (String) cboPhuongThuc.getSelectedItem() : "Tất cả";
-
-        filteredData = allData.stream().filter(row -> {
-            boolean mKw = keyword.isEmpty()
-                    || row[0].toString().toLowerCase().contains(keyword)
-                    || row[1].toString().toLowerCase().contains(keyword);
-            boolean mPt = phuongThuc.equals("Tất cả") || row[4].toString().contains(phuongThuc);
-            return mKw && mPt;
-        }).collect(Collectors.toList());
-
-        currentPage = 1;
-        updateTable();
-    }
-
-    private void updateTable() {
-        tableModel.setRowCount(0);
-        int pageSize = getPageSize();
-        int total = filteredData.size();
-        int totalPages = Math.max(1, (int) Math.ceil((double) total / pageSize));
-        int start = (currentPage - 1) * pageSize;
-        int end = Math.min(start + pageSize, total);
-
-        for (int i = start; i < end; i++) {
-            tableModel.addRow(filteredData.get(i));
+        switch (action) {
+            case ADD -> showAddDialog();
+            case EDIT -> showEditDialog();
+            case DELETE -> deleteSelectedMajor();
+            case REFRESH -> refreshData();
+            case EXPORT_EXCEL -> exportToExcel();
+            case IMPORT_EXCEL -> importFromExcel();
         }
-
-        updatePaginationDirect(currentPage, totalPages, total);
     }
 
-    // ========== Mock data ==========
+    private void showAddDialog() {
+        new MajorFormDialog((JFrame) SwingUtilities.getWindowAncestor(this), controller, subjectGroupService, null).setVisible(true);
+    }
 
-    private void generateMockData() {
-        String[][] rawData = {
-                {"7480201", "Công nghệ thông tin", "500", "18.0", "THPT, ĐGNL"},
-                {"7480101", "Khoa học máy tính", "400", "19.0", "THPT, ĐGNL"},
-                {"7480102", "Mạng máy tính", "350", "18.5", "THPT"},
-                {"7480103", "Kỹ thuật phần mềm", "450", "19.5", "THPT, ĐGNL"},
-                {"7340120", "Kinh doanh quốc tế", "200", "20.0", "THPT"},
-                {"7340115", "Marketing", "300", "21.0", "THPT, Tuyển thẳng"},
-                {"7340116", "Thương mại điện tử", "250", "20.5", "THPT, ĐGNL"},
-                {"7340101", "Quản trị kinh doanh", "500", "20.0", "THPT"},
-                {"7340201", "Tài chính - Ngân hàng", "350", "21.5", "THPT"},
-                {"7340301", "Kế toán", "300", "20.0", "THPT"},
-                {"7340302", "Kiểm toán", "200", "21.0", "THPT"},
-                {"7220201", "Ngôn ngữ Anh", "400", "22.0", "THPT"},
-                {"7220202", "Ngôn ngữ Trung", "300", "21.0", "THPT"},
-                {"7220203", "Ngôn ngữ Nhật", "250", "21.5", "THPT"},
-                {"7220204", "Ngôn ngữ Hàn", "200", "22.0", "THPT"},
-                {"7140209", "Sư phạm Toán học", "100", "22.0", "THPT"},
-                {"7140210", "Sư phạm Vật lý", "120", "22.5", "THPT"},
-                {"7140211", "Sư phạm Hóa học", "100", "22.0", "THPT"},
-                {"7140212", "Sư phạm Sinh học", "90", "21.5", "THPT"},
-                {"7510201", "Công nghệ kỹ thuật cơ khí", "300", "18.0", "THPT"},
-                {"7510301", "Công nghệ kỹ thuật điện", "280", "18.5", "THPT"},
-                {"7510401", "Công nghệ kỹ thuật điện tử", "260", "19.0", "THPT"},
-                {"7580201", "Kỹ thuật xây dựng", "200", "17.5", "THPT"}
-        };
-
-        allData = new ArrayList<>();
-        for (String[] row : rawData) {
-            allData.add(row);
+    private void showEditDialog() {
+        String maNganh = listPanel.getSelectedMaNganh();
+        if (maNganh == null) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một ngành!");
+            return;
         }
-        filteredData = new ArrayList<>(allData);
+        try {
+            MajorDTO dto = majorService.getByMaNganh(maNganh);
+            new MajorFormDialog((JFrame) SwingUtilities.getWindowAncestor(this), controller, subjectGroupService, dto).setVisible(true);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage());
+        }
+    }
+
+    private void deleteSelectedMajor() {
+        String maNganh = listPanel.getSelectedMaNganh();
+        if (maNganh != null) {
+            controller.deleteMajor(maNganh);   // ← đã sửa, không truyền detailModel nữa
+        }
+    }
+
+    private void exportToExcel() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setSelectedFile(new java.io.File("DanhSachNganh_" + java.time.LocalDate.now() + ".xlsx"));
+        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            try (OutputStream os = new java.io.FileOutputStream(fileChooser.getSelectedFile())) {
+                majorService.exportExcel(os, txtSearch.getText().trim());
+                JOptionPane.showMessageDialog(this, "Xuất file Excel thành công!");
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage());
+            }
+        }
+    }
+
+    private void importFromExcel() {
+        JFileChooser fileChooser = new JFileChooser();
+        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            try (InputStream is = new java.io.FileInputStream(fileChooser.getSelectedFile())) {
+                ImportResult<MajorDTO> result = majorService.importExcel(is);
+                String msg = String.format("Kết quả: Thành công %d, Lỗi %d", result.getSuccessCount(), result.getErrorCount());
+                JOptionPane.showMessageDialog(this, msg);
+                refreshData();
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Lỗi Import: " + e.getMessage());
+            }
+        }
     }
 }
