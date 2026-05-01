@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <div th:fragment="alert(type, message)" class="alert" th:classappend="'alert-' + ${type}" role="alert">
+        <div class="d-flex align-items-center">
+            <div th:if="${type == 'success'}">
+                <i class="bi bi-check-circle-fill me-2"></i>
+            </div>
+            <div th:if="${type == 'danger'}">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            </div>
+            <div th:if="${type == 'warning'}">
+                <i class="bi bi-exclamation-circle-fill me-2"></i>
+            </div>
+            <div th:if="${type == 'info'}">
+                <i class="bi bi-info-circle-fill me-2"></i>
+            </div>
+            <div>
+                <span th:text="${message}"></span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
