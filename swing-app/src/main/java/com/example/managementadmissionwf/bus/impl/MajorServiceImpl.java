@@ -50,8 +50,7 @@ public class MajorServiceImpl implements MajorService {
     private static final Set<String> TUYEN_THANG_METHODS = Set.of(
             METHOD_TUYEN_THANG,
             METHOD_TUYEN_THANG_SHORT,
-            METHOD_XT_TT
-    );
+            METHOD_XT_TT);
     private static final Set<String> THPT_METHODS = Set.of(METHOD_THPT, METHOD_XET_THPT);
 
     private final MajorRepository majorRepository;
@@ -94,7 +93,8 @@ public class MajorServiceImpl implements MajorService {
         int slXtt = 0, slDgnl = 0, slVsat = 0, slThpt = 0;
 
         for (AdmissionResultDTO r : results) {
-            if (!RESULT_TRUNG_TUYEN.equals(r.getKetQua())) continue;
+            if (!RESULT_TRUNG_TUYEN.equals(r.getKetQua()))
+                continue;
 
             String pt = (r.getPhuongThuc() != null ? r.getPhuongThuc().toUpperCase().trim() : "");
 
@@ -127,9 +127,10 @@ public class MajorServiceImpl implements MajorService {
     }
 
     private void addAdmissionResult(Map<String, List<AdmissionResultDTO>> resultsByMajor,
-                                    String majorKey,
-                                    AdmissionResultDTO result) {
-        if (majorKey == null || majorKey.isBlank()) return;
+            String majorKey,
+            AdmissionResultDTO result) {
+        if (majorKey == null || majorKey.isBlank())
+            return;
         resultsByMajor.computeIfAbsent(majorKey, key -> new ArrayList<>()).add(result);
     }
 
@@ -184,6 +185,10 @@ public class MajorServiceImpl implements MajorService {
     public void delete(String maNganh) {
         XtNganh entity = majorRepository.findByManganhAndIsDeletedFalse(maNganh)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy ngành với mã: " + maNganh));
+
+        // Rename với prefix + timestamp để tránh duplicate khi tạo mới cùng mã
+        String newManganh = "DELETED_" + maNganh + "_" + System.currentTimeMillis();
+        entity.setManganh(newManganh);
         entity.setIsDeleted(true);
         majorRepository.save(entity);
     }
@@ -207,7 +212,8 @@ public class MajorServiceImpl implements MajorService {
     public MajorTohopDTO addTohop(MajorTohopDTO tohopDTO) {
         if (nganhTohopRepository.existsByManganhAndMatohopAndIsDeletedFalse(
                 tohopDTO.getMaNganh(), tohopDTO.getMaToHop())) {
-            throw new RuntimeException("Tổ hợp " + tohopDTO.getMaToHop() + " đã tồn tại cho ngành " + tohopDTO.getMaNganh());
+            throw new RuntimeException(
+                    "Tổ hợp " + tohopDTO.getMaToHop() + " đã tồn tại cho ngành " + tohopDTO.getMaNganh());
         }
         XtNganhTohop entity = nganhTohopMapper.toEntity(tohopDTO);
         entity = nganhTohopRepository.save(entity);
@@ -316,16 +322,15 @@ public class MajorServiceImpl implements MajorService {
     @Transactional
     public void refreshAllStatistics() {
         List<XtNganh> allMajors = majorRepository.findByIsDeletedFalse();
-        Map<String, List<AdmissionResultDTO>> resultsByMajor =
-                groupAdmissionResultsByMajor(admissionResultService.getAllResults());
+        Map<String, List<AdmissionResultDTO>> resultsByMajor = groupAdmissionResultsByMajor(
+                admissionResultService.getAllResults());
         List<XtNganh> updatedMajors = new ArrayList<>();
         int updated = 0;
         for (XtNganh nganh : allMajors) {
             if (!Boolean.TRUE.equals(nganh.getIsDeleted())) {
                 List<AdmissionResultDTO> majorResults = resultsByMajor.getOrDefault(
                         nganh.getManganh(),
-                        Collections.emptyList()
-                );
+                        Collections.emptyList());
                 updateMajorStatistics(nganh, majorResults);
                 updatedMajors.add(nganh);
                 updated++;
