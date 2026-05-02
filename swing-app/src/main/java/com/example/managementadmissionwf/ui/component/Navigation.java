@@ -9,10 +9,9 @@ import com.example.managementadmissionwf.ui.panel.admission.AdmissionPanel;
 import com.example.managementadmissionwf.ui.panel.StatisticPanel;
 import com.example.managementadmissionwf.ui.panel.user.UserManagementPanel;
 import com.example.managementadmissionwf.ui.panel.BonusScorePanel;
-import com.example.managementadmissionwf.ui.panel.ConversionTablePanel;
+import com.example.managementadmissionwf.ui.panel.conversion.ConversionTablePanel;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
-
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -38,7 +37,6 @@ public class Navigation {
     private final AdmissionPanel admissionPanel;
     private final StatisticPanel statisticPanel;
 
-
     public void init(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
         setupMenuListeners();
@@ -46,7 +44,6 @@ public class Navigation {
         // Show default panel
         showCandidatePanel();
     }
-
 
     /**
      * Setup menu button click listeners
@@ -79,8 +76,6 @@ public class Navigation {
                 showSubjectGroupPanel();
             }
         });
-
-
 
         mainFrame.getMenuBonusScore().addActionListener(new ActionListener() {
             @Override
@@ -161,7 +156,6 @@ public class Navigation {
     /**
      * Show Admission Threshold Score Management panel
      */
-
 
     /**
      * Show Bonus Score Management panel

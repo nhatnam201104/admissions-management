@@ -7,7 +7,7 @@ import com.example.managementadmissionwf.ui.panel.score.ScorePanel;
 import com.example.managementadmissionwf.ui.panel.subjectgroup.SubjectGroupPanel;
 import com.example.managementadmissionwf.ui.panel.user.UserManagementPanel;
 import com.example.managementadmissionwf.ui.panel.BonusScorePanel;
-import com.example.managementadmissionwf.ui.panel.ConversionTablePanel;
+import com.example.managementadmissionwf.ui.panel.conversion.ConversionTablePanel;
 import com.example.managementadmissionwf.ui.panel.StatisticPanel;
 import com.example.managementadmissionwf.ui.util.UIConstants;
 import com.example.managementadmissionwf.ui.util.UIFactory;
@@ -76,10 +76,8 @@ public class MainFrame extends JFrame {
     @Autowired(required = false)
     private com.example.managementadmissionwf.ui.panel.admission.AdmissionPanel admissionPanel;
 
-
     @Autowired(required = false)
     private StatisticPanel statisticPanel;
-
 
     /**
      * Default constructor for Spring Bean
@@ -265,8 +263,6 @@ public class MainFrame extends JFrame {
             }
         });
 
-
-
         menuBonusScore.addActionListener(e -> {
             if (bonusScorePanel != null) {
                 setContent(bonusScorePanel);
@@ -287,7 +283,6 @@ public class MainFrame extends JFrame {
                 highlightMenuButton(menuUserManagement);
             }
         });
-
 
         if (user.getRole().toString().equalsIgnoreCase("admin")) {
             menuAdmission.addActionListener(e -> {
@@ -373,9 +368,9 @@ public class MainFrame extends JFrame {
      */
     public void highlightMenuButton(JButton selectedButton) {
         // Reset all buttons
-        JButton[] buttons = {menuCandidate, menuScore, menuMajor, menuSubjectGroup,
-               menuBonusScore, menuConversionTable, menuUserManagement,
-                menuAdmission, menuStatistic};
+        JButton[] buttons = { menuCandidate, menuScore, menuMajor, menuSubjectGroup,
+                menuBonusScore, menuConversionTable, menuUserManagement,
+                menuAdmission, menuStatistic };
 
         for (JButton button : buttons) {
             button.setSelected(false);
