@@ -207,6 +207,8 @@ public class ExcelUtil {
                     } catch (Exception e) {
                         return cell.getNumericCellValue();
                     }
+                default:
+                    break;
             }
         } catch (Exception e) {
             // Ignore format issues, return null

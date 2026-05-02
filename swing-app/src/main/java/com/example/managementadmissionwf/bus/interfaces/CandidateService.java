@@ -8,7 +8,6 @@ import jakarta.validation.Valid;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.List;
 
 /**
  * Service Interface for Candidate Management

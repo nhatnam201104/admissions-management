@@ -18,7 +18,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@SQLRestriction("is_deleted = false")   // ← THÊM
+@SQLRestriction("is_deleted = false") // ← THÊM
 public class XtNganhTohop {
 
     @Id
@@ -60,8 +60,9 @@ public class XtNganhTohop {
     @Column(name = "is_deleted", nullable = false)
     @Builder.Default
     Boolean isDeleted = false;
-
+    @Builder.Default
     LocalDate createdAt = LocalDate.now();
+    @Builder.Default
     LocalDate updatedAt = LocalDate.now();
 
     @PreUpdate

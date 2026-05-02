@@ -2,7 +2,6 @@ package com.example.managementadmissionwf.ui.panel;
 
 import com.example.managementadmissionwf.ui.util.ToolbarAction;
 import com.example.managementadmissionwf.ui.util.UIFactory;
-import com.example.managementadmissionwf.ui.panel.AbstractFeaturePanel;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;

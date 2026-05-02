@@ -1,0 +1,148 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{layout/main :: head(~{::title})}">
+    <title>Điểm Chuẩn - Xét Tuyển</title>
+  </head>
+  <body>
+    <div th:replace="~{layout/header :: header}"></div>
+
+    <main class="major-scores-page d-flex flex-column my-3" style="min-height: 70vh;">
+      <div class="container flex-grow-1">
+        <div class="result-card">
+          <div
+            class="result-card-header d-flex justify-content-between align-items-center flex-wrap gap-2"
+          >
+            <h5 class="mb-0">
+              <i class="bi bi-bar-chart-steps me-2"></i>Điểm sàn và điểm chuẩn
+            </h5>
+            <div class="d-flex gap-2 d-print-none">
+              <a
+                th:href="@{/tra-cuu-diem}"
+                class="btn btn-outline-secondary btn-sm"
+              >
+                <i class="bi bi-search me-1"></i>Tra cứu điểm
+              </a>
+              <button
+                class="btn btn-outline-primary btn-sm"
+                onclick="window.print()"
+              >
+                <i class="bi bi-printer me-1"></i>In
+              </button>
+            </div>
+          </div>
+          <div class="result-card-body">
+            <div class="row mb-3 d-print-none">
+              <div class="col-md-4">
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text"
+                    ><i class="bi bi-funnel"></i
+                  ></span>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="filterInput"
+                    placeholder="Tìm theo mã/tên ngành..."
+                    autocomplete="off"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-hover mb-0 major-table" id="majorTable">
+                <thead>
+                  <tr>
+                    <th style="width: 50px" class="text-center">STT</th>
+                    <th style="width: 120px">Mã ngành</th>
+                    <th>Tên ngành</th>
+                    <th style="width: 110px" class="text-center">Điểm sàn</th>
+                    <th style="width: 130px" class="text-center">Điểm chuẩn</th>
+                    <th style="width: 90px" class="text-center">Chỉ tiêu</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    th:each="ng, iter : ${nganhs}"
+                    class="major-row"
+                    th:attr="data-search=${#strings.toLowerCase(ng.manganh) + ' ' + #strings.toLowerCase(ng.tennganh)}"
+                  >
+                    <td
+                      class="text-center text-muted"
+                      th:text="${iter.count}"
+                    ></td>
+                    <td><code th:text="${ng.manganh}"></code></td>
+                    <td th:text="${ng.tennganh}"></td>
+                    <td class="text-center">
+                      <span
+                        th:if="${ng.nDiemsan != null}"
+                        class="fw-semibold"
+                        th:text="${ng.nDiemsan}"
+                      ></span>
+                      <span
+                        th:unless="${ng.nDiemsan != null}"
+                        class="text-muted"
+                        >-</span
+                      >
+                    </td>
+                    <td class="text-center">
+                      <span
+                        th:if="${ng.nDiemtrungtuyen != null}"
+                        class="badge bg-success fs-6"
+                        th:text="${ng.nDiemtrungtuyen}"
+                      ></span>
+                      <span
+                        th:unless="${ng.nDiemtrungtuyen != null}"
+                        class="badge bg-light text-dark border"
+                        >Chưa công bố</span
+                      >
+                    </td>
+                    <td class="text-center">
+                      <span
+                        th:if="${ng.nChitieu != null}"
+                        th:text="${ng.nChitieu}"
+                      ></span>
+                      <span
+                        th:unless="${ng.nChitieu != null}"
+                        class="text-muted"
+                        >-</span
+                      >
+                    </td>
+                  </tr>
+                  <tr th:if="${#lists.isEmpty(nganhs)}">
+                    <td colspan="6" class="text-center text-muted py-4">
+                      Chưa có dữ liệu ngành
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div id="noResults" class="text-center text-muted py-4 d-none">
+              Không tìm thấy ngành phù hợp.
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div th:replace="~{layout/footer :: footer}"></div>
+    <script>
+      document
+        .getElementById("filterInput")
+        .addEventListener("input", function () {
+          var keyword = this.value.toLowerCase().trim();
+          var rows = document.querySelectorAll(".major-row");
+          var visibleCount = 0;
+          rows.forEach(function (row) {
+            var text = row.getAttribute("data-search") || "";
+            var visible = text.indexOf(keyword) !== -1;
+            row.style.display = visible ? "" : "none";
+            if (visible) visibleCount++;
+          });
+          document
+            .getElementById("noResults")
+            .classList.toggle("d-none", visibleCount > 0);
+        });
+    </script>
+  </body>
+</html>

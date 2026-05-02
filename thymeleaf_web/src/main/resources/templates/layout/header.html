@@ -2,23 +2,25 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:fragment="head"></head>
 <body>
-    <nav th:fragment="header" class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" th:href="@{/}">Thymeleaf Web</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" th:href="@{/}">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" th:href="@{/users}">Users</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+<nav th:fragment="header" class="navbar admission-navbar navbar-expand">
+    <div class="container">
+        <a class="navbar-brand admission-brand" th:href="@{/}">
+            <i class="bi bi-mortarboard-fill me-2"></i>
+            <span>Tuyển sinh</span>
+        </a>
+        <ul class="navbar-nav ms-auto flex-row gap-1">
+            <li class="nav-item">
+                <a class="nav-link admission-nav-link" th:href="@{/tra-cuu-diem}">
+                    <i class="bi bi-search-heart me-1"></i>Tra cứu điểm
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link admission-nav-link" th:href="@{/diem-chuan}">
+                    <i class="bi bi-bar-chart-steps me-1"></i>Điểm chuẩn
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
 </body>
 </html>

@@ -36,7 +36,9 @@ public class Users {
     @Builder.Default
     Boolean isDeleted = false;
 
+    @Builder.Default
     LocalDate createdAt = LocalDate.now();
+    @Builder.Default
     LocalDate updatedAt = LocalDate.now();
 
     @PrePersist

@@ -41,8 +41,9 @@ public class XtTohopMonthi {
 
     @Column(name = "tentohop", nullable = false)
     String tentohop; // tên tổ hợp
-
+    @Builder.Default
     LocalDate createdAt = LocalDate.now();
+    @Builder.Default
     LocalDate updatedAt = LocalDate.now();
 
     @Column(name = "is_deleted", nullable = false)

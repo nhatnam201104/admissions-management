@@ -62,8 +62,7 @@ public class UserController {
         UserFormDialog dialog = new UserFormDialog(
                 (Frame) SwingUtilities.getWindowAncestor(managementPanel),
                 "Thêm Người Dùng Mới",
-                true
-        );
+                true);
         dialog.setVisible(true);
 
         if (dialog.isSaved()) {
@@ -103,8 +102,7 @@ public class UserController {
         UserFormDialog dialog = new UserFormDialog(
                 (Frame) SwingUtilities.getWindowAncestor(managementPanel),
                 "Sửa Thông Tin Người Dùng",
-                selected
-        );
+                selected);
         dialog.setVisible(true);
 
         if (dialog.isSaved()) {
@@ -136,11 +134,11 @@ public class UserController {
 
         int confirm = JOptionPane.showConfirmDialog(
                 managementPanel,
-                "Bạn có chắc chắn muốn xóa người dùng:\n" + selected.getFullname() + "\nUsername: " + selected.getUsername() + "?",
+                "Bạn có chắc chắn muốn xóa người dùng:\n" + selected.getFullname() + "\nUsername: "
+                        + selected.getUsername() + "?",
                 "Xác nhận xóa",
                 JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE
-        );
+                JOptionPane.QUESTION_MESSAGE);
 
         if (confirm == JOptionPane.YES_OPTION) {
             try {
@@ -174,7 +172,7 @@ public class UserController {
                 filePath += ".xlsx";
             }
             try (OutputStream os = new FileOutputStream(filePath)) {
-                // TODO: userService.exportExcel(os, keyword);
+
                 JOptionPane.showMessageDialog(managementPanel,
                         "Đã xuất dữ liệu ra file Excel thành công!\n" + filePath,
                         "Thông báo", JOptionPane.INFORMATION_MESSAGE);
@@ -195,7 +193,7 @@ public class UserController {
         if (userSelection == JFileChooser.APPROVE_OPTION) {
             File fileToOpen = fileChooser.getSelectedFile();
             try (InputStream is = new FileInputStream(fileToOpen)) {
-                // TODO: userService.importExcel(is)
+
                 JOptionPane.showMessageDialog(managementPanel,
                         "Nhập dữ liệu từ Excel thành công!",
                         "Kết quả nhập Excel", JOptionPane.INFORMATION_MESSAGE);

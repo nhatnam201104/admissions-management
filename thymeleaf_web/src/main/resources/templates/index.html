@@ -1,53 +1,30 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{layout/main :: head(~{::title})}">
-    <title>Home - Thymeleaf Web</title>
+    <title>Hệ thống Tuyển sinh</title>
 </head>
 <body>
-    <div th:replace="~{layout/header :: header}"></div>
-    
-    <main class="container mt-5">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="jumbotron bg-light p-5 rounded">
-                    <h1 class="display-4">Welcome to Thymeleaf Web</h1>
-                    <p class="lead">A best practices example for Thymeleaf web applications using Spring Boot MVC architecture.</p>
-                    <hr class="my-4">
-                    <p>This project demonstrates proper structure, separation of concerns, and scalable patterns for building maintainable web applications.</p>
-                    <a class="btn btn-primary btn-lg" href="#features" role="button">Learn More</a>
+<div th:replace="~{layout/header :: header}"></div>
+
+<main class="lookup-page">
+    <div class="container">
+        <div class="lookup-card">
+            <div class="lookup-header">
+                <div class="lookup-icon">
+                    <i class="bi bi-mortarboard-fill"></i>
                 </div>
+                <h1>Hệ thống Tuyển sinh</h1>
+                <p class="text-muted">Chào mừng bạn đến với cổng thông tin tuyển sinh</p>
+            </div>
+            <div class="text-center mt-4">
+                <a th:href="@{/tra-cuu-diem}" class="btn btn-primary btn-lg px-5">
+                    <i class="bi bi-search-heart me-2"></i>Tra cứu điểm xét tuyển
+                </a>
             </div>
         </div>
-        
-        <div id="features" class="row mt-5">
-            <div class="col-md-4">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title">MVC Architecture</h5>
-                        <p class="card-text">Clean separation of concerns with Model-View-Controller pattern for maintainable code.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title">Thymeleaf Templates</h5>
-                        <p class="card-text">Natural templating with server-side rendering for SEO-friendly and accessible web pages.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title">Spring Security</h5>
-                        <p class="card-text">Built-in security with authentication and authorization for protected resources.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-    </main>
-    
-    <div th:replace="~{layout/footer :: footer}"></div>
+    </div>
+</main>
+
+<div th:replace="~{layout/footer :: footer}"></div>
 </body>
 </html>

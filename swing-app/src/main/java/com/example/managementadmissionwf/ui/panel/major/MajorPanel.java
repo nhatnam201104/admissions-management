@@ -7,7 +7,6 @@ import com.example.managementadmissionwf.dto.major.MajorDTO;
 import com.example.managementadmissionwf.ui.panel.AbstractFeaturePanel;
 import com.example.managementadmissionwf.ui.util.ToolbarAction;
 import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import javax.swing.*;
 import java.io.InputStream;
@@ -23,7 +22,6 @@ public class MajorPanel extends AbstractFeaturePanel {
     private MajorController controller;
     private MajorListPanel listPanel;
 
-    @Autowired
     public MajorPanel(MajorService majorService, SubjectGroupService subjectGroupService) {
         this.majorService = majorService;
         this.subjectGroupService = subjectGroupService;
@@ -70,6 +68,7 @@ public class MajorPanel extends AbstractFeaturePanel {
             case REFRESH -> refreshData();
             case EXPORT_EXCEL -> exportToExcel();
             case IMPORT_EXCEL -> importFromExcel();
+            default -> throw new IllegalArgumentException("Unexpected value: " + action);
         }
     }
 
