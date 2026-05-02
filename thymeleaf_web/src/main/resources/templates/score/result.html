@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/main :: head(~{::title})}">
+    <title>Kết Quả Tra Cứu - Xét Tuyển</title>
+</head>
+<body>
+<div th:replace="~{layout/header :: header}"></div>
+
+<main class="result-page py-4">
+    <div class="container">
+        <div class="result-actions mb-3 d-flex justify-content-between align-items-center">
+            <a th:href="@{/tra-cuu-diem}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Tra cứu lại
+            </a>
+            <button class="btn btn-outline-primary" onclick="window.print()">
+                <i class="bi bi-printer me-1"></i>In kết quả
+            </button>
+        </div>
+
+        <div th:if="${result.hasAnyAdmittedAspiration()}" class="alert alert-success d-flex align-items-center mb-4" role="alert">
+            <i class="bi bi-patch-check-fill me-2 fs-5"></i>
+            <span class="fw-semibold">Chúc mừng bạn đã trúng tuyển!</span>
+        </div>
+
+        <!-- Thong tin thi sinh -->
+        <section class="result-card mb-4">
+            <div class="result-card-header">
+                <h5><i class="bi bi-person-badge me-2"></i>Thông tin thí sinh</h5>
+            </div>
+            <div class="result-card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="info-row">
+                            <span class="info-label">Họ và tên</span>
+                            <span class="info-value fw-semibold" th:text="${result.hoVaTen()}"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="info-row">
+                            <span class="info-label">Số báo danh</span>
+                            <span class="info-value fw-semibold" th:text="${result.soBaoDanh()}"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="info-row">
+                            <span class="info-label">Ngày sinh</span>
+                            <span class="info-value" th:text="${#temporals.format(result.ngaySinh(), 'dd/MM/yyyy')}"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Diem thi -->
+        <section class="result-card mb-4">
+            <div class="result-card-header">
+                <h5><i class="bi bi-journal-check me-2"></i>Điểm thi</h5>
+            </div>
+            <div class="result-card-body">
+                <div class="row g-2 score-grid">
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="score-cell">
+                            <span class="score-label">Toán</span>
+                            <span class="score-value" th:text="${result.toan() != null ? result.toan() : '-'}"></span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="score-cell">
+                            <span class="score-label">Lý</span>
+                            <span class="score-value" th:text="${result.ly() != null ? result.ly() : '-'}"></span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="score-cell">
+                            <span class="score-label">Hóa</span>
+                            <span class="score-value" th:text="${result.hoa() != null ? result.hoa() : '-'}"></span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="score-cell">
+                            <span class="score-label">Sinh</span>
+                            <span class="score-value" th:text="${result.sinh() != null ? result.sinh() : '-'}"></span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="score-cell">
+                            <span class="score-label">Sử</span>
+                            <span class="score-value" th:text="${result.su() != null ? result.su() : '-'}"></span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="score-cell">
+                            <span class="score-label">Địa</span>
+                            <span class="score-value" th:text="${result.dia() != null ? result.dia() : '-'}"></span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="score-cell">
+                            <span class="score-label">Văn</span>
+                            <span class="score-value" th:text="${result.van() != null ? result.van() : '-'}"></span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="score-cell">
+                            <span class="score-label">N1 Thi</span>
+                            <span class="score-value" th:text="${result.n1Thi() != null ? result.n1Thi() : '-'}"></span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="score-cell">
+                            <span class="score-label">N1 CC</span>
+                            <span class="score-value" th:text="${result.n1Cc() != null ? result.n1Cc() : '-'}"></span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="score-cell">
+                            <span class="score-label">NL1</span>
+                            <span class="score-value" th:text="${result.nl1() != null ? result.nl1() : '-'}"></span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="score-cell">
+                            <span class="score-label">NK1</span>
+                            <span class="score-value" th:text="${result.nk1() != null ? result.nk1() : '-'}"></span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="score-cell">
+                            <span class="score-label">NK2</span>
+                            <span class="score-value" th:text="${result.nk2() != null ? result.nk2() : '-'}"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-2 mt-2" th:if="${result.phuongThuc() != null}">
+                    <div class="col-12">
+                        <div class="info-row">
+                            <span class="info-label">Phương thức xét tuyển</span>
+                            <span class="info-value" th:text="${result.phuongThuc()}"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Diem cong -->
+        <section class="result-card mb-4" th:if="${result.diemTong() != null}">
+            <div class="result-card-header">
+                <h5><i class="bi bi-calculator me-2"></i>Điểm cộng ưu tiên</h5>
+            </div>
+            <div class="result-card-body">
+                <div class="row g-2 score-grid">
+                    <div class="col-6 col-md-4">
+                        <div class="score-cell">
+                            <span class="score-label">Điểm CC</span>
+                            <span class="score-value" th:text="${result.diemCc() != null ? result.diemCc() : '-'}"></span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <div class="score-cell">
+                            <span class="score-label">Điểm ƯTXT</span>
+                            <span class="score-value" th:text="${result.diemUtxt() != null ? result.diemUtxt() : '-'}"></span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <div class="score-cell score-cell--total">
+                            <span class="score-label">Tổng điểm cộng</span>
+                            <span class="score-value fw-bold text-primary" th:text="${result.diemTong()}"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Nguyen vong -->
+        <section class="result-card mb-4">
+            <div class="result-card-header">
+                <h5><i class="bi bi-list-ol me-2"></i>Nguyện vọng xét tuyển</h5>
+            </div>
+            <div class="result-card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 aspiration-table">
+                        <thead>
+                        <tr>
+                            <th style="width: 60px" class="text-center">STT</th>
+                            <th>Mã ngành</th>
+                            <th>Tên ngành</th>
+                            <th style="width: 100px" class="text-center">Điểm XT</th>
+                            <th style="width: 100px" class="text-center">Điểm ƯT</th>
+                            <th style="width: 100px" class="text-center">Điểm cộng</th>
+                            <th style="width: 100px" class="text-center">Tổng điểm</th>
+                            <th style="width: 130px" class="text-center">Kết quả</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="nv : ${result.nguyenVongs()}"
+                            th:classappend="${nv.isAdmitted()} ? 'table-success' : (${nv.ketQua() == 'CHO_XET'} ? 'table-warning' : '')">
+                            <td class="text-center fw-semibold" th:text="${nv.order()}"></td>
+                            <td th:text="${nv.maNganh()}"></td>
+                            <td th:text="${nv.tenNganh()}"></td>
+                            <td class="text-center" th:text="${nv.diemXettuyen() != null ? nv.diemXettuyen() : '-'}"></td>
+                            <td class="text-center" th:text="${nv.diemUtqd() != null ? nv.diemUtqd() : '-'}"></td>
+                            <td class="text-center" th:text="${nv.diemCong() != null ? nv.diemCong() : '-'}"></td>
+                            <td class="text-center fw-semibold" th:text="${nv.diemThxt() != null ? nv.diemThxt() : '-'}"></td>
+                            <td class="text-center">
+                                <span th:if="${nv.isAdmitted()}" class="badge bg-success">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    <span th:text="${nv.getKetQuaDisplay()}"></span>
+                                </span>
+                                <span th:if="${nv.ketQua() == 'CHO_XET'}" class="badge bg-warning text-dark">
+                                    <i class="bi bi-hourglass-split me-1"></i>
+                                    <span th:text="${nv.getKetQuaDisplay()}"></span>
+                                </span>
+                                <span th:if="${nv.ketQua() == 'TRUOT'}" class="badge bg-secondary">
+                                    <span th:text="${nv.getKetQuaDisplay()}"></span>
+                                </span>
+                                <span th:if="${nv.ketQua() == null}" class="badge bg-light text-dark">
+                                    <span th:text="${nv.getKetQuaDisplay()}"></span>
+                                </span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(result.nguyenVongs())}">
+                            <td colspan="8" class="text-center text-muted py-4">
+                                Không có nguyện vọng xét tuyển
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<div th:replace="~{layout/footer :: footer}"></div>
+<script th:src="@{/js/score-lookup.js}"></script>
+</body>
+</html>

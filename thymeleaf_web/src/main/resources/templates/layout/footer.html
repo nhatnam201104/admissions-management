@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<footer th:fragment="footer" class="admission-footer">
+    <div class="container text-center py-4">
+        <p class="mb-1">&copy; <span th:text="${#temporals.format(#temporals.createNow(), 'yyyy')}">2025</span> Hệ thống Quản lý Xét tuyển</p>
+        <p class="small text-muted mb-0">Phiên bản tra cứu điểm công khai</p>
+    </div>
+</footer>
+</body>
+</html>
