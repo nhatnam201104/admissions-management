@@ -135,9 +135,6 @@ public class MajorServiceImpl implements MajorService {
     }
 
     private void validateDto(MajorDTO dto) {
-        if (dto.getTohopGoc() == null || dto.getTohopGoc().trim().isEmpty()) {
-            throw new RuntimeException("Tổ hợp gốc không được để trống");
-        }
         boolean hasMethod = Boolean.TRUE.equals(dto.getTuyenThang()) ||
                 Boolean.TRUE.equals(dto.getDgnl()) ||
                 Boolean.TRUE.equals(dto.getThpt()) ||
@@ -156,7 +153,6 @@ public class MajorServiceImpl implements MajorService {
         validateDto(dto);
 
         XtNganh entity = majorMapper.toEntity(dto);
-        updateMajorStatistics(entity);
 
         entity = majorRepository.save(entity);
         return majorMapper.toResponse(entity);
@@ -174,7 +170,6 @@ public class MajorServiceImpl implements MajorService {
         validateDto(dto);
 
         majorMapper.updateEntity(entity, dto);
-        updateMajorStatistics(entity);
 
         entity = majorRepository.save(entity);
         return majorMapper.toResponse(entity);
