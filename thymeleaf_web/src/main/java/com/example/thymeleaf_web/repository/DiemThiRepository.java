@@ -6,11 +6,16 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface DiemThiRepository extends JpaRepository<DiemThi, Integer> {
 
-    @Query(value = "SELECT * FROM xt_diemthixettuyen WHERE cccd = :cccd AND is_deleted = false", nativeQuery = true)
-    Optional<DiemThi> findByCccdActive(@Param("cccd") String cccd);
+    @Query(value = """
+            SELECT *
+            FROM xt_diemthixettuyen
+            WHERE cccd = :cccd AND is_deleted = false
+            ORDER BY d_phuongthuc ASC, id ASC
+            """, nativeQuery = true)
+    List<DiemThi> findAllByCccdActive(@Param("cccd") String cccd);
 }

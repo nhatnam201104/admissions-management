@@ -12,9 +12,17 @@
             <a th:href="@{/tra-cuu-diem}" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left me-1"></i>Tra cứu lại
             </a>
-            <button class="btn btn-outline-primary" onclick="window.print()">
-                <i class="bi bi-printer me-1"></i>In kết quả
-            </button>
+            <div class="d-flex gap-2 flex-wrap justify-content-end">
+                <a
+                    th:href="@{/dang-ky-nguyen-vong/bieu-mau(cccd=${result.cccd()})}"
+                    class="btn btn-outline-primary"
+                >
+                    <i class="bi bi-ui-checks-grid me-1"></i>Sửa nguyện vọng
+                </a>
+                <button class="btn btn-outline-primary" onclick="window.print()">
+                    <i class="bi bi-printer me-1"></i>In kết quả
+                </button>
+            </div>
         </div>
 
         <div th:if="${result.hasAnyAdmittedAspiration()}" class="alert alert-success d-flex align-items-center mb-4" role="alert">
@@ -57,87 +65,93 @@
                 <h5><i class="bi bi-journal-check me-2"></i>Điểm thi</h5>
             </div>
             <div class="result-card-body">
-                <div class="row g-2 score-grid">
+                <div th:if="${#lists.isEmpty(result.diemThiList())}" class="text-muted py-2">
+                    Chưa có dữ liệu điểm thi
+                </div>
+                <div th:each="diemThi, scoreStat : ${result.diemThiList()}"
+                     th:classappend="${scoreStat.last ? '' : 'mb-3 pb-3 border-bottom'}">
+                    <div class="row g-2 mb-2" th:if="${diemThi.phuongThuc() != null}">
+                        <div class="col-12">
+                            <div class="info-row">
+                                <span class="info-label">Phương thức xét tuyển</span>
+                                <span class="info-value fw-semibold" th:text="${diemThi.phuongThuc()}"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2 score-grid">
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="score-cell">
                             <span class="score-label">Toán</span>
-                            <span class="score-value" th:text="${result.toan() != null ? result.toan() : '-'}"></span>
+                            <span class="score-value" th:text="${diemThi.toan() != null ? diemThi.toan() : '-'}"></span>
                         </div>
                     </div>
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="score-cell">
                             <span class="score-label">Lý</span>
-                            <span class="score-value" th:text="${result.ly() != null ? result.ly() : '-'}"></span>
+                            <span class="score-value" th:text="${diemThi.ly() != null ? diemThi.ly() : '-'}"></span>
                         </div>
                     </div>
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="score-cell">
                             <span class="score-label">Hóa</span>
-                            <span class="score-value" th:text="${result.hoa() != null ? result.hoa() : '-'}"></span>
+                            <span class="score-value" th:text="${diemThi.hoa() != null ? diemThi.hoa() : '-'}"></span>
                         </div>
                     </div>
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="score-cell">
                             <span class="score-label">Sinh</span>
-                            <span class="score-value" th:text="${result.sinh() != null ? result.sinh() : '-'}"></span>
+                            <span class="score-value" th:text="${diemThi.sinh() != null ? diemThi.sinh() : '-'}"></span>
                         </div>
                     </div>
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="score-cell">
                             <span class="score-label">Sử</span>
-                            <span class="score-value" th:text="${result.su() != null ? result.su() : '-'}"></span>
+                            <span class="score-value" th:text="${diemThi.su() != null ? diemThi.su() : '-'}"></span>
                         </div>
                     </div>
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="score-cell">
                             <span class="score-label">Địa</span>
-                            <span class="score-value" th:text="${result.dia() != null ? result.dia() : '-'}"></span>
+                            <span class="score-value" th:text="${diemThi.dia() != null ? diemThi.dia() : '-'}"></span>
                         </div>
                     </div>
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="score-cell">
                             <span class="score-label">Văn</span>
-                            <span class="score-value" th:text="${result.van() != null ? result.van() : '-'}"></span>
+                            <span class="score-value" th:text="${diemThi.van() != null ? diemThi.van() : '-'}"></span>
                         </div>
                     </div>
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="score-cell">
                             <span class="score-label">N1 Thi</span>
-                            <span class="score-value" th:text="${result.n1Thi() != null ? result.n1Thi() : '-'}"></span>
+                            <span class="score-value" th:text="${diemThi.n1Thi() != null ? diemThi.n1Thi() : '-'}"></span>
                         </div>
                     </div>
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="score-cell">
                             <span class="score-label">N1 CC</span>
-                            <span class="score-value" th:text="${result.n1Cc() != null ? result.n1Cc() : '-'}"></span>
+                            <span class="score-value" th:text="${diemThi.n1Cc() != null ? diemThi.n1Cc() : '-'}"></span>
                         </div>
                     </div>
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="score-cell">
                             <span class="score-label">NL1</span>
-                            <span class="score-value" th:text="${result.nl1() != null ? result.nl1() : '-'}"></span>
+                            <span class="score-value" th:text="${diemThi.nl1() != null ? diemThi.nl1() : '-'}"></span>
                         </div>
                     </div>
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="score-cell">
                             <span class="score-label">NK1</span>
-                            <span class="score-value" th:text="${result.nk1() != null ? result.nk1() : '-'}"></span>
+                            <span class="score-value" th:text="${diemThi.nk1() != null ? diemThi.nk1() : '-'}"></span>
                         </div>
                     </div>
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="score-cell">
                             <span class="score-label">NK2</span>
-                            <span class="score-value" th:text="${result.nk2() != null ? result.nk2() : '-'}"></span>
+                            <span class="score-value" th:text="${diemThi.nk2() != null ? diemThi.nk2() : '-'}"></span>
                         </div>
                     </div>
                 </div>
-                <div class="row g-2 mt-2" th:if="${result.phuongThuc() != null}">
-                    <div class="col-12">
-                        <div class="info-row">
-                            <span class="info-label">Phương thức xét tuyển</span>
-                            <span class="info-value" th:text="${result.phuongThuc()}"></span>
-                        </div>
-                    </div>
                 </div>
             </div>
         </section>

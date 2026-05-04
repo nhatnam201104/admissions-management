@@ -46,8 +46,13 @@ public class XtBangquydoi {
     @Column(name = "d_diemd")
     Double dDiemd; // điểm D (điểm quy đổi tối đa - optional)
 
-    @Builder.Default
+    @Column(name = "d_maquydoi", length = 45)
+    String dMaquydoi; // mã quy đổi (unique)
 
+    @Column(name = "d_phanvi", length = 45)
+    String dPhanvi; // phạm vi áp dụng
+
+    @Builder.Default
     LocalDate createdAt = LocalDate.now();
     @Builder.Default
     LocalDate updatedAt = LocalDate.now();

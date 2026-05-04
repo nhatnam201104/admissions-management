@@ -3,7 +3,7 @@ package com.example.managementadmissionwf.config;
 import com.example.managementadmissionwf.ui.frame.MainFrame;
 import com.example.managementadmissionwf.ui.panel.user.UserManagementPanel;
 import com.example.managementadmissionwf.ui.panel.BonusScorePanel;
-import com.example.managementadmissionwf.ui.panel.conversion.ConversionTablePanel;
+
 import com.example.managementadmissionwf.ui.panel.subjectgroup.SubjectGroupPanel;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
