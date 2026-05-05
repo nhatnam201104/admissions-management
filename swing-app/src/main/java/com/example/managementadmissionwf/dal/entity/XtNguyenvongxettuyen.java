@@ -30,8 +30,8 @@ public class XtNguyenvongxettuyen {
     @JoinColumn(name = "nn_cccd", referencedColumnName = "cccd", insertable = false, updatable = false)
     XtThisinhxettuyen25 thisinh;
 
-    @Column(name = "nn_cccd", nullable = false, length = 12)
-    String nnCccd; // thí sinh
+    @Column(name = "nn_cccd", nullable = false, length = 45)
+    String nnCccd; // thí sinh (CCCD - max 12 chars but DB allows 45)
 
     @ManyToOne
     @JoinColumn(name = "nv_manganh", referencedColumnName = "manganh", insertable = false, updatable = false)
@@ -59,6 +59,15 @@ public class XtNguyenvongxettuyen {
     // Kết quả
     @Column(name = "nv_ketqua", length = 20)
     String nvKetqua; // TRUNG_TUYEN, TRUOT, CHO_XET
+
+    @Column(name = "nv_keys", length = 45)
+    String nvKeys; // composite key for uniqueness
+
+    @Column(name = "tt_phuongthuc", length = 45)
+    String ttPhuongthuc; // phương thức xét tuyển được chọn cho nguyện vọng này
+
+    @Column(name = "tt_thm", length = 45)
+    String ttThm; // thứ tự ưu tiên/học bổng
 
     @Column(nullable = false)
     @Builder.Default

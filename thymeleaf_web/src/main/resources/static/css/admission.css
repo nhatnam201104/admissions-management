@@ -129,6 +129,30 @@ body {
     margin: 0 auto;
 }
 
+.result-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: var(--admission-card-shadow);
+    overflow: hidden;
+}
+
+.result-card-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #e9ecef;
+    background-color: #ffffff;
+}
+
+.result-card-header h5 {
+    color: var(--admission-primary);
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.result-card-body {
+    padding: 1.25rem;
+}
+
 .card {
     border: none;
     border-radius: 12px;
@@ -153,6 +177,13 @@ body {
     gap: 0.15rem;
 }
 
+.info-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+}
+
 .info-label {
     font-size: 0.8rem;
     color: #7f8c8d;
@@ -164,6 +195,37 @@ body {
 .info-value {
     font-size: 1rem;
     color: #2c3e50;
+    overflow-wrap: anywhere;
+}
+
+.score-cell {
+    background-color: #f8fafc;
+    border: 1px solid #e9eef3;
+    border-radius: 8px;
+    padding: 0.75rem;
+    min-height: 72px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.2rem;
+}
+
+.score-cell--total {
+    background-color: #eaf2f8;
+    border-color: #cfe2f3;
+}
+
+.score-label {
+    color: #6c757d;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.score-value {
+    color: var(--admission-primary);
+    font-size: 1.05rem;
+    font-weight: 700;
 }
 
 /* ===== Score Table ===== */
@@ -324,9 +386,61 @@ body {
     font-size: 0.85rem;
 }
 
+/* ===== Aspiration Registration ===== */
+.aspiration-page {
+    max-width: 1080px;
+    margin: 0 auto;
+}
+
+.aspiration-edit-table thead th {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #7f8c8d;
+    border-bottom: 2px solid var(--admission-primary-light);
+    font-weight: 600;
+    padding: 0.75rem;
+    white-space: nowrap;
+}
+
+.aspiration-edit-table tbody td {
+    padding: 0.75rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f3f5;
+}
+
+.aspiration-actions {
+    white-space: nowrap;
+}
+
+.aspiration-actions .btn {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.aspiration-actions .btn i {
+    margin-right: 0;
+}
+
+.major-select {
+    min-width: 260px;
+}
+
 @media (max-width: 768px) {
     .major-scores-page {
         margin: 0;
+    }
+
+    .aspiration-page {
+        margin: 0;
+    }
+
+    .result-card-body {
+        padding: 1rem;
     }
 
     .admission-nav-link span {

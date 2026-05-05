@@ -65,6 +65,8 @@ public class SubjectGroupServiceImpl implements SubjectGroupService {
     @Override
     @Transactional
     public SubjectGroupResponse create(SubjectGroupRequest request) {
+        validateNoDuplicateSubjects(request);
+
         if (subjectGroupRepository.existsByMatohop(request.getMatohop())) {
             throw new RuntimeException("Mã tổ hợp đã tồn tại: " + request.getMatohop());
         }
@@ -77,6 +79,8 @@ public class SubjectGroupServiceImpl implements SubjectGroupService {
     @Override
     @Transactional
     public SubjectGroupResponse update(Integer id, SubjectGroupRequest request) {
+        validateNoDuplicateSubjects(request);
+
         XtTohopMonthi entity = subjectGroupRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tổ hợp môn với ID: " + id));
 
@@ -87,6 +91,18 @@ public class SubjectGroupServiceImpl implements SubjectGroupService {
         subjectGroupMapper.updateEntity(entity, request);
         entity = subjectGroupRepository.save(entity);
         return subjectGroupMapper.toResponse(entity);
+    }
+
+    private void validateNoDuplicateSubjects(SubjectGroupRequest request) {
+        String mon1 = request.getMon1() != null ? request.getMon1().trim() : "";
+        String mon2 = request.getMon2() != null ? request.getMon2().trim() : "";
+        String mon3 = request.getMon3() != null ? request.getMon3().trim() : "";
+
+        if (mon1.equalsIgnoreCase(mon2)
+                || mon1.equalsIgnoreCase(mon3)
+                || mon2.equalsIgnoreCase(mon3)) {
+            throw new RuntimeException("Không được chọn trùng môn trong cùng một tổ hợp");
+        }
     }
 
     @Override

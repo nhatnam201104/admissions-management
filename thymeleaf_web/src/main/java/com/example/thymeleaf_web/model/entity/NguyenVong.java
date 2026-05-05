@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Entity
 @Table(name = "xt_nguyenvongxettuyen")
 @Data
@@ -37,4 +39,30 @@ public class NguyenVong {
 
     @Column(name = "nv_ketqua", length = 20)
     private String nvKetqua;
+
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+
+    private LocalDate createdAt = LocalDate.now();
+
+    private LocalDate updatedAt = LocalDate.now();
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDate.now();
+        }
+        updatedAt = LocalDate.now();
+        if (isDeleted == null) {
+            isDeleted = false;
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDate.now();
+        if (isDeleted == null) {
+            isDeleted = false;
+        }
+    }
 }

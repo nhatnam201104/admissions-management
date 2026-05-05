@@ -1,8 +1,11 @@
 package com.example.managementadmissionwf.ui.panel.major;
 
 import com.example.managementadmissionwf.bus.interfaces.MajorService;
-import com.example.managementadmissionwf.dto.major.MajorDTO;
 import com.example.managementadmissionwf.dto.common.Paging;
+import com.example.managementadmissionwf.dto.major.MajorDTO;
+import com.example.managementadmissionwf.dto.major.MajorTohopDTO;
+
+import java.util.List;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.util.List;
@@ -54,6 +57,19 @@ public class MajorController {
                 JOptionPane.showMessageDialog(view, "Không thể xóa ngành: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+
+    public MajorTohopDTO addTohop(MajorTohopDTO dto) {
+        return majorService.addTohop(dto);
+    }
+
+    public void removeTohop(Integer tohopId) {
+        majorService.removeTohop(tohopId);
+    }
+
+    public List<MajorTohopDTO> loadTohops(String maNganh) {
+        Paging<MajorTohopDTO> paging = majorService.getTohopByMaNganh(maNganh, 1, 100);
+        return paging.getData();
     }
 
     private void populateMasterTable(DefaultTableModel model, List<MajorDTO> list) {

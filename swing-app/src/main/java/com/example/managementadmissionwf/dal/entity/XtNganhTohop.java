@@ -36,23 +36,23 @@ public class XtNganhTohop {
     @JoinColumn(name = "matohop", referencedColumnName = "matohop", insertable = false, updatable = false)
     XtTohopMonthi tohopMonthi;
 
-    @Column(name = "matohop", nullable = false, length = 10)
+    @Column(name = "matohop", nullable = false, length = 50)
     String matohop;
 
     // Môn 1
-    @Column(name = "th_mon1", nullable = false, length = 5)
+    @Column(name = "th_mon1", nullable = false, length = 50)
     String thMon1;
     @Column(name = "hsmon1", nullable = false)
     Double hsmon1;
 
     // Môn 2
-    @Column(name = "th_mon2", nullable = false, length = 5)
+    @Column(name = "th_mon2", nullable = false, length = 50)
     String thMon2;
     @Column(name = "hsmon2", nullable = false)
     Double hsmon2;
 
     // Môn 3
-    @Column(name = "th_mon3", nullable = false, length = 5)
+    @Column(name = "th_mon3", nullable = false, length = 50)
     String thMon3;
     @Column(name = "hsmon3", nullable = false)
     Double hsmon3;

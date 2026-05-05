@@ -20,6 +20,8 @@ public interface ConversionTableMapper {
     @Mapping(source = "DDiemb", target = "diemB")
     @Mapping(source = "DDiemc", target = "diemC")
     @Mapping(source = "DDiemd", target = "diemD")
+    @Mapping(source = "DMaquydoi", target = "maQuyDoi")
+    @Mapping(source = "DPhanvi", target = "phanVi")
     ConversionTableDTO toResponse(XtBangquydoi entity);
 
     List<ConversionTableDTO> toResponseList(List<XtBangquydoi> entities);
@@ -32,6 +34,8 @@ public interface ConversionTableMapper {
     @Mapping(source = "diemB", target = "DDiemb")
     @Mapping(source = "diemC", target = "DDiemc")
     @Mapping(source = "diemD", target = "DDiemd")
+    @Mapping(source = "maQuyDoi", target = "DMaquydoi")
+    @Mapping(source = "phanVi", target = "DPhanvi")
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     XtBangquydoi toEntity(ConversionTableDTO dto);
@@ -43,5 +47,7 @@ public interface ConversionTableMapper {
     @Mapping(source = "diemB", target = "DDiemb")
     @Mapping(source = "diemC", target = "DDiemc")
     @Mapping(source = "diemD", target = "DDiemd")
+    @Mapping(source = "maQuyDoi", target = "DMaquydoi")
+    @Mapping(source = "phanVi", target = "DPhanvi")
     void updateEntity(@MappingTarget XtBangquydoi entity, ConversionTableDTO dto);
 }

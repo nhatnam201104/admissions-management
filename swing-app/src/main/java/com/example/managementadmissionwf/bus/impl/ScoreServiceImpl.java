@@ -1,5 +1,6 @@
 package com.example.managementadmissionwf.bus.impl;
 
+import com.example.managementadmissionwf.bus.interfaces.AspirationScoreService;
 import com.example.managementadmissionwf.bus.interfaces.ScoreService;
 import com.example.managementadmissionwf.dal.entity.XtDiemthixettuyen;
 import com.example.managementadmissionwf.dal.entity.XtThisinhxettuyen25;
@@ -10,6 +11,7 @@ import com.example.managementadmissionwf.dto.score.ScoreDTO;
 import com.example.managementadmissionwf.mapper.ScoreMapper;
 import com.example.managementadmissionwf.util.ExcelUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -24,17 +26,27 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ScoreServiceImpl implements ScoreService {
 
     private static final String FILTER_ALL = "Tất cả";
 
-    private static final Set<String> VALID_METHODS = Set.of("THPT", "DGNL", "VSAT");
+    private static final String METHOD_THPT = "THPT";
+    private static final String METHOD_DGNL = "DGNL";
+    private static final String METHOD_VSAT = "VSAT";
+    private static final double THPT_MAX_SCORE = 10;
+    private static final double VSAT_MAX_SCORE = 150;
+    private static final double DGNL_NL1_MAX_SCORE = 1200;
+    private static final double DGNL_NK_MAX_SCORE = 100;
+
+    private static final Set<String> VALID_METHODS = Set.of(METHOD_THPT, METHOD_DGNL, METHOD_VSAT);
 
     private final ScoreRepository scoreRepository;
     private final ScoreMapper scoreMapper;
     private final CandidateRepository candidateRepository;
+    private final AspirationScoreService aspirationScoreService;
     // ================= GET =================
     @Override
     @Transactional(readOnly = true)
@@ -118,9 +130,9 @@ public class ScoreServiceImpl implements ScoreService {
             for (ScoreDTO dto : importedData) {
                 try {
                     prepareImportedScore(dto);
-                    validateImportedScore(dto);
+                    validateScore(dto);
 
-                    if (scoreRepository.existsByCccdAndIsDeletedFalse(dto.getCccd())) {
+                    if (scoreRepository.existsByCccdAndDPhuongthuc(dto.getCccd(), dto.getPhuongThuc())) {
                         updateScore(dto);
                     } else {
                         createScore(dto);
@@ -149,28 +161,19 @@ public class ScoreServiceImpl implements ScoreService {
         String cccd = normalizeCccd(dto.getCccd());
         dto.setCccd(cccd);
 
-        validateRequiredFields(dto);
+        validateScore(dto);
 
-        if (!candidateRepository.existsByCccd(cccd)) {
-            throw new RuntimeException("CCCD không tồn tại trong hệ thống thí sinh!");
-        }
-
-        if (scoreRepository.existsByCccdAndIsDeletedFalse(cccd)) {
-            throw new RuntimeException("Thí sinh này đã có điểm!");
-        }
-
-        XtDiemthixettuyen existing = scoreRepository.findByCccdIncludeDeleted(cccd);
-
-        if (existing != null) {
-            existing.setIsDeleted(false);
-            scoreMapper.updateEntityFromDto(dto, existing);
-            return scoreMapper.toDto(scoreRepository.save(existing));
+        // Kiểm tra trùng (cccd + phuongThuc) - mỗi thí sinh chỉ có 1 record cho mỗi phương thức
+        if (scoreRepository.existsByCccdAndDPhuongthuc(cccd, dto.getPhuongThuc())) {
+            throw new RuntimeException("Thí sinh đã có điểm cho phương thức: " + dto.getPhuongThuc());
         }
 
         XtDiemthixettuyen entity = scoreMapper.toEntity(dto);
         entity.setIsDeleted(false);
-        
-        return scoreMapper.toDto(scoreRepository.save(entity));
+
+        ScoreDTO saved = scoreMapper.toDto(scoreRepository.save(entity));
+        recalculateAspirationScores(cccd);
+        return saved;
     }
 
     @Override
@@ -185,15 +188,17 @@ public class ScoreServiceImpl implements ScoreService {
         String cccd = normalizeCccd(dto.getCccd());
         dto.setCccd(cccd);
 
-        validateRequiredFields(dto);
+        validateScore(dto);
 
-        XtDiemthixettuyen existing = scoreRepository.findByCccd(cccd)
+        XtDiemthixettuyen existing = scoreRepository.findByCccdAndDPhuongthuc(cccd, dto.getPhuongThuc())
                 .orElseThrow(() ->
-                        new RuntimeException("Không tìm thấy thí sinh với CCCD: " + cccd));
+                        new RuntimeException("Không tìm thấy điểm thi cho CCCD: " + cccd + " với phương thức: " + dto.getPhuongThuc()));
 
         try {
             scoreMapper.updateEntityFromDto(dto, existing);
-            return scoreMapper.toDto(scoreRepository.save(existing));
+            ScoreDTO saved = scoreMapper.toDto(scoreRepository.save(existing));
+            recalculateAspirationScores(cccd);
+            return saved;
 
         } catch (DataIntegrityViolationException e) {
             throw new RuntimeException("Cập nhật thất bại: " + getRootCause(e));
@@ -252,7 +257,7 @@ public class ScoreServiceImpl implements ScoreService {
 
     }
 
-    private void validateImportedScore(ScoreDTO dto) {
+    private void validateScore(ScoreDTO dto) {
         String cccd = normalizeCccd(dto.getCccd());
         dto.setCccd(cccd);
 
@@ -265,22 +270,53 @@ public class ScoreServiceImpl implements ScoreService {
 
         validateRequiredFields(dto);
 
-        if (!VALID_METHODS.contains(dto.getPhuongThuc())) {
-            throw new RuntimeException("Phương thức phải là THPT, DGNL hoặc VSAT");
+        String phuongThuc = normalizeMethod(dto.getPhuongThuc());
+        dto.setPhuongThuc(phuongThuc);
+
+        validateScoreRangeByMethod(dto);
+    }
+
+    private String normalizeMethod(String phuongThuc) {
+        if (phuongThuc == null || phuongThuc.trim().isEmpty()) {
+            throw new RuntimeException("Phương thức không được để trống");
         }
 
-        validateRange("Toán", dto.getToan(), 0, 10);
-        validateRange("Lý", dto.getLy(), 0, 10);
-        validateRange("Hóa", dto.getHoa(), 0, 10);
-        validateRange("Sinh", dto.getSinh(), 0, 10);
-        validateRange("Sử", dto.getSu(), 0, 10);
-        validateRange("Địa", dto.getDia(), 0, 10);
-        validateRange("Văn", dto.getVan(), 0, 10);
-        validateRange("N1 Thi", dto.getN1Thi(), 0, 10);
-        validateRange("N1 CC", dto.getN1Cc(), 0, 10);
-        validateRange("NL1", dto.getNl1(), 0, 1200);
-        validateRange("NK1", dto.getNk1(), 0, 100);
-        validateRange("NK2", dto.getNk2(), 0, 100);
+        String normalized = phuongThuc.trim().toUpperCase();
+        if (!VALID_METHODS.contains(normalized)) {
+            throw new RuntimeException("Phương thức phải là THPT, DGNL hoặc VSAT");
+        }
+        return normalized;
+    }
+
+    private void validateScoreRangeByMethod(ScoreDTO dto) {
+        switch (dto.getPhuongThuc()) {
+            case METHOD_DGNL -> {
+                validateRange("NL1", dto.getNl1(), 0, DGNL_NL1_MAX_SCORE);
+                validateRange("NK1", dto.getNk1(), 0, DGNL_NK_MAX_SCORE);
+                validateRange("NK2", dto.getNk2(), 0, DGNL_NK_MAX_SCORE);
+            }
+            case METHOD_VSAT -> {
+                validateRange("Toán", dto.getToan(), 0, VSAT_MAX_SCORE);
+                validateRange("Lý", dto.getLy(), 0, VSAT_MAX_SCORE);
+                validateRange("Hóa", dto.getHoa(), 0, VSAT_MAX_SCORE);
+                validateRange("Sinh", dto.getSinh(), 0, VSAT_MAX_SCORE);
+                validateRange("Sử", dto.getSu(), 0, VSAT_MAX_SCORE);
+                validateRange("Địa", dto.getDia(), 0, VSAT_MAX_SCORE);
+                validateRange("Văn", dto.getVan(), 0, VSAT_MAX_SCORE);
+                validateRange("Anh", dto.getN1Thi(), 0, VSAT_MAX_SCORE);
+            }
+            default -> {
+                validateRange("Toán", dto.getToan(), 0, THPT_MAX_SCORE);
+                validateRange("Lý", dto.getLy(), 0, THPT_MAX_SCORE);
+                validateRange("Hóa", dto.getHoa(), 0, THPT_MAX_SCORE);
+                validateRange("Sinh", dto.getSinh(), 0, THPT_MAX_SCORE);
+                validateRange("Sử", dto.getSu(), 0, THPT_MAX_SCORE);
+                validateRange("Địa", dto.getDia(), 0, THPT_MAX_SCORE);
+                validateRange("Văn", dto.getVan(), 0, THPT_MAX_SCORE);
+                validateRange("N1 Thi", dto.getN1Thi(), 0, THPT_MAX_SCORE);
+                validateRange("N1 CC", dto.getN1Cc(), 0, THPT_MAX_SCORE);
+            }
+        }
     }
 
     private void validateRange(String fieldName, Double value, double min, double max) {
@@ -302,5 +338,13 @@ public class ScoreServiceImpl implements ScoreService {
     private String getRootCause(Exception e) {
         Throwable cause = ((NestedRuntimeException) e).getMostSpecificCause();
         return (cause != null) ? cause.getMessage() : e.getMessage();
+    }
+
+    private void recalculateAspirationScores(String cccd) {
+        try {
+            aspirationScoreService.calculateAllForCccd(cccd);
+        } catch (Exception e) {
+            log.warn("Lỗi khi tính lại điểm nguyện vọng cho CCCD={}: {}", cccd, e.getMessage());
+        }
     }
 }

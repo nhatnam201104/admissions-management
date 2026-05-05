@@ -1,0 +1,265 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{layout/main :: head(~{::title})}">
+    <title>Đăng Ký Nguyện Vọng - Xét Tuyển</title>
+  </head>
+  <body>
+    <div th:replace="~{layout/header :: header}"></div>
+
+    <main class="aspiration-page py-4">
+      <div class="container">
+        <div th:if="${registrationForm == null}" class="lookup-card">
+          <div class="lookup-header">
+            <div class="lookup-icon">
+              <i class="bi bi-ui-checks-grid"></i>
+            </div>
+            <h1>Đăng Ký Nguyện Vọng</h1>
+            <p class="text-muted">Nhập CCCD để mở phiếu đăng ký xét tuyển</p>
+          </div>
+
+          <form
+            th:action="@{/dang-ky-nguyen-vong/tra-cuu}"
+            th:object="${cccdForm}"
+            method="post"
+            id="lookupForm"
+            novalidate
+          >
+            <div class="mb-3">
+              <label for="cccd" class="form-label fw-semibold">Số CCCD</label>
+              <div class="input-group input-group-lg">
+                <span class="input-group-text"><i class="bi bi-person-vcard"></i></span>
+                <input
+                  type="text"
+                  th:field="*{cccd}"
+                  th:class="'form-control' + (*{#fields.hasErrors('cccd')} ? ' is-invalid' : '')"
+                  id="cccd"
+                  maxlength="12"
+                  placeholder="Nhập 12 số CCCD"
+                  inputmode="numeric"
+                  autocomplete="off"
+                />
+              </div>
+              <div
+                class="invalid-feedback"
+                th:if="${#fields.hasErrors('cccd')}"
+                th:errors="*{cccd}"
+              ></div>
+            </div>
+
+            <div
+              th:if="${#fields.hasGlobalErrors()}"
+              class="alert alert-warning"
+              role="alert"
+            >
+              <div th:each="err : ${#fields.globalErrors()}" th:text="${err}"></div>
+            </div>
+
+            <div th:if="${errorMessage}" class="alert alert-warning" role="alert">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              <span th:text="${errorMessage}"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg w-100 mt-3" id="btn-search">
+              <span class="btn-text">
+                <i class="bi bi-arrow-right-circle me-2"></i>Mở phiếu đăng ký
+              </span>
+              <span
+                class="spinner-border spinner-border-sm d-none"
+                id="btn-spinner"
+                role="status"
+              ></span>
+            </button>
+          </form>
+        </div>
+
+        <div th:if="${registrationForm != null}">
+          <div
+            th:if="${successMessage}"
+            class="alert alert-success d-flex align-items-center mb-3"
+            role="alert"
+          >
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span th:text="${successMessage}"></span>
+          </div>
+
+          <div class="result-actions mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <a th:href="@{/dang-ky-nguyen-vong}" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left me-1"></i>Đổi CCCD
+            </a>
+            <a
+              th:href="@{/tra-cuu-diem/ket-qua(cccd=${registrationForm.cccd})}"
+              class="btn btn-outline-primary"
+            >
+              <i class="bi bi-search-heart me-1"></i>Tra cứu điểm
+            </a>
+          </div>
+
+          <section class="result-card mb-4">
+            <div class="result-card-header">
+              <h5><i class="bi bi-person-badge me-2"></i>Thông tin thí sinh</h5>
+            </div>
+            <div class="result-card-body">
+              <div class="row g-3">
+                <div class="col-md-5">
+                  <div class="info-row">
+                    <span class="info-label">Họ và tên</span>
+                    <span class="info-value fw-semibold" th:text="${candidate != null ? candidate.hoVaTen() : '-'}"></span>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="info-row">
+                    <span class="info-label">Số báo danh</span>
+                    <span class="info-value fw-semibold" th:text="${candidate != null ? candidate.soBaoDanh() : '-'}"></span>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="info-row">
+                    <span class="info-label">CCCD</span>
+                    <span class="info-value" th:text="${registrationForm.cccd}"></span>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div class="info-row">
+                    <span class="info-label">Ngày sinh</span>
+                    <span
+                      class="info-value"
+                      th:text="${candidate != null && candidate.ngaySinh() != null ? #temporals.format(candidate.ngaySinh(), 'dd/MM/yyyy') : '-'}"
+                    ></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <form
+            th:action="@{/dang-ky-nguyen-vong}"
+            th:object="${registrationForm}"
+            method="post"
+            id="aspirationForm"
+            th:attr="data-max-aspirations=${maxAspirations}"
+            novalidate
+          >
+            <input type="hidden" th:field="*{cccd}" />
+
+            <section class="result-card">
+              <div
+                class="result-card-header d-flex justify-content-between align-items-center flex-wrap gap-2"
+              >
+                <h5 class="mb-0"><i class="bi bi-list-ol me-2"></i>Nguyện vọng xét tuyển</h5>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="addAspiration">
+                  <i class="bi bi-plus-circle me-1"></i>Thêm nguyện vọng
+                </button>
+              </div>
+
+              <div class="result-card-body">
+                <div
+                  th:if="${#fields.hasErrors('cccd')}"
+                  class="alert alert-danger"
+                  role="alert"
+                  th:errors="*{cccd}"
+                ></div>
+
+                <div
+                  th:if="${#fields.hasGlobalErrors()}"
+                  class="alert alert-danger"
+                  role="alert"
+                >
+                  <div th:each="err : ${#fields.globalErrors()}" th:text="${err}"></div>
+                </div>
+
+                <div id="clientValidationAlert" class="alert alert-danger d-none" role="alert"></div>
+
+                <div class="table-responsive">
+                  <table class="table table-hover mb-0 aspiration-edit-table">
+                    <thead>
+                      <tr>
+                        <th style="width: 70px" class="text-center">Ưu tiên</th>
+                        <th>Ngành xét tuyển</th>
+                        <th style="width: 140px" class="text-center">Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody id="aspirationRows">
+                      <tr class="aspiration-row" th:each="aspiration, iter : *{aspirations}">
+                        <td class="text-center fw-semibold preference-order" th:text="${iter.count}"></td>
+                        <td>
+                          <select
+                            class="form-select major-select"
+                            th:field="*{aspirations[__${iter.index}__].maNganh}"
+                          >
+                            <option value="">Chọn ngành...</option>
+                            <option
+                              th:each="nganh : ${nganhs}"
+                              th:value="${nganh.manganh}"
+                              th:text="${nganh.manganh + ' - ' + nganh.tennganh}"
+                            ></option>
+                          </select>
+                        </td>
+                        <td class="text-center aspiration-actions">
+                          <button type="button" class="btn btn-outline-secondary btn-sm move-up" title="Đẩy lên" aria-label="Đẩy lên">
+                            <i class="bi bi-arrow-up"></i>
+                          </button>
+                          <button type="button" class="btn btn-outline-secondary btn-sm move-down" title="Đẩy xuống" aria-label="Đẩy xuống">
+                            <i class="bi bi-arrow-down"></i>
+                          </button>
+                          <button type="button" class="btn btn-outline-danger btn-sm remove-row" title="Xóa" aria-label="Xóa">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                  <a th:href="@{/tra-cuu-diem}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle me-1"></i>Hủy
+                  </a>
+                  <button type="submit" class="btn btn-primary" id="saveAspiration">
+                    <span class="btn-text">
+                      <i class="bi bi-save me-1"></i>Lưu đăng ký
+                    </span>
+                    <span
+                      class="spinner-border spinner-border-sm d-none"
+                      id="save-spinner"
+                      role="status"
+                    ></span>
+                  </button>
+                </div>
+              </div>
+            </section>
+          </form>
+
+          <template id="aspirationRowTemplate">
+            <tr class="aspiration-row">
+              <td class="text-center fw-semibold preference-order">__ORDER__</td>
+              <td>
+                <select class="form-select major-select" name="aspirations[__INDEX__].maNganh">
+                  <option value="">Chọn ngành...</option>
+                  <option
+                    th:each="nganh : ${nganhs}"
+                    th:value="${nganh.manganh}"
+                    th:text="${nganh.manganh + ' - ' + nganh.tennganh}"
+                  ></option>
+                </select>
+              </td>
+              <td class="text-center aspiration-actions">
+                <button type="button" class="btn btn-outline-secondary btn-sm move-up" title="Đẩy lên" aria-label="Đẩy lên">
+                  <i class="bi bi-arrow-up"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm move-down" title="Đẩy xuống" aria-label="Đẩy xuống">
+                  <i class="bi bi-arrow-down"></i>
+                </button>
+                <button type="button" class="btn btn-outline-danger btn-sm remove-row" title="Xóa" aria-label="Xóa">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </template>
+        </div>
+      </div>
+    </main>
+
+    <div th:replace="~{layout/footer :: footer}"></div>
+    <script th:src="@{/js/aspiration-registration.js}"></script>
+  </body>
+</html>

@@ -57,4 +57,9 @@ public interface ConversionTableRepository extends JpaRepository<XtBangquydoi, I
 
         @Query("SELECT DISTINCT b.dMon FROM XtBangquydoi b ORDER BY b.dMon")
         List<String> getAllMon();
+
+        @Query("SELECT b FROM XtBangquydoi b WHERE b.dPhuongthuc = :phuongThuc AND b.dMon = :mon AND b.dTohop IS NULL")
+        Optional<XtBangquydoi> findByPhuongThucAndMonAndTohopIsNull(
+                        @Param("phuongThuc") String phuongThuc,
+                        @Param("mon") String mon);
 }

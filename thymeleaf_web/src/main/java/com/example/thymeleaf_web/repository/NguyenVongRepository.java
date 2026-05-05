@@ -13,4 +13,12 @@ public interface NguyenVongRepository extends JpaRepository<NguyenVong, Integer>
 
     @Query(value = "SELECT * FROM xt_nguyenvongxettuyen WHERE nn_cccd = :cccd AND is_deleted = false ORDER BY nv_tt ASC", nativeQuery = true)
     List<NguyenVong> findByCccdActive(@Param("cccd") String cccd);
+
+    @Query(value = """
+            SELECT *
+            FROM xt_nguyenvongxettuyen
+            WHERE nn_cccd = :cccd
+            ORDER BY is_deleted ASC, nv_tt ASC, id ASC
+            """, nativeQuery = true)
+    List<NguyenVong> findByCccdIncludingDeleted(@Param("cccd") String cccd);
 }

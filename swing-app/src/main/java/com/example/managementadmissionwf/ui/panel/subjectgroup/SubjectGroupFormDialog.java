@@ -7,15 +7,26 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * Dialog for adding/editing subject groups
+ * Dialog for adding/editing subject groups.
+ * Subjects are selected via editable combo boxes with a standard list.
+ * Users can add custom subjects at runtime via the "+" button.
  */
 public class SubjectGroupFormDialog extends JDialog {
 
+    private static final String[] DEFAULT_SUBJECTS = {
+            "TO", "LI", "HO", "SI", "SU", "DI", "VA",
+            "N1", "NL1", "NK1", "NK2"
+    };
+
+    private final DefaultComboBoxModel<String> comboBoxModel1 = new DefaultComboBoxModel<>(DEFAULT_SUBJECTS);
+    private final DefaultComboBoxModel<String> comboBoxModel2 = new DefaultComboBoxModel<>(DEFAULT_SUBJECTS);
+    private final DefaultComboBoxModel<String> comboBoxModel3 = new DefaultComboBoxModel<>(DEFAULT_SUBJECTS);
+
     private JTextField txtGroupCode;
     private JTextField txtGroupName;
-    private JTextField txtSubject1;
-    private JTextField txtSubject2;
-    private JTextField txtSubject3;
+    private JComboBox<String> cboSubject1;
+    private JComboBox<String> cboSubject2;
+    private JComboBox<String> cboSubject3;
     private boolean confirmed;
     private SubjectGroupRequest resultData;
 
@@ -26,7 +37,7 @@ public class SubjectGroupFormDialog extends JDialog {
     }
 
     private void initComponents() {
-        setSize(400, 350);
+        setSize(450, 350);
         setLayout(new BorderLayout());
 
         JPanel contentPanel = new JPanel(new GridBagLayout());
@@ -35,64 +46,93 @@ public class SubjectGroupFormDialog extends JDialog {
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // Mã tổ hợp
+        // Ma to hop
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.weightx = 0;
         gbc.anchor = GridBagConstraints.EAST;
         contentPanel.add(new JLabel("Mã tổ hợp:"), gbc);
 
         gbc.gridx = 1;
+        gbc.gridwidth = 2;
         gbc.weightx = 1.0;
         txtGroupCode = new JTextField(20);
         contentPanel.add(txtGroupCode, gbc);
 
-        // Tên tổ hợp
+        // Ten to hop
         gbc.gridx = 0;
         gbc.gridy = 1;
+        gbc.gridwidth = 1;
         gbc.weightx = 0;
         gbc.anchor = GridBagConstraints.EAST;
         contentPanel.add(new JLabel("Tên tổ hợp:"), gbc);
 
         gbc.gridx = 1;
+        gbc.gridwidth = 2;
         gbc.weightx = 1.0;
         txtGroupName = new JTextField(20);
         contentPanel.add(txtGroupName, gbc);
 
-        // Môn 1
+        // Mon 1
         gbc.gridx = 0;
         gbc.gridy = 2;
+        gbc.gridwidth = 1;
         gbc.weightx = 0;
         gbc.anchor = GridBagConstraints.EAST;
         contentPanel.add(new JLabel("Môn 1:"), gbc);
 
         gbc.gridx = 1;
+        gbc.gridwidth = 1;
         gbc.weightx = 1.0;
-        txtSubject1 = new JTextField(20);
-        contentPanel.add(txtSubject1, gbc);
+        cboSubject1 = createSubjectComboBox(comboBoxModel1);
+        contentPanel.add(cboSubject1, gbc);
 
-        // Môn 2
+        gbc.gridx = 2;
+        gbc.gridwidth = 1;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        contentPanel.add(createAddSubjectButton(comboBoxModel1, comboBoxModel2, comboBoxModel3), gbc);
+
+        // Mon 2
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.weightx = 0;
         gbc.anchor = GridBagConstraints.EAST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         contentPanel.add(new JLabel("Môn 2:"), gbc);
 
         gbc.gridx = 1;
+        gbc.gridwidth = 1;
         gbc.weightx = 1.0;
-        txtSubject2 = new JTextField(20);
-        contentPanel.add(txtSubject2, gbc);
+        cboSubject2 = createSubjectComboBox(comboBoxModel2);
+        contentPanel.add(cboSubject2, gbc);
 
-        // Môn 3
+        gbc.gridx = 2;
+        gbc.gridwidth = 1;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        contentPanel.add(createAddSubjectButton(comboBoxModel1, comboBoxModel2, comboBoxModel3), gbc);
+
+        // Mon 3
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.weightx = 0;
         gbc.anchor = GridBagConstraints.EAST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         contentPanel.add(new JLabel("Môn 3:"), gbc);
 
         gbc.gridx = 1;
+        gbc.gridwidth = 1;
         gbc.weightx = 1.0;
-        txtSubject3 = new JTextField(20);
-        contentPanel.add(txtSubject3, gbc);
+        cboSubject3 = createSubjectComboBox(comboBoxModel3);
+        contentPanel.add(cboSubject3, gbc);
+
+        gbc.gridx = 2;
+        gbc.gridwidth = 1;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        contentPanel.add(createAddSubjectButton(comboBoxModel1, comboBoxModel2, comboBoxModel3), gbc);
 
         // Button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
@@ -118,8 +158,64 @@ public class SubjectGroupFormDialog extends JDialog {
         add(buttonPanel, BorderLayout.SOUTH);
     }
 
+    private JComboBox<String> createSubjectComboBox(DefaultComboBoxModel<String> model) {
+        JComboBox<String> comboBox = new JComboBox<>(model);
+        comboBox.setEditable(true);
+        comboBox.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        return comboBox;
+    }
+
+    private JButton createAddSubjectButton(DefaultComboBoxModel<String>... models) {
+        JButton btnAdd = new JButton("+");
+        btnAdd.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnAdd.setFocusPainted(false);
+        btnAdd.setToolTipText("Thêm môn tự chọn");
+        btnAdd.addActionListener(e -> showCustomSubjectDialog(models));
+        return btnAdd;
+    }
+
+    private void showCustomSubjectDialog(DefaultComboBoxModel<String>[] models) {
+        JTextField txtCustomSubject = new JTextField(15);
+        txtCustomSubject.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        panel.add(new JLabel("Tên môn:"), BorderLayout.NORTH);
+        panel.add(txtCustomSubject, BorderLayout.CENTER);
+
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                panel,
+                "Thêm môn tự chọn",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
+        );
+
+        if (result == JOptionPane.OK_OPTION) {
+            String subjectName = txtCustomSubject.getText().trim();
+            if (subjectName.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "Vui lòng nhập tên môn!",
+                        "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            for (DefaultComboBoxModel<String> model : models) {
+                boolean exists = false;
+                for (int i = 0; i < model.getSize(); i++) {
+                    if (model.getElementAt(i).trim().equalsIgnoreCase(subjectName)) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists) {
+                    model.addElement(subjectName);
+                }
+            }
+        }
+    }
+
     private void handleSave() {
-        // Validate input
         if (txtGroupCode.getText().trim().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Vui lòng nhập mã tổ hợp!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             return;
@@ -130,17 +226,45 @@ public class SubjectGroupFormDialog extends JDialog {
             return;
         }
 
-        if (txtSubject1.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập môn 1!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        Object selected1 = cboSubject1.getSelectedItem();
+        Object selected2 = cboSubject2.getSelectedItem();
+        Object selected3 = cboSubject3.getSelectedItem();
+
+        String mon1 = (selected1 != null) ? selected1.toString().trim() : "";
+        String mon2 = (selected2 != null) ? selected2.toString().trim() : "";
+        String mon3 = (selected3 != null) ? selected3.toString().trim() : "";
+
+        if (mon1.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn môn 1!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (mon2.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn môn 2!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (mon3.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn môn 3!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (mon1.equalsIgnoreCase(mon2)
+                || mon1.equalsIgnoreCase(mon3)
+                || mon2.equalsIgnoreCase(mon3)) {
+            JOptionPane.showMessageDialog(this,
+                    "Không được chọn trùng môn trong cùng một tổ hợp!",
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         SubjectGroupRequest req = new SubjectGroupRequest();
         req.setMatohop(txtGroupCode.getText().trim());
         req.setTentohop(txtGroupName.getText().trim());
-        req.setMon1(txtSubject1.getText().trim());
-        req.setMon2(txtSubject2.getText().trim());
-        req.setMon3(txtSubject3.getText().trim());
+        req.setMon1(mon1);
+        req.setMon2(mon2);
+        req.setMon3(mon3);
         this.resultData = req;
 
         confirmed = true;
@@ -166,12 +290,16 @@ public class SubjectGroupFormDialog extends JDialog {
     public static SubjectGroupRequest showEditDialog(Frame parent, SubjectGroupResponse data) {
         SubjectGroupFormDialog dialog = new SubjectGroupFormDialog(parent, "Sửa tổ hợp môn");
 
-        // Fill data
+        // Ensure existing subject values are present in combo box models
+        ensureSubjectExists(dialog.comboBoxModel1, data.getMon1());
+        ensureSubjectExists(dialog.comboBoxModel2, data.getMon2());
+        ensureSubjectExists(dialog.comboBoxModel3, data.getMon3());
+
         dialog.txtGroupCode.setText(data.getMatohop());
         dialog.txtGroupName.setText(data.getTentohop());
-        dialog.txtSubject1.setText(data.getMon1());
-        dialog.txtSubject2.setText(data.getMon2());
-        dialog.txtSubject3.setText(data.getMon3());
+        dialog.cboSubject1.setSelectedItem(data.getMon1());
+        dialog.cboSubject2.setSelectedItem(data.getMon2());
+        dialog.cboSubject3.setSelectedItem(data.getMon3());
 
         dialog.setVisible(true);
 
@@ -179,5 +307,17 @@ public class SubjectGroupFormDialog extends JDialog {
             return dialog.resultData;
         }
         return null;
+    }
+
+    private static void ensureSubjectExists(DefaultComboBoxModel<String> model, String subject) {
+        if (subject == null || subject.trim().isEmpty()) {
+            return;
+        }
+        for (int i = 0; i < model.getSize(); i++) {
+            if (model.getElementAt(i).trim().equalsIgnoreCase(subject.trim())) {
+                return;
+            }
+        }
+        model.addElement(subject.trim());
     }
 }

@@ -1,6 +1,7 @@
 package com.example.thymeleaf_web.service.impl;
 
 import com.example.thymeleaf_web.model.dto.AspirationDto;
+import com.example.thymeleaf_web.model.dto.ScoreLookupExamScore;
 import com.example.thymeleaf_web.model.dto.ScoreLookupResult;
 import com.example.thymeleaf_web.model.entity.DiemCong;
 import com.example.thymeleaf_web.model.entity.DiemThi;
@@ -40,7 +41,9 @@ public class ScoreLookupServiceImpl implements ScoreLookupService {
             return Optional.empty();
         }
 
-        DiemThi diemThi = diemThiRepo.findByCccdActive(cccd).orElse(null);
+        List<ScoreLookupExamScore> diemThiList = diemThiRepo.findAllByCccdActive(cccd).stream()
+                .map(this::toExamScore)
+                .toList();
         DiemCong diemCong = diemCongRepo.findByCccdActive(cccd).orElse(null);
         List<NguyenVong> nguyenVongs = nguyenVongRepo.findByCccdActive(cccd);
 
@@ -69,19 +72,7 @@ public class ScoreLookupServiceImpl implements ScoreLookupService {
                 thisinh.getSobaodanh(),
                 displayName,
                 thisinh.getNgaySinh(),
-                diemThi != null ? diemThi.getPhuongThuc() : null,
-                diemThi != null ? diemThi.getToan() : null,
-                diemThi != null ? diemThi.getLy() : null,
-                diemThi != null ? diemThi.getHoa() : null,
-                diemThi != null ? diemThi.getSinh() : null,
-                diemThi != null ? diemThi.getSu() : null,
-                diemThi != null ? diemThi.getDia() : null,
-                diemThi != null ? diemThi.getVan() : null,
-                diemThi != null ? diemThi.getN1Thi() : null,
-                diemThi != null ? diemThi.getN1Cc() : null,
-                diemThi != null ? diemThi.getNl1() : null,
-                diemThi != null ? diemThi.getNk1() : null,
-                diemThi != null ? diemThi.getNk2() : null,
+                diemThiList,
                 diemCong != null ? diemCong.getDiemCc() : null,
                 diemCong != null ? diemCong.getDiemUtxt() : null,
                 diemCong != null ? diemCong.getDiemTong() : null,
@@ -94,5 +85,23 @@ public class ScoreLookupServiceImpl implements ScoreLookupService {
         return nganhRepo.findAllActive().stream()
                 .sorted((a, b) -> a.getManganh().compareToIgnoreCase(b.getManganh()))
                 .toList();
+    }
+
+    private ScoreLookupExamScore toExamScore(DiemThi diemThi) {
+        return new ScoreLookupExamScore(
+                diemThi.getPhuongThuc(),
+                diemThi.getToan(),
+                diemThi.getLy(),
+                diemThi.getHoa(),
+                diemThi.getSinh(),
+                diemThi.getSu(),
+                diemThi.getDia(),
+                diemThi.getVan(),
+                diemThi.getN1Thi(),
+                diemThi.getN1Cc(),
+                diemThi.getNl1(),
+                diemThi.getNk1(),
+                diemThi.getNk2()
+        );
     }
 }

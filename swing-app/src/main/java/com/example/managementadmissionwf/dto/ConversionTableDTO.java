@@ -35,6 +35,12 @@ public class ConversionTableDTO {
     @ExcelColumn(name = "Điểm quy đổi (D)", index = 6)
     private Double diemD;
 
+    @ExcelColumn(name = "Mã quy đổi", index = 7)
+    private String maQuyDoi;
+
+    @ExcelColumn(name = "Phạm vi", index = 8)
+    private String phanVi;
+
     private Boolean isDeleted;
 
     private LocalDate createdAt;

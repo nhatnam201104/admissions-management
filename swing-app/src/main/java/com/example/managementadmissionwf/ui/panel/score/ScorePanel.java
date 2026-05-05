@@ -263,10 +263,7 @@ public class ScorePanel extends AbstractFeaturePanel {
                 return;
             }
 
-            if (controller.existsScoreByCccd(cccd)) {
-                showWarning("Thí sinh này đã có điểm! Vui lòng dùng chức năng sửa.");
-                return;
-            }
+            
 
         } catch (Exception e) {
             showError("Lỗi kiểm tra CCCD: " + e.getMessage());
