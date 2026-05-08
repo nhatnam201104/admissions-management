@@ -323,7 +323,7 @@ public class ScorePanel extends AbstractFeaturePanel {
             
         if (confirm == JOptionPane.YES_OPTION) {
             try {
-                controller.deleteScore(selected.getCccd());
+                controller.deleteScore(selected.getCccd(), selected.getPhuongThuc());
                 loadData();
                 showInfo("Xóa thành công!");
             } catch (Exception e) {

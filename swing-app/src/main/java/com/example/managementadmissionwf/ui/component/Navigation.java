@@ -1,5 +1,6 @@
 package com.example.managementadmissionwf.ui.component;
 
+import com.example.managementadmissionwf.config.ApplicationContextHolder;
 import com.example.managementadmissionwf.ui.frame.MainFrame;
 import com.example.managementadmissionwf.ui.panel.candidate.CandidatePanel;
 import com.example.managementadmissionwf.ui.panel.major.MajorPanel;
@@ -10,8 +11,6 @@ import com.example.managementadmissionwf.ui.panel.StatisticPanel;
 import com.example.managementadmissionwf.ui.panel.user.UserManagementPanel;
 import com.example.managementadmissionwf.ui.panel.BonusScorePanel;
 import com.example.managementadmissionwf.ui.panel.conversion.ConversionTablePanel;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -20,29 +19,47 @@ import java.awt.event.ActionListener;
  * NavigationController - Handles menu click events and manages panel navigation
  * NO UI layout code - pure controller logic
  */
-@NoArgsConstructor(force = true)
-@RequiredArgsConstructor
 public class Navigation {
 
     private MainFrame mainFrame;
 
-    // Content panels
-    private final CandidatePanel candidatePanel;
-    private final ScorePanel scorePanel;
-    private final MajorPanel majorPanel;
-    private final SubjectGroupPanel subjectGroupPanel;
-    private final BonusScorePanel bonusScorePanel;
-    private final ConversionTablePanel conversionTablePanel;
-    private final UserManagementPanel userManagementPanel;
-    private final AdmissionPanel admissionPanel;
-    private final StatisticPanel statisticPanel;
+    // Content panels (lazy loaded from Spring context)
+    private CandidatePanel candidatePanel;
+    private ScorePanel scorePanel;
+    private MajorPanel majorPanel;
+    private SubjectGroupPanel subjectGroupPanel;
+    private BonusScorePanel bonusScorePanel;
+    private ConversionTablePanel conversionTablePanel;
+    private UserManagementPanel userManagementPanel;
+    private AdmissionPanel admissionPanel;
+    private StatisticPanel statisticPanel;
+
+    public Navigation() {
+        // Lazy load panels from Spring context
+    }
 
     public void init(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
+        loadPanelsFromContext();
         setupMenuListeners();
 
         // Show default panel
         showCandidatePanel();
+    }
+
+    /**
+     * Load all panels from Spring application context
+     */
+    private void loadPanelsFromContext() {
+        this.candidatePanel = ApplicationContextHolder.getBean(CandidatePanel.class);
+        this.scorePanel = ApplicationContextHolder.getBean(ScorePanel.class);
+        this.majorPanel = ApplicationContextHolder.getBean(MajorPanel.class);
+        this.subjectGroupPanel = ApplicationContextHolder.getBean(SubjectGroupPanel.class);
+        this.bonusScorePanel = ApplicationContextHolder.getBean(BonusScorePanel.class);
+        this.conversionTablePanel = ApplicationContextHolder.getBean(ConversionTablePanel.class);
+        this.userManagementPanel = ApplicationContextHolder.getBean(UserManagementPanel.class);
+        this.admissionPanel = ApplicationContextHolder.getBean(AdmissionPanel.class);
+        this.statisticPanel = ApplicationContextHolder.getBean(StatisticPanel.class);
     }
 
     /**

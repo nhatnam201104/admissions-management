@@ -69,6 +69,9 @@ public class XtNguyenvongxettuyen {
     @Column(name = "tt_thm", length = 45)
     String ttThm; // thứ tự ưu tiên/học bổng
 
+    @Column(name = "ly_do", length = 255)
+    String lyDo; // lý do rớt/trúng (VD: "Đạt quota", "Đã trúng tuyển NV khác")
+
     @Column(nullable = false)
     @Builder.Default
     Boolean isDeleted = false;
