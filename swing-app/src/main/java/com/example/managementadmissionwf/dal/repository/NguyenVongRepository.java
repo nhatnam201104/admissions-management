@@ -10,4 +10,6 @@ import java.util.List;
 public interface NguyenVongRepository extends JpaRepository<XtNguyenvongxettuyen, Integer> {
 
     List<XtNguyenvongxettuyen> findByNnCccd(String cccd);
+    
+    List<XtNguyenvongxettuyen> findByNvKetqua(String nvKetqua);
 }

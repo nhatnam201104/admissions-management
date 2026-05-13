@@ -719,7 +719,7 @@ class ScoreServiceImplTest {
             when(scoreRepository.findByCccd(CCCD)).thenReturn(Optional.of(entity));
             when(scoreRepository.save(entity)).thenReturn(entity);
 
-            scoreService.deleteScore(CCCD);
+            scoreService.deleteScore(CCCD, "THPT");
 
             assertThat(entity.getIsDeleted()).isTrue();
         }
@@ -729,7 +729,7 @@ class ScoreServiceImplTest {
         void shouldThrowWhenNotFound() {
             when(scoreRepository.findByCccd(CCCD)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> scoreService.deleteScore(CCCD))
+            assertThatThrownBy(() -> scoreService.deleteScore(CCCD, "THPT"))
                     .isInstanceOf(RuntimeException.class)
                     .hasMessageContaining(CCCD);
         }
@@ -739,7 +739,7 @@ class ScoreServiceImplTest {
         void shouldTrimCccd() {
             when(scoreRepository.findByCccd(CCCD)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> scoreService.deleteScore("  " + CCCD + "  "))
+            assertThatThrownBy(() -> scoreService.deleteScore("  " + CCCD + "  ", "THPT"))
                     .isInstanceOf(RuntimeException.class);
 
             verify(scoreRepository).findByCccd(CCCD);

@@ -1,5 +1,8 @@
 package com.example.managementadmissionwf.ui.panel.admission;
 
+import com.example.managementadmissionwf.config.ApplicationContextHolder;
+import com.example.managementadmissionwf.dal.entity.XtNganh;
+import com.example.managementadmissionwf.dal.repository.MajorRepository;
 import com.example.managementadmissionwf.ui.util.ToolbarAction;
 import com.example.managementadmissionwf.ui.util.UIFactory;
 import com.example.managementadmissionwf.ui.panel.AbstractFeaturePanel;
@@ -10,6 +13,7 @@ import org.springframework.stereotype.Component;
 import javax.swing.*;
 import java.awt.*;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
 @Component
@@ -51,12 +55,19 @@ public class AdmissionPanel extends AbstractFeaturePanel {
         filterPanel.add(cboKetQua);
 
         filterPanel.add(UIFactory.createFilterLabel("Ngành:"));
-        cboNganh = UIFactory.createFilterCombo(
-                new String[]{"Tất cả", "Công nghệ thông tin", "Quản trị kinh doanh", "Kỹ thuật phần mềm"}, 160);
+        // Load ngành từ database
+        MajorRepository majorRepo = ApplicationContextHolder.getBean(MajorRepository.class);
+        List<XtNganh> allMajors = majorRepo.findByIsDeletedFalse();
+        String[] nganhItems = new String[allMajors.size() + 1];
+        nganhItems[0] = "Tất cả";
+        for (int i = 0; i < allMajors.size(); i++) {
+            nganhItems[i + 1] = allMajors.get(i).getTennganh();
+        }
+        cboNganh = UIFactory.createFilterCombo(nganhItems, 160);
         filterPanel.add(cboNganh);
 
         filterPanel.add(UIFactory.createFilterLabel("Phương thức:"));
-        cboPhuongThuc = UIFactory.createFilterCombo(new String[]{"Tất cả", "THPT", "DGNL", "Học bạ"}, 100);
+        cboPhuongThuc = UIFactory.createFilterCombo(new String[]{"Tất cả", "THPT", "DGNL", "VSAT", "TUYEN_THANG"}, 100);
         filterPanel.add(cboPhuongThuc);
     }
 
@@ -70,15 +81,29 @@ public class AdmissionPanel extends AbstractFeaturePanel {
 
     @Override
     protected Set<ToolbarAction> getToolbarActions() {
-        return EnumSet.of(ToolbarAction.UPDATE, ToolbarAction.EXPORT_EXCEL, ToolbarAction.EXPORT_PDF, ToolbarAction.PRINT);
+        return EnumSet.of(
+            ToolbarAction.ADD,           // Thêm nguyện vọng
+            ToolbarAction.EDIT,          // Sửa nguyện vọng
+            ToolbarAction.DELETE,        // Xóa nguyện vọng
+            ToolbarAction.REFRESH,       // Làm mới
+            ToolbarAction.UPDATE,        // Cập nhật KQ
+            ToolbarAction.VIEW_DETAIL,   // Chi tiết điểm
+            ToolbarAction.EXPORT_EXCEL,   // Xuất Excel
+            ToolbarAction.AUTO_ADMISSION  // Xét tuyển tự động
+        );
     }
-
+    
     @Override
     protected void onToolbarAction(ToolbarAction action) {
         switch (action) {
+            case ADD -> controller.addAspiration();
+            case EDIT -> controller.editAspiration();
+            case DELETE -> controller.deleteAspiration();
+            case REFRESH -> controller.refreshData();
             case UPDATE -> controller.updateResult();
+            case VIEW_DETAIL -> controller.showScoreDetail();
             case EXPORT_EXCEL -> controller.handleExportExcel();
-            case EXPORT_PDF -> controller.handleExportPDF();
+            case AUTO_ADMISSION -> controller.handleAutomaticAdmission();
             default -> {}
         }
     }
@@ -98,7 +123,8 @@ public class AdmissionPanel extends AbstractFeaturePanel {
         String keyword = getSearchField().getText().trim();
         String ketQua = (String) cboKetQua.getSelectedItem();
         String nganh = (String) cboNganh.getSelectedItem();
-        controller.search(keyword, ketQua, nganh);
+        String phuongThuc = (String) cboPhuongThuc.getSelectedItem();
+        controller.search(keyword, ketQua, nganh, phuongThuc);
     }
 
     @Override

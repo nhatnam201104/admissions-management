@@ -73,12 +73,19 @@ public class ScoreServiceImpl implements ScoreService {
     @Override
     @Transactional(readOnly = true)
     public ScoreDTO getScoreByCccd(String cccd) {
-        String cleanCccd = normalizeCccd(cccd);
+        return getScoreByCccdAndPhuongThuc(cccd, METHOD_THPT);
+    }
 
-        return scoreRepository.findByCccd(cleanCccd)
+    @Override
+    @Transactional(readOnly = true)
+    public ScoreDTO getScoreByCccdAndPhuongThuc(String cccd, String phuongThuc) {
+        String cleanCccd = normalizeCccd(cccd);
+        String method = normalizeMethod(phuongThuc);
+
+        return scoreRepository.findByCccdAndDPhuongthuc(cleanCccd, method)
                 .map(scoreMapper::toDto)
                 .orElseThrow(() ->
-                        new RuntimeException("Không tìm thấy thí sinh với CCCD: " + cleanCccd));
+                        new RuntimeException("Không tìm thấy điểm thi với CCCD: " + cleanCccd + " và phương thức: " + method));
     }
 
     @Override
@@ -208,12 +215,13 @@ public class ScoreServiceImpl implements ScoreService {
     // ================= DELETE (SOFT) =================
     @Override
     @Transactional
-    public void deleteScore(String cccd) {
+    public void deleteScore(String cccd, String phuongThuc) {
         String cleanCccd = normalizeCccd(cccd);
+        String method = normalizeMethod(phuongThuc);
 
-        XtDiemthixettuyen entity = scoreRepository.findByCccd(cleanCccd)
+        XtDiemthixettuyen entity = scoreRepository.findByCccdAndDPhuongthuc(cleanCccd, method)
                 .orElseThrow(() ->
-                        new RuntimeException("Không tìm thấy thí sinh với CCCD: " + cleanCccd));
+                        new RuntimeException("Không tìm thấy điểm thi với CCCD: " + cleanCccd + " và phương thức: " + method));
 
         entity.setIsDeleted(true);
         scoreRepository.save(entity);

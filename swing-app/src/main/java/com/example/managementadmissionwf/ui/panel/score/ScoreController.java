@@ -39,8 +39,8 @@ public class ScoreController {
         }
     }
 
-    public void deleteScore(String cccd) throws Exception {
-        scoreService.deleteScore(cccd);
+    public void deleteScore(String cccd, String phuongThuc) throws Exception {
+        scoreService.deleteScore(cccd, phuongThuc);
     }
 
     public boolean existsScoreByCccd(String cccd) {

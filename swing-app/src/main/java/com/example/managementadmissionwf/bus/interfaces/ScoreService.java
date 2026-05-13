@@ -20,11 +20,15 @@ public interface ScoreService {
 
     ScoreDTO getScoreByCccd(@NotBlank(message = "CCCD không được để trống") String cccd);
     
+    ScoreDTO getScoreByCccdAndPhuongThuc(@NotBlank(message = "CCCD không được để trống") String cccd, 
+            @NotBlank(message = "Phương thức không được để trống") String phuongThuc);
+    
     ScoreDTO createScore(@Valid ScoreDTO dto);
     
     ScoreDTO updateScore(@Valid ScoreDTO dto);
     
-    void deleteScore(@NotBlank(message = "CCCD không được để trống") String cccd);
+    void deleteScore(@NotBlank(message = "CCCD không được để trống") String cccd, 
+            @NotBlank(message = "Phương thức không được để trống") String phuongThuc);
 
     boolean existsByCccd(String cccd);
     boolean existsCandidateByCccd(String cccd);

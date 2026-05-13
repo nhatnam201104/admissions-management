@@ -19,4 +19,9 @@ public class AdmissionResultDTO {
     private String ketQua;
     private String phuongThuc;
     private LocalDate ngayXet;
+    
+    // Thêm trường mới cho bảng
+    private String tohop;      // Tổ hợp môn xét tuyển
+    private Double diemChuan;  // Điểm chuẩn ngành
+    private String lyDo;       // Lý do rớt/trúng (VD: "Đạt quota")
 }
