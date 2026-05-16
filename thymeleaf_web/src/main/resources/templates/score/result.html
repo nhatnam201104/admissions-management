@@ -71,10 +71,18 @@
                 <div th:each="diemThi, scoreStat : ${result.diemThiList()}"
                      th:classappend="${scoreStat.last ? '' : 'mb-3 pb-3 border-bottom'}">
                     <div class="row g-2 mb-2" th:if="${diemThi.phuongThuc() != null}">
-                        <div class="col-12">
+                        <div class="col-md-8">
                             <div class="info-row">
                                 <span class="info-label">Phương thức xét tuyển</span>
                                 <span class="info-value fw-semibold" th:text="${diemThi.phuongThuc()}"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4"
+                             th:if="${diemThi.phuongThuc() == 'DGNL' or diemThi.phuongThuc() == 'VSAT'}">
+                            <div class="info-row">
+                                <span class="info-label">Điểm quy đổi (thang 30)</span>
+                                <span class="info-value fw-semibold text-success"
+                                      th:text="${#numbers.formatDecimal(diemThi.diemQuyDoiThang30(), 1, 2)}">--</span>
                             </div>
                         </div>
                     </div>
@@ -166,19 +174,19 @@
                     <div class="col-6 col-md-4">
                         <div class="score-cell">
                             <span class="score-label">Điểm CC</span>
-                            <span class="score-value" th:text="${result.diemCc() != null ? result.diemCc() : '-'}"></span>
+                            <span class="score-value" th:text="${result.diemCc() != null ? #numbers.formatDecimal(result.diemCc(), 1, 2) : '-'}"></span>
                         </div>
                     </div>
                     <div class="col-6 col-md-4">
                         <div class="score-cell">
                             <span class="score-label">Điểm ƯTXT</span>
-                            <span class="score-value" th:text="${result.diemUtxt() != null ? result.diemUtxt() : '-'}"></span>
+                            <span class="score-value" th:text="${result.diemUtxt() != null ? #numbers.formatDecimal(result.diemUtxt(), 1, 2) : '-'}"></span>
                         </div>
                     </div>
                     <div class="col-6 col-md-4">
                         <div class="score-cell score-cell--total">
                             <span class="score-label">Tổng điểm cộng</span>
-                            <span class="score-value fw-bold text-primary" th:text="${result.diemTong()}"></span>
+                            <span class="score-value fw-bold text-primary" th:text="${#numbers.formatDecimal(result.diemTong(), 1, 2)}"></span>
                         </div>
                     </div>
                 </div>
@@ -198,42 +206,124 @@
                             <th style="width: 60px" class="text-center">STT</th>
                             <th>Mã ngành</th>
                             <th>Tên ngành</th>
-                            <th style="width: 100px" class="text-center">Điểm XT</th>
+                            <th style="width: 120px" class="text-center">Phương thức</th>
+                            <th style="width: 90px" class="text-center">Tổ hợp</th>
+                            <th style="width: 100px" class="text-center">Điểm nền</th>
                             <th style="width: 100px" class="text-center">Điểm ƯT</th>
                             <th style="width: 100px" class="text-center">Điểm cộng</th>
-                            <th style="width: 100px" class="text-center">Tổng điểm</th>
+                            <th style="width: 110px" class="text-center">Điểm xét tuyển</th>
                             <th style="width: 130px" class="text-center">Kết quả</th>
                         </tr>
                         </thead>
                         <tbody>
-                        <tr th:each="nv : ${result.nguyenVongs()}"
-                            th:classappend="${nv.isAdmitted()} ? 'table-success' : (${nv.ketQua() == 'CHO_XET'} ? 'table-warning' : '')">
-                            <td class="text-center fw-semibold" th:text="${nv.order()}"></td>
-                            <td th:text="${nv.maNganh()}"></td>
-                            <td th:text="${nv.tenNganh()}"></td>
-                            <td class="text-center" th:text="${nv.diemXettuyen() != null ? nv.diemXettuyen() : '-'}"></td>
-                            <td class="text-center" th:text="${nv.diemUtqd() != null ? nv.diemUtqd() : '-'}"></td>
-                            <td class="text-center" th:text="${nv.diemCong() != null ? nv.diemCong() : '-'}"></td>
-                            <td class="text-center fw-semibold" th:text="${nv.diemThxt() != null ? nv.diemThxt() : '-'}"></td>
-                            <td class="text-center">
-                                <span th:if="${nv.isAdmitted()}" class="badge bg-success">
-                                    <i class="bi bi-check-circle me-1"></i>
-                                    <span th:text="${nv.getKetQuaDisplay()}"></span>
-                                </span>
-                                <span th:if="${nv.ketQua() == 'CHO_XET'}" class="badge bg-warning text-dark">
-                                    <i class="bi bi-hourglass-split me-1"></i>
-                                    <span th:text="${nv.getKetQuaDisplay()}"></span>
-                                </span>
-                                <span th:if="${nv.ketQua() == 'TRUOT'}" class="badge bg-secondary">
-                                    <span th:text="${nv.getKetQuaDisplay()}"></span>
-                                </span>
-                                <span th:if="${nv.ketQua() == null}" class="badge bg-light text-dark">
-                                    <span th:text="${nv.getKetQuaDisplay()}"></span>
-                                </span>
-                            </td>
-                        </tr>
+                        <th:block th:each="nv : ${result.nguyenVongs()}">
+                            <tr th:classappend="${nv.isAdmitted()} ? 'table-success' : (${nv.ketQua() == 'CHO_XET'} ? 'table-warning' : '')">
+                                <td class="text-center fw-semibold" th:text="${nv.order()}"></td>
+                                <td th:text="${nv.maNganh()}"></td>
+                                <td th:text="${nv.tenNganh()}"></td>
+                                <td class="text-center" th:text="${nv.phuongThucDisplay()}"></td>
+                                <td class="text-center" th:text="${nv.toHopDisplay()}"></td>
+                                <td class="text-center" th:text="${nv.diemThxt() != null ? #numbers.formatDecimal(nv.diemThxt(), 1, 2) : '-'}"></td>
+                                <td class="text-center" th:text="${nv.diemUtqd() != null ? #numbers.formatDecimal(nv.diemUtqd(), 1, 2) : '-'}"></td>
+                                <td class="text-center" th:text="${nv.diemCong() != null ? #numbers.formatDecimal(nv.diemCong(), 1, 2) : '-'}"></td>
+                                <td class="text-center fw-semibold" th:text="${nv.diemXettuyen() != null ? #numbers.formatDecimal(nv.diemXettuyen(), 1, 2) : '-'}"></td>
+                                <td class="text-center">
+                                    <span th:if="${nv.isAdmitted()}" class="badge bg-success">
+                                        <i class="bi bi-check-circle me-1"></i>
+                                        <span th:text="${nv.getKetQuaDisplay()}"></span>
+                                    </span>
+                                    <span th:if="${nv.ketQua() == 'CHO_XET'}" class="badge bg-warning text-dark">
+                                        <i class="bi bi-hourglass-split me-1"></i>
+                                        <span th:text="${nv.getKetQuaDisplay()}"></span>
+                                    </span>
+                                    <span th:if="${nv.ketQua() == 'TRUOT'}" class="badge bg-danger">
+                                        <i class="bi bi-x-circle me-1"></i>
+                                        <span th:text="${nv.getKetQuaDisplay()}"></span>
+                                    </span>
+                                    <span th:if="${nv.ketQua() == null}" class="badge bg-light text-dark">
+                                        <span th:text="${nv.getKetQuaDisplay()}"></span>
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr th:if="${nv.calculationDetail().hasDetails()}" class="calculation-row">
+                                <td colspan="10">
+                                    <details class="calculation-detail" th:open="${nv.isAdmitted()}">
+                                        <summary>
+                                            <span class="calculation-summary-title">
+                                                <i class="bi bi-diagram-3 me-1"></i>Quy đổi và cách tính điểm
+                                            </span>
+                                            <span class="calculation-summary-meta"
+                                                  th:text="${nv.phuongThucDisplay() + (nv.toHopDisplay() != '-' ? ' · ' + nv.toHopDisplay() : '')}"></span>
+                                        </summary>
+
+
+                                        <div class="calculation-detail-body">
+                                            <div class="calculation-panel"
+                                                 th:if="${not #lists.isEmpty(nv.calculationDetail().convertedScores())}">
+                                                <div class="calculation-panel-title">Quy đổi điểm</div>
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm calculation-mini-table mb-0">
+                                                        <thead>
+                                                        <tr>
+                                                            <th>Môn</th>
+                                                            <th class="text-center">Điểm gốc</th>
+                                                            <th class="text-center">Điểm quy đổi</th>
+                                                            <th>Công thức</th>
+                                                        </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                        <tr th:each="row : ${nv.calculationDetail().convertedScores()}">
+                                                            <td>
+                                                                <span class="fw-semibold" th:text="${row.subjectName()}"></span>
+                                                                <span class="text-muted ms-1" th:text="${'(' + row.subjectCode() + ')'}"></span>
+                                                            </td>
+                                                            <td class="text-center" th:text="${row.rawScore() != null ? #numbers.formatDecimal(row.rawScore(), 1, 2) : '-'}"></td>
+                                                            <td class="text-center fw-semibold" th:text="${row.convertedScore() != null ? #numbers.formatDecimal(row.convertedScore(), 1, 2) : '-'}"></td>
+                                                            <td>
+                                                                <span th:text="${row.formula()}"></span>
+                                                                <span th:if="${row.converted()}" class="badge text-bg-info ms-2">Quy đổi</span>
+                                                            </td>
+                                                        </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+
+                                            <div class="calculation-panel">
+                                                <div class="calculation-panel-title">Cách tính điểm</div>
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm calculation-mini-table mb-0">
+                                                        <thead>
+                                                        <tr>
+                                                            <th style="width: 64px" class="text-center">Bước</th>
+                                                            <th style="width: 180px">Nội dung</th>
+                                                            <th>Công thức</th>
+                                                            <th style="width: 110px" class="text-center">Kết quả</th>
+                                                        </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                        <tr th:each="step : ${nv.calculationDetail().steps()}"
+                                                            th:classappend="${step.finalStep()} ? 'calculation-final-row' : (${step.capApplied()} ? 'calculation-cap-row' : '')">
+                                                            <td class="text-center fw-semibold" th:text="${step.stepNumber()}"></td>
+                                                            <td th:text="${step.description()}"></td>
+                                                            <td>
+                                                                <span th:text="${step.formula()}"></span>
+                                                                <span th:if="${step.capApplied()}" class="badge text-bg-warning ms-2">ƯT giảm</span>
+                                                                <span th:if="${step.incomplete()}" class="badge text-bg-secondary ms-2">Thiếu dữ liệu</span>
+                                                            </td>
+                                                            <td class="text-center fw-semibold" th:text="${step.result() != null ? #numbers.formatDecimal(step.result(), 1, 2) : '-'}"></td>
+                                                        </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </details>
+                                </td>
+                            </tr>
+                        </th:block>
                         <tr th:if="${#lists.isEmpty(result.nguyenVongs())}">
-                            <td colspan="8" class="text-center text-muted py-4">
+                            <td colspan="10" class="text-center text-muted py-4">
                                 Không có nguyện vọng xét tuyển
                             </td>
                         </tr>

@@ -5,7 +5,6 @@ import com.example.managementadmissionwf.dto.common.Paging;
 import com.example.managementadmissionwf.dto.major.MajorDTO;
 import com.example.managementadmissionwf.dto.major.MajorTohopDTO;
 
-import java.util.List;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.util.List;
@@ -81,7 +80,15 @@ public class MajorController {
             if (Boolean.TRUE.equals(m.getTuyenThang())) pt.append("T.Thẳng, ");
             if (Boolean.TRUE.equals(m.getVsat())) pt.append("VSAT, ");
             String ptStr = pt.length() > 0 ? pt.substring(0, pt.length() - 2) : "Chưa có";
-            model.addRow(new Object[]{ m.getMaNganh(), m.getTenNganh(), m.getChiTieu(), m.getDiemSan(), ptStr });
+            model.addRow(new Object[]{
+                    m.getMaNganh(),
+                    m.getTenNganh(),
+                    m.getChiTieu(),
+                    m.getDiemSan(),
+                    m.getDiemTrungTuyen(),
+                    m.getTotalAspirations() != null ? m.getTotalAspirations() : 0,
+                    ptStr
+            });
         }
     }
 }

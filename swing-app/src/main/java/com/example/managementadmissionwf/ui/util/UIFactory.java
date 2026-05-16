@@ -24,7 +24,9 @@ public final class UIFactory {
     }
 
     public static JPanel createActionPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        // Dùng WrapLayout để các button khi xuống hàng vẫn được tính chiều cao
+        // -> tránh tình trạng nút "Xét tuyển" bị ẩn khi cửa sổ hẹp.
+        JPanel panel = new JPanel(new WrapLayout(FlowLayout.LEFT, 10, 5));
         panel.setBackground(new Color(240, 240, 240));
         panel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
         return panel;

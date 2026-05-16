@@ -57,7 +57,7 @@ public class CandidatePanel extends AbstractFeaturePanel {
 
     @Override
     protected Set<ToolbarAction> getToolbarActions() {
-        return EnumSet.of(ToolbarAction.ADD, ToolbarAction.EDIT, ToolbarAction.DELETE,
+        return EnumSet.of(ToolbarAction.ADD, ToolbarAction.EDIT, ToolbarAction.DELETE, ToolbarAction.VIEW_DETAIL,
                 ToolbarAction.REFRESH, ToolbarAction.EXPORT_EXCEL, ToolbarAction.IMPORT_EXCEL);
     }
 
@@ -67,6 +67,7 @@ public class CandidatePanel extends AbstractFeaturePanel {
             case ADD -> controller.addCandidate();
             case EDIT -> controller.editCandidate();
             case DELETE -> controller.deleteCandidate();
+            case VIEW_DETAIL -> controller.viewCandidateDetail();
             case REFRESH -> refreshData();
             case EXPORT_EXCEL -> controller.exportExcel(getSearchField().getText().trim());
             case IMPORT_EXCEL -> controller.importExcel();

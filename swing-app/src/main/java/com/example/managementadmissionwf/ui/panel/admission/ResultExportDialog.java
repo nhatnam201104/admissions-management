@@ -9,7 +9,8 @@ public class ResultExportDialog extends JDialog {
     private boolean confirmed = false;
     private String formatType;
 
-    private JCheckBox chkStt, chkCccd, chkHoTen, chkSbd, chkNguyenVong, chkNganh, chkDiem, chkKetQua,chkPhuongThuc, chkNgayXet;
+    private JCheckBox chkStt, chkCccd, chkHoTen, chkSbd, chkNguyenVong, chkNganh, chkDiem,
+            chkKetQua, chkPhuongThuc, chkToHop, chkDiemChuan, chkNgayXet;
     
     private JRadioButton rbAll, rbSelected, rbFiltered;
 
@@ -37,12 +38,15 @@ public class ResultExportDialog extends JDialog {
         chkDiem = new JCheckBox("Điểm XT", true);
         chkKetQua = new JCheckBox("Kết quả", true);
         chkPhuongThuc = new JCheckBox("Phương thức", true);
+        chkToHop = new JCheckBox("Tổ hợp", true);
+        chkDiemChuan = new JCheckBox("Điểm chuẩn", true);
         chkNgayXet = new JCheckBox("Ngày xét", true);
         
         columnPanel.add(chkStt); columnPanel.add(chkCccd);
         columnPanel.add(chkHoTen); columnPanel.add(chkSbd);
         columnPanel.add(chkNguyenVong); columnPanel.add(chkNganh);
-        columnPanel.add(chkPhuongThuc); columnPanel.add(chkDiem); 
+        columnPanel.add(chkPhuongThuc); columnPanel.add(chkToHop);
+        columnPanel.add(chkDiem); columnPanel.add(chkDiemChuan);
         columnPanel.add(chkKetQua); columnPanel.add(chkNgayXet);
 
         //PHẠM VI (Radio Buttons)
@@ -104,6 +108,8 @@ public class ResultExportDialog extends JDialog {
         cols.put("Diem", chkDiem.isSelected());
         cols.put("KetQua", chkKetQua.isSelected());
         cols.put("PhuongThuc", chkPhuongThuc.isSelected());
+        cols.put("ToHop", chkToHop.isSelected());
+        cols.put("DiemChuan", chkDiemChuan.isSelected());
         cols.put("NgayXet", chkNgayXet.isSelected());
         return cols;
     }

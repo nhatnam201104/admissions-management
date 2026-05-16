@@ -6,18 +6,24 @@ import org.springframework.stereotype.Component;
 import com.example.managementadmissionwf.bus.interfaces.AdmissionResultService;
 import com.example.managementadmissionwf.bus.interfaces.StatisticService;
 import com.example.managementadmissionwf.config.ApplicationContextHolder;
-import com.example.managementadmissionwf.dal.entity.XtNguyenvongxettuyen;
+
 import com.example.managementadmissionwf.dal.repository.NguyenVongRepository;
 import com.example.managementadmissionwf.dto.admission.AdmissionResultDTO;
+import com.example.managementadmissionwf.dto.admission.AspirationImportDTO;
+import com.example.managementadmissionwf.dto.common.ImportResult;
 import com.example.managementadmissionwf.dto.statistic.StatisticSummary;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
 import java.awt.*;
-import java.time.format.DateTimeFormatter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 
 @Component
 public class AdmissionResultController {
@@ -30,6 +36,8 @@ public class AdmissionResultController {
     
     @Autowired
     private StatisticService statisticService;
+
+    private List<AdmissionResultDTO> currentResults = List.of();
     
     public void setAdmissionPanel(AdmissionPanel admissionPanel, ResultTable resultTable) {
         this.admissionPanel = admissionPanel;
@@ -85,11 +93,29 @@ public class AdmissionResultController {
         dialog.setVisible(true); 
 
         if (dialog.isConfirmed()) {
-            List<AdmissionResultDTO> listToExport = service.getAllResults();
-            service.exportToExcel(listToExport); 
-            JOptionPane.showMessageDialog(admissionPanel, 
-                "Đã xuất file Excel thành công!", 
-                "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            List<AdmissionResultDTO> listToExport = resolveExportRows(dialog.getSelectedScope());
+            if (listToExport.isEmpty()) {
+                JOptionPane.showMessageDialog(admissionPanel, "Không có dữ liệu để xuất.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setSelectedFile(new File("ket_qua_xet_tuyen.xlsx"));
+            if (fileChooser.showSaveDialog(admissionPanel) != JFileChooser.APPROVE_OPTION) {
+                return;
+            }
+
+            File outputFile = ensureExtension(fileChooser.getSelectedFile(), "xlsx");
+            try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
+                service.exportToExcel(listToExport, outputStream, dialog.getSelectedColumns());
+                JOptionPane.showMessageDialog(admissionPanel,
+                        "Đã xuất file Excel thành công:\n" + outputFile.getAbsolutePath(),
+                        "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(admissionPanel,
+                        "Không thể xuất file Excel: " + e.getMessage(),
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
@@ -99,12 +125,60 @@ public class AdmissionResultController {
         dialog.setVisible(true);
 
         if (dialog.isConfirmed()) {
-            List<AdmissionResultDTO> listToExport = service.getAllResults();
-            service.exportToPDF(listToExport); 
-            JOptionPane.showMessageDialog(admissionPanel, 
-                "Đã xuất file PDF thành công!", 
-                "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            List<AdmissionResultDTO> listToExport = resolveExportRows(dialog.getSelectedScope());
+            if (listToExport.isEmpty()) {
+                JOptionPane.showMessageDialog(admissionPanel, "Không có dữ liệu để xuất.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setSelectedFile(new File("ket_qua_xet_tuyen.pdf"));
+            if (fileChooser.showSaveDialog(admissionPanel) != JFileChooser.APPROVE_OPTION) {
+                return;
+            }
+
+            File outputFile = ensureExtension(fileChooser.getSelectedFile(), "pdf");
+            try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
+                service.exportToPDF(listToExport, outputStream, dialog.getSelectedColumns());
+                JOptionPane.showMessageDialog(admissionPanel,
+                        "Đã xuất file PDF thành công:\n" + outputFile.getAbsolutePath(),
+                        "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(admissionPanel,
+                        "Không thể xuất file PDF: " + e.getMessage(),
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
         }
+    }
+
+    private List<AdmissionResultDTO> resolveExportRows(String scope) {
+        if ("FILTERED".equals(scope)) {
+            return new ArrayList<>(currentResults);
+        }
+        if ("SELECTED".equals(scope)) {
+            int[] selectedRows = resultTable.getTable().getSelectedRows();
+            if (selectedRows.length == 0) {
+                return List.of();
+            }
+
+            List<Integer> selectedIds = new ArrayList<>();
+            for (int selectedRow : selectedRows) {
+                int modelRow = resultTable.getTable().convertRowIndexToModel(selectedRow);
+                selectedIds.add((Integer) resultTable.getTableModel().getValueAt(modelRow, 0));
+            }
+            return currentResults.stream()
+                    .filter(result -> selectedIds.contains(result.getId()))
+                    .toList();
+        }
+        return service.getAllResults();
+    }
+
+    private File ensureExtension(File file, String extension) {
+        String name = file.getName().toLowerCase();
+        if (name.endsWith("." + extension)) {
+            return file;
+        }
+        return new File(file.getParentFile(), file.getName() + "." + extension);
     }
 
     public void refreshData() {
@@ -138,6 +212,39 @@ public class AdmissionResultController {
         AspirationFormDialog dialog = new AspirationFormDialog(parentFrame, this);
         dialog.setVisible(true);
     }
+
+    /**
+     * Import danh sách nguyện vọng từ file Excel. Sau khi tạo bản ghi,
+     * service sẽ tự tính điểm xét tuyển cho từng nguyện vọng.
+     */
+    public void handleImportExcel() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Chọn file Excel danh sách nguyện vọng");
+        if (chooser.showOpenDialog(admissionPanel) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+        try (FileInputStream is = new FileInputStream(chooser.getSelectedFile())) {
+            ImportResult<AspirationImportDTO> result = service.importAspirationsFromExcel(is);
+            String detail = result.getErrorCount() > 0
+                    ? "\n\nChi tiết lỗi (5 đầu):\n- "
+                      + String.join("\n- ", result.getErrors().subList(0,
+                            Math.min(5, result.getErrors().size())))
+                    : "";
+            String msg = String.format("Tổng dòng: %d\nThành công: %d\nLỗi: %d%s",
+                    result.getTotalRows(), result.getSuccessCount(),
+                    result.getErrorCount(), detail);
+            JOptionPane.showMessageDialog(admissionPanel, msg, "Kết quả import",
+                    result.getErrorCount() == 0
+                            ? JOptionPane.INFORMATION_MESSAGE
+                            : JOptionPane.WARNING_MESSAGE);
+            loadResults();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(admissionPanel,
+                    "Không đọc được file Excel: " + ex.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
 
     public void showScoreDetail() {
         int row = resultTable.getTable().getSelectedRow();
@@ -210,11 +317,11 @@ public class AdmissionResultController {
     }
 
     private void updateTable(List<AdmissionResultDTO> list) {
+        currentResults = list != null ? new ArrayList<>(list) : List.of();
         DefaultTableModel model = resultTable.getTableModel();
         model.setRowCount(0);
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
-        for (AdmissionResultDTO dto : list) {
+    
+        for (AdmissionResultDTO dto : currentResults) {
             // Format điểm XT với 2 số thập phân
             String diemXettuyenStr = dto.getDiemXettuyen() != null 
                 ? String.format("%.2f", dto.getDiemXettuyen()) 

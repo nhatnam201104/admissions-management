@@ -40,6 +40,22 @@ public class ExcelUtil {
             // Map fields with @ExcelColumn
             List<Field> excelFields = getExcelFields(clazz);
 
+            // Sanity check: if NONE of the @ExcelColumn names match the headers,
+            // the file is the wrong format. Fail loud instead of silently
+            // returning an empty list (đây là bug "import thành công nhưng không
+            // có dòng nào được nhập").
+            List<String> expectedHeaders = excelFields.stream()
+                    .map(f -> f.getAnnotation(ExcelColumn.class).name())
+                    .toList();
+            boolean anyMatch = expectedHeaders.stream().anyMatch(headerIndexMap::containsKey);
+            if (!anyMatch) {
+                throw new IllegalArgumentException(
+                        "File Excel không đúng định dạng. Cần có ít nhất một cột trong: "
+                                + expectedHeaders + ". Nhưng file đang có headers: "
+                                + headerIndexMap.keySet());
+            }
+
+
             // Read data rows
             for (int i = 1; i < sheet.getPhysicalNumberOfRows(); i++) {
                 Row row = sheet.getRow(i);

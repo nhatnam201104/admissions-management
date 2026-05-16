@@ -102,9 +102,37 @@ public class SubjectGroupController {
     }
 
     /**
+     * View selected subject group detail (read-only).
+     */
+    public void viewSubjectGroupDetail() {
+        Integer selectedId = listPanel.getSelectedId();
+        if (selectedId == null) {
+            JOptionPane.showMessageDialog(
+                    subjectGroupPanel,
+                    "Vui lòng chọn một tổ hợp môn để xem chi tiết!",
+                    "Cảnh báo",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        try {
+            SubjectGroupResponse data = subjectGroupService.findById(selectedId);
+            new SubjectGroupDetailDialog(
+                    (JFrame) SwingUtilities.getWindowAncestor(subjectGroupPanel), data)
+                    .setVisible(true);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(
+                    subjectGroupPanel,
+                    "Không tải được chi tiết: " + e.getMessage(),
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
      * Edit selected subject group
      */
     public void editSubjectGroup() {
+
         int selectedRow = listPanel.getSelectedRow();
         Integer selectedId = listPanel.getSelectedId();
 

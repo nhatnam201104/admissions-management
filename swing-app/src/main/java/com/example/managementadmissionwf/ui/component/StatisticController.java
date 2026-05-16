@@ -1,6 +1,7 @@
 package com.example.managementadmissionwf.ui.component;
 
 import com.example.managementadmissionwf.bus.interfaces.StatisticService;
+import com.example.managementadmissionwf.dto.statistic.CandidateCategoryStatistic;
 import com.example.managementadmissionwf.dto.statistic.MajorStatistic;
 import com.example.managementadmissionwf.dto.statistic.MethodStatistic;
 import com.example.managementadmissionwf.dto.statistic.ScoreDistribution;
@@ -55,6 +56,24 @@ public class StatisticController {
             return statisticService.getMethodStatistics();
         } catch (Exception e) {
             log.error("Error loading method statistics", e);
+            return List.of();
+        }
+    }
+
+    public List<CandidateCategoryStatistic> loadCandidateStatisticsByDoiTuong() {
+        try {
+            return statisticService.getCandidateStatisticsByDoiTuong();
+        } catch (Exception e) {
+            log.error("Error loading candidate statistics by priority object", e);
+            return List.of();
+        }
+    }
+
+    public List<CandidateCategoryStatistic> loadCandidateStatisticsByKhuVuc() {
+        try {
+            return statisticService.getCandidateStatisticsByKhuVuc();
+        } catch (Exception e) {
+            log.error("Error loading candidate statistics by region", e);
             return List.of();
         }
     }

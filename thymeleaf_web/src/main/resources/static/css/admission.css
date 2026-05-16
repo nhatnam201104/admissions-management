@@ -269,6 +269,86 @@ body {
     border-bottom: none;
 }
 
+.calculation-row td {
+    background-color: #f8fafc;
+    padding: 0 0.75rem 1rem;
+    border-bottom: 1px solid #eef2f6;
+}
+
+.calculation-detail {
+    border: 1px solid #dbe7f0;
+    border-radius: 8px;
+    background: #ffffff;
+    padding: 0.65rem 0.85rem;
+}
+
+.calculation-detail summary {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    color: var(--admission-primary);
+    font-weight: 700;
+    list-style-position: inside;
+}
+
+.calculation-summary-title,
+.calculation-summary-meta {
+    overflow-wrap: anywhere;
+}
+
+.calculation-summary-meta {
+    color: #6c757d;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.calculation-detail-body {
+    display: grid;
+    gap: 0.9rem;
+    margin-top: 0.85rem;
+}
+
+.calculation-panel {
+    min-width: 0;
+}
+
+.calculation-panel-title {
+    color: #2c3e50;
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 0.45rem;
+}
+
+.calculation-mini-table {
+    border: 1px solid #edf1f5;
+    box-shadow: none;
+}
+
+.calculation-mini-table thead th {
+    background-color: #eef5fb;
+    color: #486174;
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.calculation-mini-table tbody td {
+    color: #2c3e50;
+    font-size: 0.86rem;
+    vertical-align: middle;
+}
+
+.calculation-final-row td {
+    background-color: #edf8f1;
+}
+
+.calculation-cap-row td {
+    background-color: #fff8e1;
+}
+
 /* Highlight admitted row */
 .admitted-row {
     border-left: 4px solid var(--admission-success) !important;
@@ -306,6 +386,11 @@ body {
 
     .score-table tbody td {
         font-size: 0.95rem;
+    }
+
+    .calculation-detail summary {
+        align-items: flex-start;
+        flex-direction: column;
     }
 
     .info-item {

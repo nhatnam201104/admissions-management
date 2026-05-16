@@ -6,6 +6,7 @@ import com.example.managementadmissionwf.dal.entity.XtNganh;
 import com.example.managementadmissionwf.dal.entity.XtNganhTohop;
 import com.example.managementadmissionwf.dal.repository.MajorRepository;
 import com.example.managementadmissionwf.dal.repository.NganhTohopRepository;
+import com.example.managementadmissionwf.dal.repository.NguyenVongRepository;
 import com.example.managementadmissionwf.dto.admission.AdmissionResultDTO;
 import com.example.managementadmissionwf.dto.common.ImportResult;
 import com.example.managementadmissionwf.dto.common.Paging;
@@ -58,6 +59,7 @@ public class MajorServiceImpl implements MajorService {
     private final MajorMapper majorMapper;
     private final NganhTohopMapper nganhTohopMapper;
     private final AdmissionResultService admissionResultService;
+    private final NguyenVongRepository nguyenVongRepository;
 
     @Override
     public Paging<MajorDTO> search(String keyword, int page, int size) {
@@ -67,6 +69,7 @@ public class MajorServiceImpl implements MajorService {
                 : majorRepository.findByIsDeletedFalse(pageable);
 
         List<MajorDTO> responses = majorMapper.toResponseList(entityPage.getContent());
+        attachTotalAspirations(responses);
         return Paging.<MajorDTO>builder()
                 .data(responses)
                 .totalItems(entityPage.getTotalElements())
@@ -75,6 +78,23 @@ public class MajorServiceImpl implements MajorService {
                 .limit(entityPage.getSize())
                 .hasNext(entityPage.hasNext())
                 .build();
+    }
+
+    private void attachTotalAspirations(List<MajorDTO> majors) {
+        List<String> majorCodes = majors.stream()
+                .map(MajorDTO::getMaNganh)
+                .filter(code -> code != null && !code.isBlank())
+                .toList();
+        if (majorCodes.isEmpty()) {
+            return;
+        }
+
+        Map<String, Long> counts = new HashMap<>();
+        for (Object[] row : nguyenVongRepository.countActiveByMajorCodes(majorCodes)) {
+            counts.put((String) row[0], ((Number) row[1]).longValue());
+        }
+        majors.forEach(major -> major.setTotalAspirations(
+                counts.getOrDefault(major.getMaNganh(), 0L)));
     }
 
     @Override

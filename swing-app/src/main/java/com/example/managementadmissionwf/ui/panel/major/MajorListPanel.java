@@ -23,7 +23,8 @@ public class MajorListPanel extends JPanel {
         setLayout(new BorderLayout());
         setBackground(new Color(248, 250, 252));
 
-        String[] mCols = {"Mã ngành", "Tên ngành", "Chỉ tiêu", "Điểm sàn", "Phương thức"};
+        String[] mCols = {"Mã ngành", "Tên ngành", "Chỉ tiêu", "Điểm sàn",
+                "Điểm chuẩn", "Số NV", "Phương thức"};
         masterModel = new DefaultTableModel(mCols, 0) {
             @Override
             public boolean isCellEditable(int r, int c) {

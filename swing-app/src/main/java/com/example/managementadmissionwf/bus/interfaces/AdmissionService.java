@@ -4,7 +4,7 @@ import com.example.managementadmissionwf.dal.entity.XtDiemthixettuyen;
 import com.example.managementadmissionwf.dal.entity.XtNganh;
 import com.example.managementadmissionwf.dal.entity.XtNganhTohop;
 import com.example.managementadmissionwf.dal.entity.XtNguyenvongxettuyen;
-import com.example.managementadmissionwf.dal.entity.XtThisinhxettuyen25;
+
 import com.example.managementadmissionwf.dal.repository.CandidateRepository;
 import com.example.managementadmissionwf.dal.repository.MajorRepository;
 import com.example.managementadmissionwf.dal.repository.NganhTohopRepository;

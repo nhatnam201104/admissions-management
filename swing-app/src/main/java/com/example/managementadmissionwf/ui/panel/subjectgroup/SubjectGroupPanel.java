@@ -36,7 +36,8 @@ public class SubjectGroupPanel extends AbstractFeaturePanel {
     @Override
     protected Set<ToolbarAction> getToolbarActions() {
         return EnumSet.of(ToolbarAction.ADD, ToolbarAction.EDIT, ToolbarAction.DELETE,
-                ToolbarAction.REFRESH, ToolbarAction.EXPORT_EXCEL, ToolbarAction.IMPORT_EXCEL);
+                ToolbarAction.VIEW_DETAIL, ToolbarAction.REFRESH,
+                ToolbarAction.EXPORT_EXCEL, ToolbarAction.IMPORT_EXCEL);
     }
 
     @Override
@@ -45,12 +46,14 @@ public class SubjectGroupPanel extends AbstractFeaturePanel {
             case ADD -> controller.addSubjectGroup();
             case EDIT -> controller.editSubjectGroup();
             case DELETE -> controller.deleteSubjectGroup();
+            case VIEW_DETAIL -> controller.viewSubjectGroupDetail();
             case REFRESH -> refreshData();
             case EXPORT_EXCEL -> controller.exportExcel(getSearchField().getText().trim());
             case IMPORT_EXCEL -> controller.importExcel();
             default -> {}
         }
     }
+
 
     @Override
     protected JComponent createContentPanel() {

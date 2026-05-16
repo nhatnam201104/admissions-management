@@ -1,5 +1,6 @@
 package com.example.managementadmissionwf.ui.panel.admission;
 
+import com.example.managementadmissionwf.bus.interfaces.AspirationScoreService;
 import com.example.managementadmissionwf.bus.interfaces.CandidateService;
 import com.example.managementadmissionwf.config.ApplicationContextHolder;
 import com.example.managementadmissionwf.dal.entity.XtNganh;
@@ -8,7 +9,6 @@ import com.example.managementadmissionwf.dal.entity.XtNguyenvongxettuyen;
 import com.example.managementadmissionwf.dal.repository.MajorRepository;
 import com.example.managementadmissionwf.dal.repository.NganhTohopRepository;
 import com.example.managementadmissionwf.dal.repository.NguyenVongRepository;
-import com.example.managementadmissionwf.service.ScoreCalculationService;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -188,25 +188,20 @@ public class AspirationFormDialog extends JDialog {
         XtNganh selectedMajor = allMajors.get(selectedIndex);
         this.selectedManganh = selectedMajor.getManganh();
         
-        // Load phương thức dựa trên ngành
+        // Chỉ hiển thị các phương thức mà ngành này đã đăng ký
+        // (các flag n_thpt, n_dgnl, n_vsat, n_tuyenthang trong xt_nganh).
         cboPhuongThuc.removeAllItems();
-        
-        if (Boolean.TRUE.equals(selectedMajor.getNThpt())) {
-            cboPhuongThuc.addItem("THPT");
-        }
-        if (Boolean.TRUE.equals(selectedMajor.getNDgnl())) {
-            cboPhuongThuc.addItem("DGNL");
-        }
-        if (Boolean.TRUE.equals(selectedMajor.getNVsat())) {
-            cboPhuongThuc.addItem("VSAT");
-        }
-        if (Boolean.TRUE.equals(selectedMajor.getNTuyenthang())) {
-            cboPhuongThuc.addItem("TUYEN_THANG");
-        }
-        
+        if (Boolean.TRUE.equals(selectedMajor.getNThpt())) cboPhuongThuc.addItem("THPT");
+        if (Boolean.TRUE.equals(selectedMajor.getNDgnl())) cboPhuongThuc.addItem("DGNL");
+        if (Boolean.TRUE.equals(selectedMajor.getNVsat())) cboPhuongThuc.addItem("VSAT");
+        if (Boolean.TRUE.equals(selectedMajor.getNTuyenthang())) cboPhuongThuc.addItem("TUYEN_THANG");
         if (cboPhuongThuc.getItemCount() == 0) {
+            // Nếu ngành chưa cấu hình phương thức nào, fallback THPT để form
+            // không bị chặn hoàn toàn (admin có thể sửa ngành sau).
             cboPhuongThuc.addItem("THPT");
         }
+
+
         
         // Auto-select first method
         cboPhuongThuc.setSelectedIndex(0);
@@ -328,10 +323,6 @@ public class AspirationFormDialog extends JDialog {
             }
         }
 
-        // Tính điểm xét tuyển
-        ScoreCalculationService scoreService = ApplicationContextHolder.getBean(ScoreCalculationService.class);
-        Double diemXettuyen = scoreService.calculateScore(cccd, selectedManganh, selectedTohop, phuongThuc, 0.0, 0.0);
-
         // Save nguyện vọng
         XtNguyenvongxettuyen aspiration;
         if (editingAspiration != null) {
@@ -340,7 +331,6 @@ public class AspirationFormDialog extends JDialog {
             aspiration.setNvTt(nvSo);
             aspiration.setTtPhuongthuc(phuongThuc);
             aspiration.setTtThm(selectedTohop);
-            aspiration.setDiemXettuyen(diemXettuyen);
         } else {
             aspiration = XtNguyenvongxettuyen.builder()
                 .nnCccd(cccd)
@@ -348,14 +338,21 @@ public class AspirationFormDialog extends JDialog {
                 .nvTt(nvSo)
                 .ttPhuongthuc(phuongThuc)
                 .ttThm(selectedTohop)
-                .diemXettuyen(diemXettuyen)
                 .nvKetqua("CHO_XET")
                 .build();
         }
 
-        NguyenVongRepository nguyenVongRepository = ApplicationContextHolder.getBean(NguyenVongRepository.class);
-        nguyenVongRepository.save(aspiration);
-        
+        AspirationScoreService aspirationScoreService = ApplicationContextHolder.getBean(AspirationScoreService.class);
+        var scoreResult = aspirationScoreService.calculateForAspiration(aspiration);
+        if (scoreResult == null) {
+            JOptionPane.showMessageDialog(this,
+                "Không đủ dữ liệu điểm thi/tổ hợp để tính điểm xét tuyển.\nNguyện vọng đã được lưu nhưng đánh dấu THIEU_DIEM.",
+                "Cảnh báo - Thiếu điểm", JOptionPane.WARNING_MESSAGE);
+            controller.refreshData();
+            dispose();
+            return;
+        }
+
         JOptionPane.showMessageDialog(this, editingAspiration == null ? "Thêm nguyện vọng thành công!" : "Cập nhật thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
         controller.refreshData();
         dispose();

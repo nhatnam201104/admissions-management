@@ -4,6 +4,7 @@ import com.example.managementadmissionwf.ui.frame.MainFrame;
 import com.example.managementadmissionwf.ui.panel.user.UserManagementPanel;
 import com.example.managementadmissionwf.ui.panel.BonusScorePanel;
 
+import com.example.managementadmissionwf.bus.interfaces.BonusScoreService;
 import com.example.managementadmissionwf.ui.panel.subjectgroup.SubjectGroupPanel;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -38,8 +39,8 @@ public class UIBeanConfig {
      * Register BonusScorePanel as a singleton bean
      */
     @Bean
-    public BonusScorePanel bonusScorePanel() {
-        return new BonusScorePanel();
+    public BonusScorePanel bonusScorePanel(BonusScoreService bonusScoreService) {
+        return new BonusScorePanel(bonusScoreService);
     }
 
     /**

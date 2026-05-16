@@ -282,7 +282,7 @@ public class DataSeeder implements CommandLineRunner {
             // 5 thí sinh ban đầu
             XtThisinhxettuyen25.builder()
                 .cccd("001082001234")
-                .sobaodanh("SBD001")
+                .sobaodanh("001")
                 .ho("Nguyễn")
                 .ten("An")
                 .ngaySinh(LocalDate.of(2006, 3, 15))
@@ -298,7 +298,7 @@ public class DataSeeder implements CommandLineRunner {
                 .build(),
             XtThisinhxettuyen25.builder()
                 .cccd("001082001235")
-                .sobaodanh("SBD002")
+                .sobaodanh("002")
                 .ho("Trần")
                 .ten("Bình")
                 .ngaySinh(LocalDate.of(2006, 5, 22))
@@ -314,7 +314,7 @@ public class DataSeeder implements CommandLineRunner {
                 .build(),
             XtThisinhxettuyen25.builder()
                 .cccd("001082001236")
-                .sobaodanh("SBD003")
+                .sobaodanh("003")
                 .ho("Lê")
                 .ten("Hương")
                 .ngaySinh(LocalDate.of(2006, 7, 8))
@@ -330,7 +330,7 @@ public class DataSeeder implements CommandLineRunner {
                 .build(),
             XtThisinhxettuyen25.builder()
                 .cccd("001082001237")
-                .sobaodanh("SBD004")
+                .sobaodanh("004")
                 .ho("Phạm")
                 .ten("Dũng")
                 .ngaySinh(LocalDate.of(2006, 9, 30))
@@ -346,7 +346,7 @@ public class DataSeeder implements CommandLineRunner {
                 .build(),
             XtThisinhxettuyen25.builder()
                 .cccd("001082001238")
-                .sobaodanh("SBD005")
+                .sobaodanh("005")
                 .ho("Hoàng")
                 .ten("Lan")
                 .ngaySinh(LocalDate.of(2006, 12, 25))
@@ -363,7 +363,7 @@ public class DataSeeder implements CommandLineRunner {
             // Thí sinh 6: Điểm DGNL
             XtThisinhxettuyen25.builder()
                 .cccd("001082001239")
-                .sobaodanh("SBD006")
+                .sobaodanh("006")
                 .ho("Vũ")
                 .ten("Minh")
                 .ngaySinh(LocalDate.of(2006, 4, 10))
@@ -380,7 +380,7 @@ public class DataSeeder implements CommandLineRunner {
             // Thí sinh 7: Điểm VSAT
             XtThisinhxettuyen25.builder()
                 .cccd("001082001240")
-                .sobaodanh("SBD007")
+                .sobaodanh("007")
                 .ho("Đỗ")
                 .ten("Thảo")
                 .ngaySinh(LocalDate.of(2006, 8, 20))
@@ -405,65 +405,65 @@ public class DataSeeder implements CommandLineRunner {
         // ========== THÍ SINH 1: Nguyễn An ==========
         // Điểm THPT
         scores.add(XtDiemthixettuyen.builder()
-            .cccd("001082001234").sobaodanh("SBD001").dPhuongthuc("THPT")
+            .cccd("001082001234").sobaodanh("001").dPhuongthuc("THPT")
             .to(9.5).li(9.0).ho(8.8).si(8.3).su(7.3).di(7.8).va(8.7)
             .n1Thi(7.5).n1Cc(7.5)
             .isDeleted(false).createdAt(LocalDate.now()).updatedAt(LocalDate.now()).build());
         // Điểm DGNL - NL1 thang 1200 (ví dụ: 900 điểm → quy đổi 22.5 thang 30)
         scores.add(XtDiemthixettuyen.builder()
-            .cccd("001082001234").sobaodanh("SBD001").dPhuongthuc("DGNL")
+            .cccd("001082001234").sobaodanh("001").dPhuongthuc("DGNL")
             .nl1(900.0).nk1(null).nk2(null) // Chỉ dùng NL1, thang 1200
             .n1Thi(8.0).n1Cc(8.0)
             .isDeleted(false).createdAt(LocalDate.now()).updatedAt(LocalDate.now()).build());
         
         // ========== THÍ SINH 2: Trần Bình ==========
         scores.add(XtDiemthixettuyen.builder()
-            .cccd("001082001235").sobaodanh("SBD002").dPhuongthuc("THPT")
+            .cccd("001082001235").sobaodanh("002").dPhuongthuc("THPT")
             .to(7.3).li(7.2).ho(6.7).si(6.5).su(6.7).di(7.0).va(7.5)
             .n1Thi(6.0).n1Cc(6.0)
             .isDeleted(false).createdAt(LocalDate.now()).updatedAt(LocalDate.now()).build());
         // NL1 = 750 → quy đổi 18.75 thang 30
         scores.add(XtDiemthixettuyen.builder()
-            .cccd("001082001235").sobaodanh("SBD002").dPhuongthuc("DGNL")
+            .cccd("001082001235").sobaodanh("002").dPhuongthuc("DGNL")
             .nl1(750.0).nk1(null).nk2(null)
             .n1Thi(6.5).n1Cc(6.5)
             .isDeleted(false).createdAt(LocalDate.now()).updatedAt(LocalDate.now()).build());
         
         // ========== THÍ SINH 3: Lê Hương ==========
         scores.add(XtDiemthixettuyen.builder()
-            .cccd("001082001236").sobaodanh("SBD003").dPhuongthuc("THPT")
+            .cccd("001082001236").sobaodanh("003").dPhuongthuc("THPT")
             .to(8.5).li(8.0).ho(8.7).si(8.5).su(7.2).di(7.3).va(8.2)
             .n1Thi(8.5).n1Cc(8.5)
             .isDeleted(false).createdAt(LocalDate.now()).updatedAt(LocalDate.now()).build());
         // NL1 = 950 → quy đổi 23.75 thang 30
         scores.add(XtDiemthixettuyen.builder()
-            .cccd("001082001236").sobaodanh("SBD003").dPhuongthuc("DGNL")
+            .cccd("001082001236").sobaodanh("003").dPhuongthuc("DGNL")
             .nl1(950.0).nk1(null).nk2(null)
             .n1Thi(8.5).n1Cc(8.5)
             .isDeleted(false).createdAt(LocalDate.now()).updatedAt(LocalDate.now()).build());
         
         // ========== THÍ SINH 4: Phạm Dũng ==========
         scores.add(XtDiemthixettuyen.builder()
-            .cccd("001082001237").sobaodanh("SBD004").dPhuongthuc("THPT")
+            .cccd("001082001237").sobaodanh("004").dPhuongthuc("THPT")
             .to(6.0).li(5.8).ho(5.3).si(5.2).su(6.2).di(6.3).va(6.7)
             .n1Thi(5.0).n1Cc(5.0)
             .isDeleted(false).createdAt(LocalDate.now()).updatedAt(LocalDate.now()).build());
         // NL1 = 550 → quy đổi 13.75 thang 30
         scores.add(XtDiemthixettuyen.builder()
-            .cccd("001082001237").sobaodanh("SBD004").dPhuongthuc("DGNL")
+            .cccd("001082001237").sobaodanh("004").dPhuongthuc("DGNL")
             .nl1(550.0).nk1(null).nk2(null)
             .n1Thi(5.5).n1Cc(5.5)
             .isDeleted(false).createdAt(LocalDate.now()).updatedAt(LocalDate.now()).build());
         
         // ========== THÍ SINH 5: Hoàng Lan ==========
         scores.add(XtDiemthixettuyen.builder()
-            .cccd("001082001238").sobaodanh("SBD005").dPhuongthuc("THPT")
+            .cccd("001082001238").sobaodanh("005").dPhuongthuc("THPT")
             .to(7.0).li(6.8).ho(7.3).si(7.2).su(6.8).di(6.5).va(7.2)
             .n1Thi(6.5).n1Cc(6.5)
             .isDeleted(false).createdAt(LocalDate.now()).updatedAt(LocalDate.now()).build());
         // NL1 = 800 → quy đổi 20.0 thang 30
         scores.add(XtDiemthixettuyen.builder()
-            .cccd("001082001238").sobaodanh("SBD005").dPhuongthuc("DGNL")
+            .cccd("001082001238").sobaodanh("005").dPhuongthuc("DGNL")
             .nl1(800.0).nk1(null).nk2(null)
             .n1Thi(7.0).n1Cc(7.0)
             .isDeleted(false).createdAt(LocalDate.now()).updatedAt(LocalDate.now()).build());
@@ -471,7 +471,7 @@ public class DataSeeder implements CommandLineRunner {
         // ========== THÍ SINH 6: Vũ Minh - ĐGNL + IELTS ==========
         // Điểm DGNL - NL1 = 1100 → quy đổi 27.5 thang 30 (Xuất sắc)
         scores.add(XtDiemthixettuyen.builder()
-            .cccd("001082001239").sobaodanh("SBD006").dPhuongthuc("DGNL")
+            .cccd("001082001239").sobaodanh("006").dPhuongthuc("DGNL")
             .nl1(1100.0).nk1(null).nk2(null)
             .n1Thi(null).n1Cc(8.5) // IELTS 8.0 quy đổi 8.5
             .isDeleted(false).createdAt(LocalDate.now()).updatedAt(LocalDate.now()).build());
@@ -479,7 +479,7 @@ public class DataSeeder implements CommandLineRunner {
         // ========== THÍ SINH 7: Đỗ Thảo - VSAT + TOEIC ==========
         // Điểm VSAT (phương thức chính)
         scores.add(XtDiemthixettuyen.builder()
-            .cccd("001082001240").sobaodanh("SBD007").dPhuongthuc("VSAT")
+            .cccd("001082001240").sobaodanh("007").dPhuongthuc("VSAT")
             .to(138.5).li(135.0).ho(140.0).si(132.0)
             .su(128.0).di(125.0).va(130.0)
             .n1Thi(null).n1Cc(7.5) // TOEIC 800 quy đổi 7.5
@@ -507,16 +507,16 @@ public class DataSeeder implements CommandLineRunner {
                 .tentohop("Khối A01 - Toán, Lý, Tiếng Anh")
                 .createdAt(LocalDate.now()).updatedAt(LocalDate.now()).build(),
             XtTohopMonthi.builder()
-                .matohop("A02").mon1("TO").mon2("LI").mon3("SH")
+                .matohop("A02").mon1("TO").mon2("LI").mon3("SI")
                 .tentohop("Khối A02 - Toán, Lý, Sinh")
                 .createdAt(LocalDate.now()).updatedAt(LocalDate.now()).build(),
             // ========== KHỐI B (Khoa học sự sống) ==========
             XtTohopMonthi.builder()
-                .matohop("B00").mon1("TO").mon2("HO").mon3("SH")
+                .matohop("B00").mon1("TO").mon2("HO").mon3("SI")
                 .tentohop("Khối B00 - Toán, Hóa, Sinh")
                 .createdAt(LocalDate.now()).updatedAt(LocalDate.now()).build(),
             XtTohopMonthi.builder()
-                .matohop("B01").mon1("TO").mon2("SH").mon3("DI")
+                .matohop("B01").mon1("TO").mon2("SI").mon3("DI")
                 .tentohop("Khối B01 - Toán, Sinh, Địa")
                 .createdAt(LocalDate.now()).updatedAt(LocalDate.now()).build(),
             // ========== KHỐI C (Xã hội) ==========
