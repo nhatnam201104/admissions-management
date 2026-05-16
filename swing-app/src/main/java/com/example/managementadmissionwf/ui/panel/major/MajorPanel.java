@@ -56,7 +56,8 @@ public class MajorPanel extends AbstractFeaturePanel {
     @Override
     protected Set<ToolbarAction> getToolbarActions() {
         return EnumSet.of(ToolbarAction.ADD, ToolbarAction.EDIT, ToolbarAction.DELETE,
-                ToolbarAction.REFRESH, ToolbarAction.EXPORT_EXCEL, ToolbarAction.IMPORT_EXCEL);
+                ToolbarAction.VIEW_DETAIL, ToolbarAction.REFRESH,
+                ToolbarAction.EXPORT_EXCEL, ToolbarAction.IMPORT_EXCEL);
     }
 
     @Override
@@ -65,12 +66,30 @@ public class MajorPanel extends AbstractFeaturePanel {
             case ADD -> showAddDialog();
             case EDIT -> showEditDialog();
             case DELETE -> deleteSelectedMajor();
+            case VIEW_DETAIL -> showDetailDialog();
             case REFRESH -> refreshData();
             case EXPORT_EXCEL -> exportToExcel();
             case IMPORT_EXCEL -> importFromExcel();
             default -> throw new IllegalArgumentException("Unexpected value: " + action);
         }
     }
+
+    private void showDetailDialog() {
+        String maNganh = listPanel.getSelectedMaNganh();
+        if (maNganh == null) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một ngành để xem chi tiết.");
+            return;
+        }
+        try {
+            MajorDTO dto = majorService.getByMaNganh(maNganh);
+            new MajorDetailDialog((JFrame) SwingUtilities.getWindowAncestor(this), dto)
+                    .setVisible(true);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Không tải được thông tin ngành: " + ex.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
 
     private void showAddDialog() {
         new MajorFormDialog((JFrame) SwingUtilities.getWindowAncestor(this), controller, subjectGroupService, null).setVisible(true);

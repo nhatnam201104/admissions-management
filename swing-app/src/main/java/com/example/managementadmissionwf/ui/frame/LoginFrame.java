@@ -1,6 +1,5 @@
 package com.example.managementadmissionwf.ui.frame;
 
-import com.example.managementadmissionwf.bus.interfaces.AuthService;
 import com.example.managementadmissionwf.ui.panel.LoginPanel.LeftWelcomePanel;
 import com.example.managementadmissionwf.ui.panel.LoginPanel.RightLoginPanel;
 import com.example.managementadmissionwf.ui.util.UIConstants;

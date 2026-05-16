@@ -4,6 +4,7 @@ import com.example.thymeleaf_web.exception.ResourceNotFoundException;
 import com.example.thymeleaf_web.model.dto.CccdForm;
 import com.example.thymeleaf_web.model.dto.ScoreLookupResult;
 import com.example.thymeleaf_web.service.ScoreLookupService;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +15,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -22,6 +22,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequiredArgsConstructor
 @Slf4j
 public class ScoreLookupController {
+
+    private static final String SESSION_VALIDATED_CCCD = "SCORE_LOOKUP_VALIDATED_CCCD";
 
     private final ScoreLookupService scoreLookupService;
 
@@ -33,34 +35,44 @@ public class ScoreLookupController {
     @PostMapping
     public String processLookup(@Valid @ModelAttribute("cccdForm") CccdForm cccdForm,
                                 BindingResult bindingResult,
-                                RedirectAttributes redirectAttributes) {
+                                RedirectAttributes redirectAttributes,
+                                HttpSession session) {
+        if (cccdForm.getNgaySinh() == null) {
+            bindingResult.rejectValue("ngaySinh", "ngaySinh.required", "Vui lòng nhập ngày sinh");
+        }
+
         if (bindingResult.hasErrors()) {
             return "score/lookup";
         }
 
-        String cccd = cccdForm.getCccd();
-        var result = scoreLookupService.lookupByCccd(cccd);
+        String cccd = cccdForm.getCccd().trim();
+        var result = scoreLookupService.lookupByCccdAndNgaySinh(cccd, cccdForm.getNgaySinh());
 
         if (result.isEmpty()) {
+            session.removeAttribute(SESSION_VALIDATED_CCCD);
             redirectAttributes.addFlashAttribute("errorMessage",
-                    "Không tìm thấy thông tin thí sinh với CCCD: " + maskCccd(cccd));
+                    "Thông tin tra cứu không hợp lệ. Vui lòng kiểm tra CCCD và ngày sinh.");
             return "redirect:/tra-cuu-diem";
         }
 
-        redirectAttributes.addAttribute("cccd", cccd);
+        session.setAttribute(SESSION_VALIDATED_CCCD, cccd);
         return "redirect:/tra-cuu-diem/ket-qua";
     }
 
     @GetMapping("/ket-qua")
-    public String showResult(@RequestParam("cccd") String cccd, Model model) {
+    public String showResult(Model model,
+                             HttpSession session,
+                             RedirectAttributes redirectAttributes) {
+        String cccd = (String) session.getAttribute(SESSION_VALIDATED_CCCD);
+        if (cccd == null || cccd.isBlank()) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Vui lòng xác thực CCCD và ngày sinh trước khi xem kết quả.");
+            return "redirect:/tra-cuu-diem";
+        }
+
         ScoreLookupResult result = scoreLookupService.lookupByCccd(cccd)
                 .orElseThrow(() -> new ResourceNotFoundException("Thí sinh", cccd));
         model.addAttribute("result", result);
         return "score/result";
-    }
-
-    private String maskCccd(String cccd) {
-        if (cccd == null || cccd.length() < 4) return cccd;
-        return "********" + cccd.substring(cccd.length() - 4);
     }
 }

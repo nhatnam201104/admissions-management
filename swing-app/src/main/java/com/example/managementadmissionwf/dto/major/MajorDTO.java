@@ -50,6 +50,7 @@ public class MajorDTO {
     private Integer slDgnl;
     private Integer slVsat;
     private Integer slThpt;
+    private Long totalAspirations;
 
     @Valid
     private List<MajorTohopDTO> tohopList;

@@ -41,18 +41,37 @@ public class AspirationScoreServiceImpl implements AspirationScoreService {
             return null;
         }
 
-        List<XtNganhTohop> tohops = nganhTohopRepository.findByManganh(maNganh);
-        if (tohops.isEmpty()) {
-            log.debug("Không có tổ hợp nào cho ngành={}, bỏ qua", maNganh);
-            markInsufficientScore(aspiration);
-            return null;
-        }
+        AspirationScoreResult bestResult;
+        // DGNL không cần tổ hợp môn — chỉ dùng NL1 quy đổi trực tiếp.
+        if ("DGNL".equalsIgnoreCase(preferredMethod) || "DGNL".equalsIgnoreCase(score.getDPhuongthuc())) {
+            bestResult = calculateForDgnl(aspiration, score);
+        } else {
+            List<XtNganhTohop> tohops = nganhTohopRepository.findByManganh(maNganh);
+            if (tohops.isEmpty()) {
+                log.debug("Không có tổ hợp nào cho ngành={}, bỏ qua", maNganh);
+                markInsufficientScore(aspiration);
+                return null;
+            }
+            List<XtNganhTohop> candidateTohops = tohops;
+            if (aspiration.getTtThm() != null && !aspiration.getTtThm().isBlank()) {
+                candidateTohops = tohops.stream()
+                        .filter(tohop -> aspiration.getTtThm().equals(tohop.getMatohop()))
+                        .toList();
+                if (candidateTohops.isEmpty()) {
+                    log.debug("Tổ hợp {} không hợp lệ cho ngành={}, bỏ qua",
+                            aspiration.getTtThm(), maNganh);
+                    markInsufficientScore(aspiration);
+                    nguyenVongRepository.save(aspiration);
+                    return null;
+                }
+            }
 
-        AspirationScoreResult bestResult = null;
-        for (XtNganhTohop tohop : tohops) {
-            AspirationScoreResult result = calculateForTohop(aspiration, score, tohop);
-            if (result != null && (bestResult == null || result.diemXettuyen() > bestResult.diemXettuyen())) {
-                bestResult = result;
+            bestResult = null;
+            for (XtNganhTohop tohop : candidateTohops) {
+                AspirationScoreResult result = calculateForTohop(aspiration, score, tohop);
+                if (result != null && (bestResult == null || result.diemXettuyen() > bestResult.diemXettuyen())) {
+                    bestResult = result;
+                }
             }
         }
 
@@ -61,6 +80,7 @@ public class AspirationScoreServiceImpl implements AspirationScoreService {
             aspiration.setDiemUtqd(bestResult.diemUuTien());
             aspiration.setDiemCong(bestResult.diemCong());
             aspiration.setDiemXettuyen(bestResult.diemXettuyen());
+            aspiration.setTtThm(bestResult.matohop());
             aspiration.setNvKetqua(bestResult.datDiemSan() ? "CHO_XET" : "THIEU_DIEM");
         } else {
             markInsufficientScore(aspiration);
@@ -123,6 +143,57 @@ public class AspirationScoreServiceImpl implements AspirationScoreService {
         }
 
         return allScores.get(0);
+    }
+
+    // ================= DGNL: KHÔNG CẦN TỔ HỢP =================
+
+    /**
+     * Tính điểm xét tuyển cho phương thức ĐGNL: chỉ dùng cột {@code nl1}.
+     * Quy đổi qua bảng quy đổi (DGNL × NL1) hoặc fallback {@code nl1×30/1200}.
+     */
+    private AspirationScoreResult calculateForDgnl(XtNguyenvongxettuyen aspiration, XtDiemthixettuyen score) {
+        Double nl1 = score.getNl1();
+        if (nl1 == null) {
+            log.debug("ĐGNL: thiếu NL1 cho CCCD={}", aspiration.getNnCccd());
+            return null;
+        }
+        Double converted = convertScore(nl1, "DGNL", null, "NL1");
+        if (converted == null) {
+            converted = nl1 * 30.0 / 1200.0;
+        }
+        double diemThxt = Math.min(converted, 30.0);
+
+        double diemCong = 0.0;
+        double diemUtxt = 0.0;
+        Optional<XtDiemcongxettuyen> bonusOpt = bonusScoreRepository.findByCccd(aspiration.getNnCccd());
+        if (bonusOpt.isPresent()) {
+            diemCong = bonusOpt.get().getDiemCc() != null ? bonusOpt.get().getDiemCc() : 0;
+            diemUtxt = bonusOpt.get().getDiemUtxt() != null ? bonusOpt.get().getDiemUtxt() : 0;
+        }
+        double diemUuTien = calculatePriorityScore(diemUtxt, diemThxt);
+        double diemXettuyen = diemThxt + diemUuTien + diemCong;
+
+        double diemSan = majorRepository.findByManganh(aspiration.getNvManganh())
+                .map(XtNganh::getNDiemsan)
+                .orElse(0.0);
+        boolean datDiemSan = diemSan <= 0 || diemXettuyen >= diemSan;
+
+        return new AspirationScoreResult(
+                aspiration.getNnCccd(),
+                aspiration.getNvManganh(),
+                null, // tổ hợp không áp dụng cho DGNL
+                "DGNL",
+                nl1, 0.0, 0.0,
+                converted, null, null,
+                1.0, 1.0, 1.0,
+                diemThxt,
+                diemCong,
+                diemUuTien,
+                diemXettuyen,
+                diemSan,
+                datDiemSan,
+                ""
+        );
     }
 
     // ================= PIPELINE 9 BƯỚC =================
@@ -223,21 +294,23 @@ public class AspirationScoreServiceImpl implements AspirationScoreService {
     private Double convertScore(Double original, String phuongThuc, String toHop, String mon) {
         if (original == null) return null;
 
-        Optional<XtBangquydoi> rule = conversionTableRepository
-                .findByPhuongThucAndMonAndTohop(phuongThuc, mon, toHop);
-
-        if (rule.isEmpty()) {
-            rule = conversionTableRepository
-                    .findByPhuongThucAndMonAndTohopIsNull(phuongThuc, mon);
+        // Lấy TẤT CẢ rule khớp (phuongThuc, mon, toHop) — bảng quy đổi có
+        // nhiều khoảng [diema, diemb], cần chọn dòng nào chứa score gốc.
+        java.util.List<XtBangquydoi> rules =
+                conversionTableRepository.findAllByPhuongThucAndMonAndTohop(phuongThuc, mon, toHop);
+        if (rules.isEmpty()) {
+            rules = conversionTableRepository.findAllByPhuongThucAndMonAndTohopIsNull(phuongThuc, mon);
         }
 
-        if (rule.isPresent()) {
-            XtBangquydoi r = rule.get();
+        for (XtBangquydoi r : rules) {
+            if (r.getDDiema() == null || r.getDDiemb() == null) continue;
             if (original >= r.getDDiema() && original <= r.getDDiemb()) {
                 double range = r.getDDiemb() - r.getDDiema();
                 if (range == 0) return r.getDDiemc();
                 double ratio = (original - r.getDDiema()) / range;
-                return r.getDDiemc() + ratio * (r.getDDiemd() - r.getDDiemc());
+                double c = r.getDDiemc() != null ? r.getDDiemc() : 0.0;
+                double d = r.getDDiemd() != null ? r.getDDiemd() : c;
+                return c + ratio * (d - c);
             }
         }
 

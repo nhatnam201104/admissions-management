@@ -40,6 +40,12 @@ public class NguyenVong {
     @Column(name = "nv_ketqua", length = 20)
     private String nvKetqua;
 
+    @Column(name = "tt_phuongthuc", length = 45)
+    private String ttPhuongthuc;
+
+    @Column(name = "tt_thm", length = 45)
+    private String ttThm;
+
     @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = false;
 

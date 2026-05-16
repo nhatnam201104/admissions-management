@@ -31,10 +31,14 @@ public interface SubjectGroupMapper {
 
     // For import
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "isDeleted", ignore = true)
     @Mapping(target = "matohop", source = "matohop")
     @Mapping(target = "mon1", source = "mon1")
     @Mapping(target = "mon2", source = "mon2")
     @Mapping(target = "mon3", source = "mon3")
     @Mapping(target = "tentohop", source = "tentohop")
+    
     XtTohopMonthi toEntityFromResponse(SubjectGroupResponse response);
 }

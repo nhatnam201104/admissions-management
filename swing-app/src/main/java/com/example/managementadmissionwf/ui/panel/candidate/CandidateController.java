@@ -1,6 +1,11 @@
 package com.example.managementadmissionwf.ui.panel.candidate;
 
 import com.example.managementadmissionwf.bus.interfaces.CandidateService;
+import com.example.managementadmissionwf.dal.entity.XtNganh;
+import com.example.managementadmissionwf.dal.repository.BonusScoreRepository;
+import com.example.managementadmissionwf.dal.repository.MajorRepository;
+import com.example.managementadmissionwf.dal.repository.NguyenVongRepository;
+import com.example.managementadmissionwf.dal.repository.ScoreRepository;
 import com.example.managementadmissionwf.dto.candidate.CandidateDTO;
 import com.example.managementadmissionwf.dto.common.ImportResult;
 import com.example.managementadmissionwf.dto.common.Paging;
@@ -19,6 +24,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Controller for Candidate Management
@@ -29,6 +36,18 @@ public class CandidateController {
     
     @Autowired
     private CandidateService candidateService;
+
+    @Autowired
+    private ScoreRepository scoreRepository;
+
+    @Autowired
+    private BonusScoreRepository bonusScoreRepository;
+
+    @Autowired
+    private NguyenVongRepository nguyenVongRepository;
+
+    @Autowired
+    private MajorRepository majorRepository;
     
     private CandidatePanel candidatePanel;
     private CandidateListPanel listPanel;
@@ -186,6 +205,28 @@ public class CandidateController {
                 JOptionPane.showMessageDialog(candidatePanel, "Lỗi: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+
+    public void viewCandidateDetail() {
+        CandidateDTO selected = listPanel.getSelectedCandidate();
+        if (selected == null) {
+            JOptionPane.showMessageDialog(candidatePanel, "Vui lòng chọn thí sinh cần xem chi tiết!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String cccd = selected.getCccd();
+        Map<String, String> majorNames = majorRepository.findByIsDeletedFalse().stream()
+                .collect(Collectors.toMap(XtNganh::getManganh, XtNganh::getTennganh, (a, b) -> a));
+
+        CandidateDetailDialog dialog = new CandidateDetailDialog(
+                (Frame) SwingUtilities.getWindowAncestor(candidatePanel),
+                selected,
+                scoreRepository.findAllByCccd(cccd),
+                bonusScoreRepository.findByCccd(cccd).orElse(null),
+                nguyenVongRepository.findByNnCccd(cccd),
+                majorNames
+        );
+        dialog.setVisible(true);
     }
 
     public void exportExcel(String keyword) {

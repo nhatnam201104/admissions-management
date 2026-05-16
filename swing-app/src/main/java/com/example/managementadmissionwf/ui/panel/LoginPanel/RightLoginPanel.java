@@ -30,8 +30,7 @@ public class RightLoginPanel extends JPanel {
     CustomPasswordField passwordField;
     JCheckBox rememberMeCheckBox;
     CustomButton loginButton;
-    JLabel signupLabel;
-    JLabel forgotPasswordLabel;
+   
     AuthService authService;
 
     // final LoginController controller;
@@ -85,32 +84,10 @@ public class RightLoginPanel extends JPanel {
                 handleLogin();
             }
         });
+       
+        
 
-        // Signup label (hyperlink style)
-        signupLabel = new JLabel("<html><u>Don't have an account? Signup</u></html>");
-        signupLabel.setFont(UIConstants.FONT_LINK);
-        signupLabel.setForeground(UIConstants.PRIMARY_BLUE);
-        signupLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        signupLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        signupLabel.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                handleSignup();
-            }
-        });
-
-        // Forgot password label (hyperlink style)
-        forgotPasswordLabel = new JLabel("<html><u>Forgot your password?</u></html>");
-        forgotPasswordLabel.setFont(UIConstants.FONT_LINK);
-        forgotPasswordLabel.setForeground(UIConstants.PRIMARY_BLUE);
-        forgotPasswordLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        forgotPasswordLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        forgotPasswordLabel.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                handleForgotPassword();
-            }
-        });
+      
     }
 
     /**
@@ -271,18 +248,9 @@ public class RightLoginPanel extends JPanel {
 
     }
 
-    private void handleSignup() {
-        // TODO: Implement signup navigation
-        System.out.println("Signup clicked");
-    }
+    
 
-    /**
-     * Handle forgot password link click - Placeholder for business logic
-     */
-    private void handleForgotPassword() {
-        // TODO: Implement forgot password logic
-        System.out.println("Forgot password clicked");
-    }
+   
 
     /**
      * Custom checkbox icon

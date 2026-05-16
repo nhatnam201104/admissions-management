@@ -20,6 +20,9 @@ public class Nganh {
     @Column(nullable = false)
     private String tennganh;
 
+    @Column(name = "n_tohopgoc")
+    private String nTohopgoc;
+
     @Column(name = "n_diemtrungtuyen")
     private Double nDiemtrungtuyen;
 

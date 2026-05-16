@@ -82,17 +82,18 @@ public class AdmissionPanel extends AbstractFeaturePanel {
     @Override
     protected Set<ToolbarAction> getToolbarActions() {
         return EnumSet.of(
-            ToolbarAction.ADD,           // Thêm nguyện vọng
-            ToolbarAction.EDIT,          // Sửa nguyện vọng
-            ToolbarAction.DELETE,        // Xóa nguyện vọng
-            ToolbarAction.REFRESH,       // Làm mới
-            ToolbarAction.UPDATE,        // Cập nhật KQ
-            ToolbarAction.VIEW_DETAIL,   // Chi tiết điểm
-            ToolbarAction.EXPORT_EXCEL,   // Xuất Excel
-            ToolbarAction.AUTO_ADMISSION  // Xét tuyển tự động
+            ToolbarAction.ADD,
+            ToolbarAction.EDIT,
+            ToolbarAction.DELETE,
+            ToolbarAction.REFRESH,
+            ToolbarAction.UPDATE,
+            ToolbarAction.VIEW_DETAIL,
+            ToolbarAction.EXPORT_EXCEL,
+            ToolbarAction.IMPORT_EXCEL,
+            ToolbarAction.AUTO_ADMISSION
         );
     }
-    
+
     @Override
     protected void onToolbarAction(ToolbarAction action) {
         switch (action) {
@@ -103,10 +104,12 @@ public class AdmissionPanel extends AbstractFeaturePanel {
             case UPDATE -> controller.updateResult();
             case VIEW_DETAIL -> controller.showScoreDetail();
             case EXPORT_EXCEL -> controller.handleExportExcel();
+            case IMPORT_EXCEL -> controller.handleImportExcel();
             case AUTO_ADMISSION -> controller.handleAutomaticAdmission();
             default -> {}
         }
     }
+
 
     @Override
     protected JComponent createContentPanel() {

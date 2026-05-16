@@ -1,44 +1,48 @@
 package com.example.managementadmissionwf.ui.panel;
 
+import com.example.managementadmissionwf.bus.interfaces.BonusScoreService;
+import com.example.managementadmissionwf.dto.common.ImportResult;
+import com.example.managementadmissionwf.dto.score.BonusScoreDTO;
+import com.example.managementadmissionwf.dto.score.BonusScoreViewDTO;
+import com.example.managementadmissionwf.ui.panel.score.BonusScoreFormDialog;
 import com.example.managementadmissionwf.ui.util.ToolbarAction;
 import com.example.managementadmissionwf.ui.util.UIFactory;
-import com.example.managementadmissionwf.ui.panel.AbstractFeaturePanel;
 
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.util.ArrayList;
+import java.awt.*;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
 public class BonusScorePanel extends AbstractFeaturePanel {
+
+    private final BonusScoreService bonusScoreService;
 
     private JTable table;
     private DefaultTableModel tableModel;
-
-    // Mock data
-    private List<BonusScoreMock> allData = new ArrayList<>();
-    private List<BonusScoreMock> currentFilteredData = new ArrayList<>();
-
-    public BonusScorePanel() {
-        super();
-    }
+    private List<BonusScoreViewDTO> currentRows = List.of();
 
     @PostConstruct
     private void init() {
-        generateMockData();
         buildUI();
-        handleSearchInternal();
     }
 
     @Override
     protected JComponent createContentPanel() {
-        String[] columnNames = {"STT", "CCCD", "Họ tên thí sinh", "Điểm chứng chỉ", "Điểm ƯTXT", "Tổng điểm"};
+        String[] columnNames = {
+                "STT", "CCCD", "Họ tên thí sinh", "NV", "Mã ngành", "Tên ngành",
+                "Phương thức", "Tổ hợp", "Điểm CC", "Điểm UTXT", "Tổng điểm"
+        };
         tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -47,106 +51,217 @@ public class BonusScorePanel extends AbstractFeaturePanel {
         };
 
         table = UIFactory.createStandardTable(tableModel);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         return UIFactory.createStandardScrollPane(table);
     }
 
     @Override
     protected Set<ToolbarAction> getToolbarActions() {
         return EnumSet.of(ToolbarAction.ADD, ToolbarAction.EDIT, ToolbarAction.DELETE,
-                ToolbarAction.REFRESH, ToolbarAction.EXPORT_EXCEL, ToolbarAction.IMPORT_EXCEL);
+                ToolbarAction.REFRESH, ToolbarAction.IMPORT_EXCEL, ToolbarAction.UPDATE);
     }
 
     @Override
     protected void onToolbarAction(ToolbarAction action) {
-        // TODO: Wire to BonusScoreController when service layer is implemented
+        switch (action) {
+            case ADD -> handleAdd();
+            case EDIT -> handleEdit();
+            case DELETE -> handleDelete();
+            case REFRESH -> refreshData();
+            case IMPORT_EXCEL -> handleImportExcel();
+            case UPDATE -> handleRecomputePriority();
+            default -> {
+            }
+        }
     }
+
+    private void handleImportExcel() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Chọn file Excel điểm cộng");
+        if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+        try (var is = new java.io.FileInputStream(chooser.getSelectedFile())) {
+            ImportResult<BonusScoreDTO> result = bonusScoreService.importExcel(is);
+            String msg = String.format(
+                    "Tổng dòng: %d\nThành công: %d\nLỗi: %d%s",
+                    result.getTotalRows(),
+                    result.getSuccessCount(),
+                    result.getErrorCount(),
+                    result.getErrorCount() > 0
+                            ? "\n\nChi tiết lỗi (5 đầu):\n- "
+                              + String.join("\n- ",
+                                  result.getErrors().subList(0, Math.min(5, result.getErrors().size())))
+                            : "");
+            JOptionPane.showMessageDialog(this, msg, "Kết quả import",
+                    result.getErrorCount() == 0
+                            ? JOptionPane.INFORMATION_MESSAGE
+                            : JOptionPane.WARNING_MESSAGE);
+            refreshData();
+        } catch (Exception ex) {
+            showError("Lỗi import: " + ex.getMessage());
+        }
+    }
+
+    private void handleRecomputePriority() {
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Tính lại điểm ưu tiên (KV + ĐT) cho toàn bộ thí sinh theo Quy chế tuyển sinh?",
+                "Xác nhận",
+                JOptionPane.YES_NO_OPTION);
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+        try {
+            int updated = bonusScoreService.recomputeAllPriorityPoints();
+            showInfo("Đã cập nhật " + updated + " bản ghi điểm ưu tiên.");
+            refreshData();
+        } catch (Exception ex) {
+            showError("Lỗi: " + ex.getMessage());
+        }
+    }
+
 
     @Override
     protected void loadData() {
-        handleSearchInternal();
+        try {
+            String keyword = getSearchField().getText().trim();
+            Pageable pageable = PageRequest.of(Math.max(0, currentPage - 1), getPageSize());
+            Page<BonusScoreViewDTO> page = bonusScoreService.searchBonusScoreViews(keyword, pageable);
+
+            currentRows = page.getContent();
+            populateTable(currentRows, page.getNumber() * page.getSize());
+            updatePaginationDirect(page.getNumber() + 1, page.getTotalPages(), page.getTotalElements());
+        } catch (Exception e) {
+            showError("Lỗi tải dữ liệu điểm cộng: " + e.getMessage());
+        }
     }
 
     @Override
     protected String getItemLabel() {
-        return "thí sinh";
+        return "dòng điểm cộng";
     }
 
-    // ========== Client-side pagination logic ==========
-
-    private void handleSearchInternal() {
-        String keyword = getSearchField().getText().trim().toLowerCase();
-        currentFilteredData = allData.stream()
-                .filter(m -> keyword.isEmpty()
-                        || m.cccd.contains(keyword)
-                        || m.hoTen.toLowerCase().contains(keyword))
-                .collect(Collectors.toList());
-
-        currentPage = 1;
-        updateTableAndPagination();
-    }
-
-    @Override
-    protected void resetFilters() {
-        super.resetFilters();
-        handleSearchInternal();
-    }
-
-    private void updateTableAndPagination() {
-        int pageSize = getPageSize();
-        int totalItems = currentFilteredData.size();
-        int totalPages = (int) Math.ceil((double) totalItems / pageSize);
-        if (totalPages == 0) totalPages = 1;
-
-        int startIndex = (currentPage - 1) * pageSize;
-        int endIndex = Math.min(startIndex + pageSize, totalItems);
-        List<BonusScoreMock> pageData = currentFilteredData.subList(startIndex, endIndex);
-
+    private void populateTable(List<BonusScoreViewDTO> rows, int startIndex) {
         tableModel.setRowCount(0);
         int stt = startIndex + 1;
-        for (BonusScoreMock m : pageData) {
+        for (BonusScoreViewDTO row : rows) {
             tableModel.addRow(new Object[]{
-                    stt++, m.cccd, m.hoTen, m.diemCC, m.diemUTXT, m.getTongDiem()
+                    stt++,
+                    valueOrDash(row.getCccd()),
+                    valueOrDash(row.getHoTen()),
+                    row.getNvTt() != null ? row.getNvTt() : "-",
+                    valueOrDash(row.getMaNganh()),
+                    valueOrDash(row.getTenNganh()),
+                    valueOrDash(row.getPhuongThuc()),
+                    valueOrDash(row.getToHop()),
+                    formatScore(row.getDiemCc()),
+                    formatScore(row.getDiemUtxt()),
+                    formatScore(row.getDiemTong())
             });
         }
-
-        updatePaginationDirect(currentPage, totalPages, totalItems);
     }
 
-    // ========== Mock data ==========
-
-    private void generateMockData() {
-        allData.add(new BonusScoreMock("079204000001", "Nguyễn Văn An", 10.0, 0.5));
-        allData.add(new BonusScoreMock("079204000002", "Trần Thị Bình", 9.5, 0.0));
-        allData.add(new BonusScoreMock("079204000003", "Lê Hoàng Cường", 0.0, 1.0));
-        allData.add(new BonusScoreMock("079204000004", "Phạm Đăng Dương", 8.0, 0.5));
-        allData.add(new BonusScoreMock("079204000005", "Hoàng Ngọc Em", 10.0, 2.0));
-        allData.add(new BonusScoreMock("079204000006", "Vũ Minh Phương", 0.0, 0.0));
-        allData.add(new BonusScoreMock("079204000007", "Đặng Quang Huy", 9.0, 0.5));
-        allData.add(new BonusScoreMock("079204000008", "Bùi Thanh Tùng", 7.5, 1.0));
-        allData.add(new BonusScoreMock("079204000009", "Đỗ Quỳnh Như", 10.0, 0.0));
-        allData.add(new BonusScoreMock("079204000010", "Hồ Việt Dũng", 0.0, 2.5));
-        allData.add(new BonusScoreMock("079204000011", "Ngô Khắc Tiệp", 8.5, 0.5));
-        allData.add(new BonusScoreMock("079204000012", "Dương Yến Ngọc", 9.5, 1.0));
-        allData.add(new BonusScoreMock("079204000013", "Lý Hải Anh", 0.0, 0.0));
-        allData.add(new BonusScoreMock("079204000014", "Đoàn Thiên Tôn", 10.0, 2.0));
-        allData.add(new BonusScoreMock("079204000015", "Trương Triết Hạn", 9.0, 0.5));
+    private BonusScoreViewDTO getSelectedRow() {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow < 0) {
+            return null;
+        }
+        int modelRow = table.convertRowIndexToModel(selectedRow);
+        return modelRow >= 0 && modelRow < currentRows.size() ? currentRows.get(modelRow) : null;
     }
 
-    private static class BonusScoreMock {
-        String cccd;
-        String hoTen;
-        double diemCC;
-        double diemUTXT;
-
-        BonusScoreMock(String cccd, String hoTen, double diemCC, double diemUTXT) {
-            this.cccd = cccd;
-            this.hoTen = hoTen;
-            this.diemCC = diemCC;
-            this.diemUTXT = diemUTXT;
+    private void handleAdd() {
+        String cccd = JOptionPane.showInputDialog(this, "Nhập CCCD thí sinh:");
+        if (cccd == null) {
+            return;
+        }
+        cccd = cccd.trim();
+        if (!cccd.matches("\\d{12}")) {
+            showWarning("CCCD phải gồm đúng 12 chữ số.");
+            return;
         }
 
-        double getTongDiem() {
-            return diemCC + diemUTXT;
+        BonusScoreDTO dto = BonusScoreDTO.builder().cccd(cccd).build();
+        showForm(dto, false);
+    }
+
+    private void handleEdit() {
+        BonusScoreViewDTO selected = getSelectedRow();
+        if (selected == null) {
+            showWarning("Vui lòng chọn một dòng điểm cộng.");
+            return;
         }
+
+        BonusScoreDTO dto = bonusScoreService.getBonusScoreByCccd(selected.getCccd());
+        showForm(dto, true);
+    }
+
+    private void handleDelete() {
+        BonusScoreViewDTO selected = getSelectedRow();
+        if (selected == null) {
+            showWarning("Vui lòng chọn một dòng điểm cộng.");
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "Xóa điểm cộng của CCCD: " + selected.getCccd() + "?",
+                "Xác nhận xóa",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        );
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        try {
+            bonusScoreService.deleteBonusScore(selected.getCccd());
+            refreshData();
+            showInfo("Xóa điểm cộng thành công.");
+        } catch (Exception e) {
+            showError("Không thể xóa điểm cộng: " + e.getMessage());
+        }
+    }
+
+    private void showForm(BonusScoreDTO dto, boolean isUpdate) {
+        BonusScoreFormDialog dialog = new BonusScoreFormDialog(
+                (Frame) SwingUtilities.getWindowAncestor(this),
+                isUpdate ? "Cập nhật điểm cộng" : "Thêm điểm cộng",
+                dto
+        );
+        dialog.setSaveHandler(result -> {
+            result.setCccd(result.getCccd().trim());
+            if (isUpdate) {
+                bonusScoreService.updateBonusScore(result);
+            } else {
+                bonusScoreService.createBonusScore(result);
+            }
+        });
+        dialog.setVisible(true);
+
+        if (dialog.isSaved()) {
+            refreshData();
+            showInfo(isUpdate ? "Cập nhật điểm cộng thành công." : "Thêm điểm cộng thành công.");
+        }
+    }
+
+    private String valueOrDash(String value) {
+        return value == null || value.isBlank() ? "-" : value.trim();
+    }
+
+    private String formatScore(Double value) {
+        return value != null ? String.format("%.2f", value) : "-";
+    }
+
+    private void showInfo(String message) {
+        JOptionPane.showMessageDialog(this, message, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void showWarning(String message) {
+        JOptionPane.showMessageDialog(this, message, "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+    }
+
+    private void showError(String message) {
+        JOptionPane.showMessageDialog(this, message, "Lỗi", JOptionPane.ERROR_MESSAGE);
     }
 }

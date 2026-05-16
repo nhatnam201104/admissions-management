@@ -6,7 +6,6 @@ import com.example.managementadmissionwf.ui.util.UIConstants;
 
 import javax.swing.*;
 import java.awt.*;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;

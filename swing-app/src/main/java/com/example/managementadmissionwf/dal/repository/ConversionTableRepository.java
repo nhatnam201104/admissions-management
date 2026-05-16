@@ -30,11 +30,22 @@ public interface ConversionTableRepository extends JpaRepository<XtBangquydoi, I
 
         Optional<XtBangquydoi> findById(Integer id);
 
-        @Query("SELECT b FROM XtBangquydoi b WHERE b.dPhuongthuc = :phuongThuc AND b.dMon = :mon AND b.dTohop = :toHop")
-        Optional<XtBangquydoi> findByPhuongThucAndMonAndTohop(
+        /**
+         * Trả về 1 dòng quy đổi (đầu tiên) cho 1 cấu hình. Dùng cho UI/CRUD
+         * khi cần kiểm tra duy nhất. Trong nghiệp vụ tính điểm, dùng
+         * {@link #findAllByPhuongThucAndMonAndTohop(String, String, String)}
+         * vì 1 cấu hình có nhiều khoảng quy đổi.
+         */
+        @Query("SELECT b FROM XtBangquydoi b WHERE b.dPhuongthuc = :phuongThuc AND b.dMon = :mon AND b.dTohop = :toHop ORDER BY b.dDiema ASC")
+        List<XtBangquydoi> findAllByPhuongThucAndMonAndTohop(
                         @Param("phuongThuc") String phuongThuc,
                         @Param("mon") String mon,
                         @Param("toHop") String toHop);
+
+        default Optional<XtBangquydoi> findByPhuongThucAndMonAndTohop(String phuongThuc, String mon, String toHop) {
+                return findAllByPhuongThucAndMonAndTohop(phuongThuc, mon, toHop).stream().findFirst();
+        }
+
 
         @Query("SELECT CASE WHEN COUNT(b) > 0 THEN true ELSE false END FROM XtBangquydoi b WHERE b.dPhuongthuc = :phuongThuc AND b.dMon = :mon AND b.dTohop = :toHop")
         boolean existsByPhuongThucAndMonAndTohop(
@@ -58,8 +69,14 @@ public interface ConversionTableRepository extends JpaRepository<XtBangquydoi, I
         @Query("SELECT DISTINCT b.dMon FROM XtBangquydoi b ORDER BY b.dMon")
         List<String> getAllMon();
 
-        @Query("SELECT b FROM XtBangquydoi b WHERE b.dPhuongthuc = :phuongThuc AND b.dMon = :mon AND b.dTohop IS NULL")
-        Optional<XtBangquydoi> findByPhuongThucAndMonAndTohopIsNull(
+        @Query("SELECT b FROM XtBangquydoi b WHERE b.dPhuongthuc = :phuongThuc AND b.dMon = :mon AND b.dTohop IS NULL ORDER BY b.dDiema ASC")
+        List<XtBangquydoi> findAllByPhuongThucAndMonAndTohopIsNull(
                         @Param("phuongThuc") String phuongThuc,
                         @Param("mon") String mon);
+
+        default Optional<XtBangquydoi> findByPhuongThucAndMonAndTohopIsNull(String phuongThuc, String mon) {
+                return findAllByPhuongThucAndMonAndTohopIsNull(phuongThuc, mon).stream().findFirst();
+        }
 }
+
+

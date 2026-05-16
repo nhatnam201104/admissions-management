@@ -1,11 +1,15 @@
 package com.example.managementadmissionwf.ui.panel;
 
+import com.example.managementadmissionwf.bus.interfaces.StatisticService;
 import com.example.managementadmissionwf.config.ApplicationContextHolder;
+import com.example.managementadmissionwf.dto.statistic.CandidateCategoryStatistic;
 import com.example.managementadmissionwf.dto.statistic.MajorStatistic;
 import com.example.managementadmissionwf.dto.statistic.MethodStatistic;
 import com.example.managementadmissionwf.dto.statistic.ScoreDistribution;
 import com.example.managementadmissionwf.dto.statistic.StatisticSummary;
 import com.example.managementadmissionwf.ui.component.StatisticController;
+import com.example.managementadmissionwf.ui.panel.admission.MajorMethodMatrixDialog;
+
 import lombok.extern.slf4j.Slf4j;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -38,11 +42,15 @@ public class StatisticPanel extends JPanel {
     private ChartPanel majorChartPanel;
     private ChartPanel methodChartPanel;
     private ChartPanel scoreChartPanel;
+    private ChartPanel candidateObjectChartPanel;
+    private ChartPanel candidateRegionChartPanel;
     
     // Chart Containers (để update sau khi load data)
     private JPanel majorChartContainer;
     private JPanel methodChartContainer;
     private JPanel scoreChartContainer;
+    private JPanel candidateObjectChartContainer;
+    private JPanel candidateRegionChartContainer;
     
     public StatisticPanel() {
         this.controller = ApplicationContextHolder.getBean(StatisticController.class);
@@ -68,26 +76,44 @@ public class StatisticPanel extends JPanel {
         centerPanel.add(summaryPanel, BorderLayout.NORTH);
         
         // Main charts area
-        JPanel chartsPanel = new JPanel(new BorderLayout(10, 10));
+        JPanel chartsPanel = new JPanel();
+        chartsPanel.setLayout(new BoxLayout(chartsPanel, BoxLayout.Y_AXIS));
         chartsPanel.setBackground(Color.WHITE);
-        
+
         // Major statistics chart (top, full width)
         majorChartContainer = createChartContainer("Thống kê theo ngành (Top 10)", majorChartPanel);
-        chartsPanel.add(majorChartContainer, BorderLayout.NORTH);
-        
+        chartsPanel.add(majorChartContainer);
+        chartsPanel.add(Box.createVerticalStrut(10));
+
+        // Candidate breakdown row
+        JPanel candidateCharts = new JPanel(new GridLayout(1, 2, 10, 10));
+        candidateCharts.setBackground(Color.WHITE);
+
+        candidateObjectChartContainer = createChartContainer("Thí sinh theo đối tượng", candidateObjectChartPanel);
+        candidateRegionChartContainer = createChartContainer("Thí sinh theo khu vực", candidateRegionChartPanel);
+
+        candidateCharts.add(candidateObjectChartContainer);
+        candidateCharts.add(candidateRegionChartContainer);
+        chartsPanel.add(candidateCharts);
+        chartsPanel.add(Box.createVerticalStrut(10));
+
         // Bottom row: Score distribution + Method statistics
         JPanel bottomCharts = new JPanel(new GridLayout(1, 2, 10, 10));
         bottomCharts.setBackground(Color.WHITE);
-        
+
         scoreChartContainer = createChartContainer("Phân bố điểm", scoreChartPanel);
         methodChartContainer = createChartContainer("Theo phương thức xét tuyển", methodChartPanel);
-        
+
         bottomCharts.add(scoreChartContainer);
         bottomCharts.add(methodChartContainer);
-        chartsPanel.add(bottomCharts, BorderLayout.CENTER);
-        
+        chartsPanel.add(bottomCharts);
+
         centerPanel.add(chartsPanel, BorderLayout.CENTER);
-        add(centerPanel, BorderLayout.CENTER);
+
+        JScrollPane scrollPane = new JScrollPane(centerPanel);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        add(scrollPane, BorderLayout.CENTER);
     }
     
     private JPanel createTopPanel() {
@@ -103,15 +129,37 @@ public class StatisticPanel extends JPanel {
         // Refresh button only
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         buttons.setBackground(Color.WHITE);
-        
+
+        JButton btnMatrix = new JButton("Trúng tuyển ngành × phương thức");
+        btnMatrix.addActionListener(e -> showMajorMethodMatrix());
+
         JButton btnRefresh = new JButton("Làm mới");
         btnRefresh.addActionListener(e -> loadData());
-        
+
+        buttons.add(btnMatrix);
         buttons.add(btnRefresh);
         panel.add(buttons, BorderLayout.EAST);
-        
+
         return panel;
     }
+
+    /**
+     * Mở báo cáo "trúng tuyển ngành × phương thức".
+     * Yêu cầu rubric mục 6 desktop.
+     */
+    private void showMajorMethodMatrix() {
+        try {
+            StatisticService service = ApplicationContextHolder.getBean(StatisticService.class);
+            Frame parent = (Frame) SwingUtilities.getWindowAncestor(this);
+            new MajorMethodMatrixDialog(parent, service).setVisible(true);
+        } catch (Exception ex) {
+            log.error("Cannot open major-method matrix", ex);
+            JOptionPane.showMessageDialog(this,
+                    "Không mở được báo cáo: " + ex.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     
     private JPanel createSummaryPanel() {
         JPanel panel = new JPanel(new GridLayout(1, 4, 15, 0));
@@ -217,6 +265,18 @@ public class StatisticPanel extends JPanel {
                 majorChartPanel = createMajorBarChart(majorStats);
                 updateChartPanel("Thống kê theo ngành (Top 10)", majorChartPanel, 0);
             });
+
+            java.util.List<CandidateCategoryStatistic> objectStats = controller.loadCandidateStatisticsByDoiTuong();
+            SwingUtilities.invokeLater(() -> {
+                candidateObjectChartPanel = createCandidateCategoryBarChart(objectStats, "Theo đối tượng ưu tiên");
+                updateChartPanel("Thí sinh theo đối tượng", candidateObjectChartPanel, 3);
+            });
+
+            java.util.List<CandidateCategoryStatistic> regionStats = controller.loadCandidateStatisticsByKhuVuc();
+            SwingUtilities.invokeLater(() -> {
+                candidateRegionChartPanel = createCandidateCategoryBarChart(regionStats, "Theo khu vực");
+                updateChartPanel("Thí sinh theo khu vực", candidateRegionChartPanel, 4);
+            });
             
             // Load method statistics
             java.util.List<MethodStatistic> methodStats = controller.loadMethodStatistics();
@@ -244,6 +304,8 @@ public class StatisticPanel extends JPanel {
             case 0 -> container = majorChartContainer;
             case 1 -> container = methodChartContainer;
             case 2 -> container = scoreChartContainer;
+            case 3 -> container = candidateObjectChartContainer;
+            case 4 -> container = candidateRegionChartContainer;
             default -> { return; }
         }
         
@@ -315,6 +377,34 @@ public class StatisticPanel extends JPanel {
             @Override
             public Dimension getPreferredSize() {
                 return new Dimension(350, 250);
+            }
+        };
+    }
+
+    private ChartPanel createCandidateCategoryBarChart(java.util.List<CandidateCategoryStatistic> stats, String title) {
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+        for (CandidateCategoryStatistic stat : stats) {
+            dataset.addValue(stat.total(), "Thí sinh", stat.label());
+        }
+
+        JFreeChart chart = ChartFactory.createBarChart(
+            title,
+            "Nhóm",
+            "Số thí sinh",
+            dataset,
+            PlotOrientation.VERTICAL,
+            false,
+            true,
+            false
+        );
+
+        chart.setBackgroundPaint(Color.WHITE);
+
+        return new ChartPanel(chart) {
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(350, 230);
             }
         };
     }

@@ -4,9 +4,11 @@ import com.example.managementadmissionwf.dal.entity.XtThisinhxettuyen25;
 
 import jakarta.transaction.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -68,7 +70,37 @@ public interface CandidateRepository extends JpaRepository<XtThisinhxettuyen25, 
 
     @Query(value = "SELECT * FROM xt_thisinhxettuyen25 WHERE dien_thoai = :dienThoai LIMIT 1", nativeQuery = true)
     Optional<XtThisinhxettuyen25> findByDienThoaiIncludingDeleted(@Param("dienThoai") String dienThoai);
-   
 
-    
+    // ==================== Statistic queries ====================
+
+    @Query("SELECT COUNT(c) FROM XtThisinhxettuyen25 c WHERE c.isDeleted = false")
+    long countActive();
+
+    /**
+     * Đếm thí sinh theo đối tượng ưu tiên (đã loại bản ghi xoá mềm).
+     * Trả về: label, total.
+     */
+    @Query("""
+            SELECT c.doiTuong, COUNT(c)
+            FROM XtThisinhxettuyen25 c
+            WHERE c.isDeleted = false
+            GROUP BY c.doiTuong
+            ORDER BY COUNT(c) DESC
+            """)
+    List<Object[]> countByDoiTuong();
+
+    /**
+     * Đếm thí sinh theo khu vực.
+     * Trả về: label, total.
+     */
+    @Query("""
+            SELECT c.khuVuc, COUNT(c)
+            FROM XtThisinhxettuyen25 c
+            WHERE c.isDeleted = false
+            GROUP BY c.khuVuc
+            ORDER BY COUNT(c) DESC
+            """)
+    List<Object[]> countByKhuVuc();
 }
+
+

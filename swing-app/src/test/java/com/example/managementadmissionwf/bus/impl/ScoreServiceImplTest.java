@@ -27,7 +27,6 @@ import org.springframework.data.domain.Pageable;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 
@@ -197,7 +196,7 @@ class ScoreServiceImplTest {
             XtDiemthixettuyen entity = baseEntity();
             ScoreDTO dto = baseDto("THPT");
 
-            when(scoreRepository.findByCccd(CCCD)).thenReturn(Optional.of(entity));
+            when(scoreRepository.findByCccdAndDPhuongthuc(CCCD, "THPT")).thenReturn(Optional.of(entity));
             when(scoreMapper.toDto(entity)).thenReturn(dto);
 
             assertThat(scoreService.getScoreByCccd(CCCD)).isEqualTo(dto);
@@ -206,7 +205,7 @@ class ScoreServiceImplTest {
         @Test
         @DisplayName("should throw when CCCD not found")
         void shouldThrow_whenNotFound() {
-            when(scoreRepository.findByCccd(CCCD)).thenReturn(Optional.empty());
+            when(scoreRepository.findByCccdAndDPhuongthuc(CCCD, "THPT")).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> scoreService.getScoreByCccd(CCCD))
                     .isInstanceOf(RuntimeException.class)
@@ -216,12 +215,12 @@ class ScoreServiceImplTest {
         @Test
         @DisplayName("should trim CCCD before lookup")
         void shouldTrimCccd() {
-            when(scoreRepository.findByCccd(CCCD)).thenReturn(Optional.empty());
+            when(scoreRepository.findByCccdAndDPhuongthuc(CCCD, "THPT")).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> scoreService.getScoreByCccd("  " + CCCD + "  "))
                     .isInstanceOf(RuntimeException.class);
 
-            verify(scoreRepository).findByCccd(CCCD);
+            verify(scoreRepository).findByCccdAndDPhuongthuc(CCCD, "THPT");
         }
     }
 
@@ -716,7 +715,7 @@ class ScoreServiceImplTest {
         void shouldSoftDelete() {
             XtDiemthixettuyen entity = baseEntity();
 
-            when(scoreRepository.findByCccd(CCCD)).thenReturn(Optional.of(entity));
+            when(scoreRepository.findByCccdAndDPhuongthuc(CCCD, "THPT")).thenReturn(Optional.of(entity));
             when(scoreRepository.save(entity)).thenReturn(entity);
 
             scoreService.deleteScore(CCCD, "THPT");
@@ -727,7 +726,7 @@ class ScoreServiceImplTest {
         @Test
         @DisplayName("should throw when CCCD not found")
         void shouldThrowWhenNotFound() {
-            when(scoreRepository.findByCccd(CCCD)).thenReturn(Optional.empty());
+            when(scoreRepository.findByCccdAndDPhuongthuc(CCCD, "THPT")).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> scoreService.deleteScore(CCCD, "THPT"))
                     .isInstanceOf(RuntimeException.class)
@@ -737,12 +736,12 @@ class ScoreServiceImplTest {
         @Test
         @DisplayName("should trim CCCD before deletion")
         void shouldTrimCccd() {
-            when(scoreRepository.findByCccd(CCCD)).thenReturn(Optional.empty());
+            when(scoreRepository.findByCccdAndDPhuongthuc(CCCD, "THPT")).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> scoreService.deleteScore("  " + CCCD + "  ", "THPT"))
                     .isInstanceOf(RuntimeException.class);
 
-            verify(scoreRepository).findByCccd(CCCD);
+            verify(scoreRepository).findByCccdAndDPhuongthuc(CCCD, "THPT");
         }
     }
 
