@@ -23,15 +23,4 @@ public interface BangquydoiRepository extends JpaRepository<XtBangquydoi, Intege
     @Query("SELECT b FROM XtBangquydoi b WHERE b.dPhuongthuc = :phuongthuc AND b.dMon = :mon")
     List<XtBangquydoi> findByDPhuongthucAndDMon(@Param("phuongthuc") String phuongthuc, @Param("mon") String mon);
 
-    /**
-     * Tìm quy đổi theo phương thức, môn và tổ hợp
-     */
-    @Query("SELECT b FROM XtBangquydoi b WHERE b.dPhuongthuc = :phuongthuc AND b.dMon = :mon AND b.dTohop = :tohop")
-    List<XtBangquydoi> findByDPhuongthucAndDMonAndDTohop(@Param("phuongthuc") String phuongthuc, @Param("mon") String mon, @Param("tohop") String tohop);
-
-    /**
-     * Tìm quy đổi theo mã quy đổi
-     */
-    @Query("SELECT b FROM XtBangquydoi b WHERE b.dMaquydoi = :maQuyDoi")
-    List<XtBangquydoi> findByMaQuyDoi(@Param("maQuyDoi") String maQuyDoi);
 }

@@ -301,31 +301,6 @@ public class MainFrame extends JFrame {
         }
 
     }
-
-    /**
-     * Show placeholder panel for unimplemented features
-     */
-    private void showPlaceholderPanel(String featureName) {
-        JPanel placeholder = new JPanel(new BorderLayout());
-        placeholder.setBackground(Color.WHITE);
-
-        JLabel message = new JLabel(
-                "<html><div style='text-align: center;'>" +
-                        "<h2>" + featureName + "</h2>" +
-                        "<p>Tính năng này đang được phát triển.</p>" +
-                        "<p>Vui lòng quay lại sau.</p>" +
-                        "</div></html>",
-                SwingConstants.CENTER);
-        message.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        message.setForeground(new Color(127, 140, 141));
-
-        placeholder.add(message, BorderLayout.CENTER);
-        setContent(placeholder);
-    }
-
-    /**
-     * Setup frame properties
-     */
     public void setupFrame() {
         setTitle("Admission Management System");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

@@ -108,7 +108,13 @@ SGU_FALLBACK_MAJORS = [
 
 
 def _expand_majors(base, target=110):
-    """Pad >=target ngành bằng cách thêm chương trình CLC/LK/SE."""
+    """Pad >=target ngành bằng cách thêm chương trình CLC/LK/SE.
+
+    Khi giảm chitieu cho ngành mới, các sl_* (sl_xtt/sl_dgnl/sl_vsat/sl_thpt)
+    cũng phải được scale theo cùng tỉ lệ để bảo toàn invariant:
+    chitieu == sl_xtt + sl_dgnl + sl_vsat + sl_thpt. Trước đây giữ nguyên
+    *flags → ngành mới luôn lệch chỉ tiêu (vd chitieu=30 nhưng tổng sl_*=60).
+    """
     if len(base) >= target:
         return base
     extras = []
@@ -121,17 +127,52 @@ def _expand_majors(base, target=110):
     while len(base) + len(extras) < target:
         src = base[i % len(base)]
         manganh, tennganh, tohop, chitieu, sapn, dchuan, *flags = src
+        # flags = [thpt, dgnl, vsat, tuyenthang, sl_xtt, sl_dgnl, sl_vsat, sl_thpt]
+        method_flags = flags[:4]
+        sl_old = flags[4:8]
         suffix_code, suffix_name = suffixes[(i // len(base)) % len(suffixes)]
         new_code = f"{manganh}-{suffix_code}{(i // len(base)) + 1}"
         new_name = f"{tennganh} ({suffix_name})"
         delta = ((i % 7) - 3) * 0.1
-        extras.append((new_code, new_name, tohop,
-                       max(20, chitieu // 2),
-                       round(sapn, 2),
-                       round(dchuan + delta, 2),
-                       *flags))
+
+        new_chitieu = max(20, chitieu // 2)
+        sl_new = _rescale_quotas(sl_old, chitieu, new_chitieu)
+
+        extras.append((
+            new_code, new_name, tohop,
+            new_chitieu,
+            round(sapn, 2),
+            round(dchuan + delta, 2),
+            *method_flags,
+            *sl_new,
+        ))
         i += 1
     return list(base) + extras
+
+
+def _rescale_quotas(sl_old, chitieu_old, chitieu_new):
+    """Scale các sl_* sao cho tổng đúng bằng chitieu_new.
+
+    Bước 1: scale theo tỉ lệ chitieu_new/chitieu_old, làm tròn xuống.
+    Bước 2: phân phối phần dư để tổng khớp chitieu_new — ưu tiên cộng vào
+    sl_thpt (cột lớn nhất, ít ảnh hưởng phân phối).
+    """
+    if chitieu_old <= 0:
+        return [0, 0, 0, chitieu_new]
+    ratio = chitieu_new / chitieu_old
+    scaled = [int(s * ratio) for s in sl_old]
+    diff = chitieu_new - sum(scaled)
+    if diff != 0:
+        # Tìm index có sl > 0 để cộng/trừ; mặc định sl_thpt (idx 3).
+        target_idx = 3 if scaled[3] > 0 else next(
+            (i for i, s in enumerate(scaled) if s > 0), 3)
+        scaled[target_idx] += diff
+        # Đảm bảo không âm
+        if scaled[target_idx] < 0:
+            scaled[target_idx] = 0
+            # Cân bằng lại bằng cách dồn diff sang sl_thpt
+            scaled[3] = chitieu_new - sum(scaled[:3]) - scaled[3]
+    return scaled
 
 
 SGU_FALLBACK_MAJORS = _expand_majors(SGU_FALLBACK_MAJORS, target=110)
@@ -493,7 +534,10 @@ def build_bangquydoi():
     }
     for mon, ranges in vsat_blocks.items():
         for a, b, c, d in ranges:
-            rows.append(("VSAT", "A00", mon, a, b, c, d))
+            # VSAT chỉ phụ thuộc môn, không phụ thuộc tổ hợp.
+            # Đặt tohop=None để pipeline lookup match qua fallback
+            # (phuongThuc, mon, tohop IS NULL).
+            rows.append(("VSAT", None, mon, a, b, c, d))
 
     thpt_curve = vsat_blocks["TO"]
     for mon in ("TO", "LI", "HO", "SI", "SU", "DI", "AN", "VA"):
@@ -508,8 +552,12 @@ def build_bangquydoi():
         (360.0, 450.0,  9.00, 11.25), (270.0, 360.0,  6.75,  9.00),
         (180.0, 270.0,  4.50,  6.75), (0.0,   180.0,  0.00,  4.50),
     ]
-    for a, b, c, d in dgnl:
-        rows.append(("DGNL", "", "NL1", a, b, c, d))
+    # DGNL: d_mon=NULL (empty), d_tohop=tổ hợp gốc (A00, A01, B00, C00, C01, D01)
+    # Mỗi tổ hợp gốc có cùng bảng quy đổi bách phân vị
+    dgnl_tohop_goc = ["A00", "A01", "B00", "C00", "C01", "D01"]
+    for tohop in dgnl_tohop_goc:
+        for a, b, c, d in dgnl:
+            rows.append(("DGNL", tohop, "", a, b, c, d))
 
     ielts = [
         (8.5, 9.0, 8.0, 9.0), (8.0, 8.5, 7.5, 8.0), (7.5, 8.0, 7.0, 7.5),
@@ -705,15 +753,19 @@ def write_app_bonus(diem_cong):
 def write_app_majors(majors):
     rows = []
     for m in majors:
-        manganh, tennganh, tohop, chitieu, sapn, dchuan, thpt, dgnl, vsat, tt, *_ = m
+        (manganh, tennganh, tohop, chitieu, sapn, dchuan,
+         thpt, dgnl, vsat, tt,
+         sl_xtt, sl_dgnl, sl_vsat, sl_thpt) = m
         rows.append([
             manganh, tennganh, tohop, chitieu, sapn, dchuan,
             _bool_cell(tt), _bool_cell(dgnl), _bool_cell(thpt), _bool_cell(vsat),
+            sl_xtt, sl_dgnl, sl_vsat, sl_thpt,
         ])
     _write(OUT_APP, "majors.xlsx",
            ["Mã ngành", "Tên ngành", "Tổ hợp gốc", "Chỉ tiêu",
             "Điểm sàn", "Điểm chuẩn",
-            "Tuyển thẳng", "ĐGNL", "THPT", "VSAT"],
+            "Tuyển thẳng", "ĐGNL", "THPT", "VSAT",
+            "SL Tuyển thẳng", "SL ĐGNL", "SL VSAT", "SL THPT"],
            rows)
 
 
@@ -783,10 +835,12 @@ def write_app_conversion(bangquydoi):
     rows = []
     for r in bangquydoi:
         # r = (phuongThuc, tohop, mon, diema, diemb, diemc, diemd)
+        # Giữ None làm ô trống thực sự để MySQL import thành NULL.
+        # KHÔNG coerce None → "" vì swing-app repo query cần check IS NULL.
         rows.append([
-            r[0], r[1] or "", r[2],
+            r[0], r[1], r[2],
             r[3], r[4], r[5], r[6],
-            "", "",
+            None, None,
         ])
     _write(OUT_APP, "conversion_table.xlsx",
            ["Phương thức", "Tổ hợp", "Môn",

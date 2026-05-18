@@ -35,12 +35,12 @@ public class ScoreLookupController {
     @PostMapping
     public String processLookup(@Valid @ModelAttribute("cccdForm") CccdForm cccdForm,
                                 BindingResult bindingResult,
-                                RedirectAttributes redirectAttributes,
-                                HttpSession session) {
-        if (cccdForm.getNgaySinh() == null) {
-            bindingResult.rejectValue("ngaySinh", "ngaySinh.required", "Vui lòng nhập ngày sinh");
-        }
-
+                                HttpSession session,
+                                Model model) {
+        // Validation thất bại (CCCD không phải 12 số, ngày sinh thiếu/sai
+        // định dạng, ngày sinh không trong quá khứ...) → render lại form
+        // với thông báo lỗi field-level. Không redirect để giữ giá trị
+        // người dùng đã nhập, dễ chỉnh sửa.
         if (bindingResult.hasErrors()) {
             return "score/lookup";
         }
@@ -50,9 +50,11 @@ public class ScoreLookupController {
 
         if (result.isEmpty()) {
             session.removeAttribute(SESSION_VALIDATED_CCCD);
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "Thông tin tra cứu không hợp lệ. Vui lòng kiểm tra CCCD và ngày sinh.");
-            return "redirect:/tra-cuu-diem";
+            // Báo lỗi global trên form (không gắn vào field cụ thể vì
+            // không xác định được field nào sai trong cặp CCCD/ngày sinh).
+            bindingResult.reject("lookup.notFound",
+                    "Không tìm thấy thí sinh khớp với CCCD và ngày sinh đã nhập. Vui lòng kiểm tra lại.");
+            return "score/lookup";
         }
 
         session.setAttribute(SESSION_VALIDATED_CCCD, cccd);

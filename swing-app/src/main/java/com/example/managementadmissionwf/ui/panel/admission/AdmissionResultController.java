@@ -318,25 +318,32 @@ public class AdmissionResultController {
 
     private void updateTable(List<AdmissionResultDTO> list) {
         currentResults = list != null ? new ArrayList<>(list) : List.of();
-        DefaultTableModel model = resultTable.getTableModel();
-        model.setRowCount(0);
-    
+        List<Object[]> rows = new ArrayList<>();
+
         for (AdmissionResultDTO dto : currentResults) {
-            // Format điểm XT với 2 số thập phân
-            String diemXettuyenStr = dto.getDiemXettuyen() != null 
-                ? String.format("%.2f", dto.getDiemXettuyen()) 
+            String diemXettuyenStr = dto.getDiemXettuyen() != null
+                ? String.format("%.2f", dto.getDiemXettuyen())
                 : "0.00";
-            // Format điểm chuẩn
-            String diemChuanStr = dto.getDiemChuan() != null 
-                ? String.format("%.2f", dto.getDiemChuan()) 
+            String diemChuanStr = dto.getDiemChuan() != null
+                ? String.format("%.2f", dto.getDiemChuan())
                 : "-";
-            
-            model.addRow(new Object[]{
+
+            rows.add(new Object[]{
                 dto.getId(), dto.getCccd(), dto.getSobaodanh(),
                 dto.getNvTt(), dto.getTennganh(), dto.getPhuongThuc(),
                 dto.getTohop(), diemXettuyenStr, diemChuanStr,
                 dto.getKetQua()
             });
         }
+        resultTable.setAllRows(rows);
+        // Phân trang client-side: dùng thanh dưới của AbstractFeaturePanel
+        // (page + pageSize do user chọn). Render đúng slice + cập nhật trạng thái.
+        int page = admissionPanel.getCurrentPage();
+        int pageSize = admissionPanel.getPageSize();
+        int total = rows.size();
+        int totalPages = total == 0 ? 1 : (int) Math.ceil((double) total / pageSize);
+        if (page > totalPages) page = totalPages;
+        resultTable.renderPage(page, pageSize);
+        admissionPanel.updatePaginationDirect(page, totalPages, total);
     }
 }

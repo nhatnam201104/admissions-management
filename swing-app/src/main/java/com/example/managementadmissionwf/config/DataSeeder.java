@@ -718,42 +718,51 @@ public class DataSeeder implements CommandLineRunner {
 
     private List<XtBangquydoi> seedDgnlData() {
         List<XtBangquydoi> records = new ArrayList<>();
-        LocalDate now = LocalDate.now();
 
         // ĐGNL: Quy đổi từ thang 1200 (NL1) về thang 30
-        // Bảng quy đổi: [diemA, diemB] = khoảng điểm NL1, [diemC, diemD] = điểm quy đổi thang 30
+        // Cấu trúc: d_phuongthuc='DGNL', d_mon=NULL, d_tohop=<tổ hợp gốc>
+        // Mỗi tổ hợp gốc có cùng bảng quy đổi (bách phân vị)
         double[][] data = {
-                // NL1: 1080-1200 → 27.0-30.0 (Xuất sắc)
                 { 1080.0, 1200.0, 27.0, 30.0 },
-                // NL1: 990-1080 → 24.75-27.0 (Giỏi)
                 { 990.0, 1080.0, 24.75, 27.0 },
-                // NL1: 900-990 → 22.5-24.75 (Khá)
                 { 900.0, 990.0, 22.5, 24.75 },
-                // NL1: 810-900 → 20.25-22.5 (Trung bình khá)
                 { 810.0, 900.0, 20.25, 22.5 },
-                // NL1: 720-810 → 18.0-20.25 (Trung bình)
                 { 720.0, 810.0, 18.0, 20.25 },
-                // NL1: 630-720 → 15.75-18.0 (Yếu)
                 { 630.0, 720.0, 15.75, 18.0 },
-                // NL1: 540-630 → 13.5-15.75 (Yếu)
                 { 540.0, 630.0, 13.5, 15.75 },
-                // NL1: 450-540 → 11.25-13.5 (Kém)
                 { 450.0, 540.0, 11.25, 13.5 },
-                // NL1: 360-450 → 9.0-11.25 (Kém)
                 { 360.0, 450.0, 9.0, 11.25 },
-                // NL1: 270-360 → 6.75-9.0 (Yếu)
                 { 270.0, 360.0, 6.75, 9.0 },
-                // NL1: 180-270 → 4.5-6.75 (Kém)
                 { 180.0, 270.0, 4.5, 6.75 },
-                // NL1: 0-180 → 0.0-4.5 (Yếu)
                 { 0.0, 180.0, 0.0, 4.5 }
         };
 
-        for (double[] row : data) {
-            records.add(createRecordNoToHop("DGNL", "NL1", row[0], row[1], row[2], row[3], now));
+        // Tạo bảng quy đổi cho mỗi tổ hợp gốc (giống cấu trúc data thật từ ban tuyển sinh)
+        String[] tohopGocList = {"A00", "A01", "B00", "C00", "C01", "D01"};
+        for (String tohopGoc : tohopGocList) {
+            for (double[] row : data) {
+                records.add(createDgnlRecord(tohopGoc, row[0], row[1], row[2], row[3]));
+            }
         }
 
         return records;
+    }
+
+    /**
+     * Tạo record DGNL: d_phuongthuc='DGNL', d_mon=NULL, d_tohop=tohopGoc.
+     * Đây là cấu trúc đúng theo quy ước data ban tuyển sinh.
+     */
+    private XtBangquydoi createDgnlRecord(String tohopGoc, double diemA, double diemB,
+            double diemC, double diemD) {
+        return XtBangquydoi.builder()
+                .dPhuongthuc("DGNL")
+                .dTohop(tohopGoc)
+                .dMon(null)
+                .dDiema(diemA)
+                .dDiemb(diemB)
+                .dDiemc(diemC)
+                .dDiemd(diemD)
+                .build();
     }
 
     private List<XtBangquydoi> seedIeltsData() {

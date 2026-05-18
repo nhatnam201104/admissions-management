@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -78,9 +79,26 @@ public class ScoreLookupServiceImpl implements ScoreLookupService {
         Map<String, Nganh> nganhMap = nganhRepo.findAllActive().stream()
                 .collect(Collectors.toMap(Nganh::getManganh, nganh -> nganh, (a, b) -> a));
 
-        List<AspirationDto> aspirationDtos = nguyenVongs.stream()
+        // Sort theo thứ tự ưu tiên (nv_tt) tăng dần để xác định nguyện vọng
+        // được nhận chính thức (NV đậu có thứ tự thấp nhất). Theo quy chế
+        // tuyển sinh, mỗi thí sinh chỉ được trúng tuyển VÀO MỘT nguyện vọng.
+        List<NguyenVong> sortedNvs = nguyenVongs.stream()
+                .sorted(Comparator.comparing(NguyenVong::getNvTt,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+
+        // Tìm NV ưu tiên cao nhất có ketQua = TRUNG_TUYEN.
+        Integer winningNvTt = sortedNvs.stream()
+                .filter(nv -> "TRUNG_TUYEN".equalsIgnoreCase(nv.getNvKetqua()))
+                .map(NguyenVong::getNvTt)
+                .findFirst()
+                .orElse(null);
+
+        List<AspirationDto> aspirationDtos = sortedNvs.stream()
                 .map(nv -> {
                     Nganh nganh = nganhMap.get(nv.getNvManganh());
+                    boolean finalAdmitted = winningNvTt != null
+                            && winningNvTt.equals(nv.getNvTt());
                     return new AspirationDto(
                             nv.getNvTt(),
                             nv.getNvManganh(),
@@ -92,10 +110,12 @@ public class ScoreLookupServiceImpl implements ScoreLookupService {
                             nv.getDiemCong(),
                             nv.getDiemXettuyen(),
                             nv.getNvKetqua(),
+                            finalAdmitted,
                             buildCalculationDetail(nv, diemThiRows, diemCong)
                     );
                 })
                 .toList();
+
 
         String displayName = thisinh.getHoVaTen() != null
                 ? thisinh.getHoVaTen()

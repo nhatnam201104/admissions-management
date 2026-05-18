@@ -31,7 +31,7 @@ public class XtBangquydoi {
     @Column(name = "d_tohop", length = 10)
     String dTohop; // tổ hợp (A00, D01, etc.)
 
-    @Column(name = "d_mon", nullable = false, length = 10)
+    @Column(name = "d_mon", nullable = true, length = 10)
     String dMon; // môn (TO, LI, N1, NL1, etc.)
 
     @Column(name = "d_diema", nullable = false)

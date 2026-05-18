@@ -1,2 +1,5 @@
 /docs
 /seed-data/output
+.claude/
+.kiro/
+.remember/

@@ -344,10 +344,38 @@ public class AspirationFormDialog extends JDialog {
 
         AspirationScoreService aspirationScoreService = ApplicationContextHolder.getBean(AspirationScoreService.class);
         var scoreResult = aspirationScoreService.calculateForAspiration(aspiration);
-        if (scoreResult == null) {
-            JOptionPane.showMessageDialog(this,
-                "Không đủ dữ liệu điểm thi/tổ hợp để tính điểm xét tuyển.\nNguyện vọng đã được lưu nhưng đánh dấu THIEU_DIEM.",
-                "Cảnh báo - Thiếu điểm", JOptionPane.WARNING_MESSAGE);
+
+        // TUYEN_THANG: scoreResult luôn null vì không tính điểm theo công thức,
+        // nhưng nguyện vọng vẫn ở trạng thái CHO_XET (chờ xét thẳng) — đây là
+        // case hợp lệ, không hiển thị cảnh báo thiếu điểm.
+        boolean isTuyenThang = "TUYEN_THANG".equalsIgnoreCase(phuongThuc);
+
+        if (scoreResult == null && !isTuyenThang) {
+            // Phân biệt 2 nguyên nhân để user dễ xử lý:
+            //  (a) thí sinh chưa có record điểm cho phương thức này
+            //  (b) đã có record nhưng tổ hợp môn yêu cầu thiếu môn
+            //      (vd: NV chọn tổ hợp B00 = TO+HO+SI nhưng chỉ nhập TO+LI)
+            com.example.managementadmissionwf.dal.repository.ScoreRepository scoreRepo =
+                    ApplicationContextHolder.getBean(
+                            com.example.managementadmissionwf.dal.repository.ScoreRepository.class);
+            boolean hasScore = scoreRepo.findByCccdAndDPhuongthuc(cccd, phuongThuc).isPresent();
+            String message;
+            if (!hasScore) {
+                message = "Thí sinh chưa có điểm thi cho phương thức \"" + phuongThuc + "\".\n" +
+                        "Nguyện vọng đã được lưu với trạng thái THIEU_DIEM.\n\n" +
+                        "Hệ thống KHÔNG tự lấy điểm phương thức khác để tránh sai lệch dữ liệu.\n" +
+                        "Vui lòng nhập điểm thi của phương thức \"" + phuongThuc + "\" cho thí sinh\n" +
+                        "rồi tính lại điểm nguyện vọng.";
+            } else {
+                message = "Thí sinh đã có điểm phương thức \"" + phuongThuc + "\" nhưng tổ hợp \""
+                        + (selectedTohop != null ? selectedTohop : "?") + "\" yêu cầu môn\n"
+                        + "không có trong record điểm. Kiểm tra lại các môn:\n"
+                        + " • Tổ hợp này yêu cầu 3 môn cụ thể (xem cấu hình ngành/tổ hợp).\n"
+                        + " • Bổ sung điểm các môn còn thiếu trong màn hình Điểm thi.\n\n"
+                        + "Nguyện vọng đã được lưu với trạng thái THIEU_DIEM.";
+            }
+            JOptionPane.showMessageDialog(this, message,
+                    "Cảnh báo - Thiếu điểm", JOptionPane.WARNING_MESSAGE);
             controller.refreshData();
             dispose();
             return;

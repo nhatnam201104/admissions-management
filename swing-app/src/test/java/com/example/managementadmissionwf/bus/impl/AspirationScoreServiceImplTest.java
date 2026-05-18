@@ -65,10 +65,10 @@ class AspirationScoreServiceImplTest {
     }
 
     private void mockNoConversion() {
-        when(conversionTableRepository.findByPhuongThucAndMonAndTohop(any(), any(), any()))
-                .thenReturn(Optional.empty());
-        when(conversionTableRepository.findByPhuongThucAndMonAndTohopIsNull(any(), any()))
-                .thenReturn(Optional.empty());
+        when(conversionTableRepository.findAllByPhuongThucAndMonAndTohop(any(), any(), any()))
+                .thenReturn(Collections.emptyList());
+        when(conversionTableRepository.findAllByPhuongThucAndMonAndTohopIsNull(any(), any()))
+                .thenReturn(Collections.emptyList());
     }
 
     // ================= FIND SCORE BY METHOD =================
@@ -81,17 +81,16 @@ class AspirationScoreServiceImplTest {
         @DisplayName("should use preferred method score when available")
         void shouldUsePreferredMethodScore_whenAvailable() {
             XtNguyenvongxettuyen aspiration = buildAspiration(CCCD, MA_NGANH, "DGNL");
-            XtDiemthixettuyen dgnlScore = buildScore(CCCD, "DGNL", 8.0, 8.0, 8.0);
-            XtNganhTohop tohop = buildTohop(MA_NGANH, MA_TOHOP, "TO", 1.0, "LI", 1.0, "HO", 1.0);
+            XtDiemthixettuyen dgnlScore = XtDiemthixettuyen.builder()
+                    .id(1).cccd(CCCD).sobaodanh("SBD001").dPhuongthuc("DGNL")
+                    .nl1(800.0).isDeleted(false).build();
             XtNganh major = buildMajor(MA_NGANH, 0.0);
 
             when(scoreRepository.findByCccdAndDPhuongthuc(CCCD, "DGNL"))
                     .thenReturn(Optional.of(dgnlScore));
-            when(nganhTohopRepository.findByManganh(MA_NGANH)).thenReturn(List.of(tohop));
             when(bonusScoreRepository.findByCccd(CCCD)).thenReturn(Optional.empty());
             when(majorRepository.findByManganh(MA_NGANH)).thenReturn(Optional.of(major));
             when(nguyenVongRepository.save(any())).thenReturn(aspiration);
-            mockNoConversion();
 
             AspirationScoreResult result = aspirationScoreService.calculateForAspiration(aspiration);
 
@@ -142,16 +141,15 @@ class AspirationScoreServiceImplTest {
         @DisplayName("should fallback to DGNL when THPT not available")
         void shouldFallbackToDgnl_whenThptNotAvailable() {
             XtNguyenvongxettuyen aspiration = buildAspiration(CCCD, MA_NGANH, null);
-            XtDiemthixettuyen dgnlScore = buildScore(CCCD, "DGNL", 7.0, 7.0, 7.0);
-            XtNganhTohop tohop = buildTohop(MA_NGANH, MA_TOHOP, "TO", 1.0, "LI", 1.0, "HO", 1.0);
+            XtDiemthixettuyen dgnlScore = XtDiemthixettuyen.builder()
+                    .id(1).cccd(CCCD).sobaodanh("SBD001").dPhuongthuc("DGNL")
+                    .nl1(800.0).isDeleted(false).build();
             XtNganh major = buildMajor(MA_NGANH, 0.0);
 
             when(scoreRepository.findAllByCccd(CCCD)).thenReturn(List.of(dgnlScore));
-            when(nganhTohopRepository.findByManganh(MA_NGANH)).thenReturn(List.of(tohop));
             when(bonusScoreRepository.findByCccd(CCCD)).thenReturn(Optional.empty());
             when(majorRepository.findByManganh(MA_NGANH)).thenReturn(Optional.of(major));
             when(nguyenVongRepository.save(any())).thenReturn(aspiration);
-            mockNoConversion();
 
             AspirationScoreResult result = aspirationScoreService.calculateForAspiration(aspiration);
 
@@ -293,16 +291,16 @@ class AspirationScoreServiceImplTest {
             when(bonusScoreRepository.findByCccd(CCCD)).thenReturn(Optional.empty());
             when(majorRepository.findByManganh(MA_NGANH)).thenReturn(Optional.of(major));
             when(nguyenVongRepository.save(any())).thenReturn(aspiration);
-            when(conversionTableRepository.findByPhuongThucAndMonAndTohop(PHUONG_THUC_THPT, "TO", MA_TOHOP))
-                    .thenReturn(Optional.of(conversionRule));
-            when(conversionTableRepository.findByPhuongThucAndMonAndTohop(eq(PHUONG_THUC_THPT), eq("LI"), any()))
-                    .thenReturn(Optional.empty());
-            when(conversionTableRepository.findByPhuongThucAndMonAndTohop(eq(PHUONG_THUC_THPT), eq("HO"), any()))
-                    .thenReturn(Optional.empty());
-            when(conversionTableRepository.findByPhuongThucAndMonAndTohopIsNull(PHUONG_THUC_THPT, "LI"))
-                    .thenReturn(Optional.empty());
-            when(conversionTableRepository.findByPhuongThucAndMonAndTohopIsNull(PHUONG_THUC_THPT, "HO"))
-                    .thenReturn(Optional.empty());
+            when(conversionTableRepository.findAllByPhuongThucAndMonAndTohop(PHUONG_THUC_THPT, "TO", MA_TOHOP))
+                    .thenReturn(List.of(conversionRule));
+            when(conversionTableRepository.findAllByPhuongThucAndMonAndTohop(eq(PHUONG_THUC_THPT), eq("LI"), any()))
+                    .thenReturn(Collections.emptyList());
+            when(conversionTableRepository.findAllByPhuongThucAndMonAndTohop(eq(PHUONG_THUC_THPT), eq("HO"), any()))
+                    .thenReturn(Collections.emptyList());
+            when(conversionTableRepository.findAllByPhuongThucAndMonAndTohopIsNull(PHUONG_THUC_THPT, "LI"))
+                    .thenReturn(Collections.emptyList());
+            when(conversionTableRepository.findAllByPhuongThucAndMonAndTohopIsNull(PHUONG_THUC_THPT, "HO"))
+                    .thenReturn(Collections.emptyList());
 
             AspirationScoreResult result = aspirationScoreService.calculateForAspiration(aspiration);
 
@@ -329,18 +327,18 @@ class AspirationScoreServiceImplTest {
             when(bonusScoreRepository.findByCccd(CCCD)).thenReturn(Optional.empty());
             when(majorRepository.findByManganh(MA_NGANH)).thenReturn(Optional.of(major));
             when(nguyenVongRepository.save(any())).thenReturn(aspiration);
-            when(conversionTableRepository.findByPhuongThucAndMonAndTohop(PHUONG_THUC_THPT, "TO", MA_TOHOP))
-                    .thenReturn(Optional.empty());
-            when(conversionTableRepository.findByPhuongThucAndMonAndTohopIsNull(PHUONG_THUC_THPT, "TO"))
-                    .thenReturn(Optional.of(globalRule));
-            when(conversionTableRepository.findByPhuongThucAndMonAndTohop(eq(PHUONG_THUC_THPT), eq("LI"), any()))
-                    .thenReturn(Optional.empty());
-            when(conversionTableRepository.findByPhuongThucAndMonAndTohopIsNull(PHUONG_THUC_THPT, "LI"))
-                    .thenReturn(Optional.empty());
-            when(conversionTableRepository.findByPhuongThucAndMonAndTohop(eq(PHUONG_THUC_THPT), eq("HO"), any()))
-                    .thenReturn(Optional.empty());
-            when(conversionTableRepository.findByPhuongThucAndMonAndTohopIsNull(PHUONG_THUC_THPT, "HO"))
-                    .thenReturn(Optional.empty());
+            when(conversionTableRepository.findAllByPhuongThucAndMonAndTohop(PHUONG_THUC_THPT, "TO", MA_TOHOP))
+                    .thenReturn(Collections.emptyList());
+            when(conversionTableRepository.findAllByPhuongThucAndMonAndTohopIsNull(PHUONG_THUC_THPT, "TO"))
+                    .thenReturn(List.of(globalRule));
+            when(conversionTableRepository.findAllByPhuongThucAndMonAndTohop(eq(PHUONG_THUC_THPT), eq("LI"), any()))
+                    .thenReturn(Collections.emptyList());
+            when(conversionTableRepository.findAllByPhuongThucAndMonAndTohopIsNull(PHUONG_THUC_THPT, "LI"))
+                    .thenReturn(Collections.emptyList());
+            when(conversionTableRepository.findAllByPhuongThucAndMonAndTohop(eq(PHUONG_THUC_THPT), eq("HO"), any()))
+                    .thenReturn(Collections.emptyList());
+            when(conversionTableRepository.findAllByPhuongThucAndMonAndTohopIsNull(PHUONG_THUC_THPT, "HO"))
+                    .thenReturn(Collections.emptyList());
 
             AspirationScoreResult result = aspirationScoreService.calculateForAspiration(aspiration);
 
@@ -391,16 +389,16 @@ class AspirationScoreServiceImplTest {
             when(bonusScoreRepository.findByCccd(CCCD)).thenReturn(Optional.empty());
             when(majorRepository.findByManganh(MA_NGANH)).thenReturn(Optional.of(major));
             when(nguyenVongRepository.save(any())).thenReturn(aspiration);
-            when(conversionTableRepository.findByPhuongThucAndMonAndTohop(PHUONG_THUC_THPT, "TO", MA_TOHOP))
-                    .thenReturn(Optional.of(zeroRangeRule));
-            when(conversionTableRepository.findByPhuongThucAndMonAndTohop(eq(PHUONG_THUC_THPT), eq("LI"), any()))
-                    .thenReturn(Optional.empty());
-            when(conversionTableRepository.findByPhuongThucAndMonAndTohopIsNull(PHUONG_THUC_THPT, "LI"))
-                    .thenReturn(Optional.empty());
-            when(conversionTableRepository.findByPhuongThucAndMonAndTohop(eq(PHUONG_THUC_THPT), eq("HO"), any()))
-                    .thenReturn(Optional.empty());
-            when(conversionTableRepository.findByPhuongThucAndMonAndTohopIsNull(PHUONG_THUC_THPT, "HO"))
-                    .thenReturn(Optional.empty());
+            when(conversionTableRepository.findAllByPhuongThucAndMonAndTohop(PHUONG_THUC_THPT, "TO", MA_TOHOP))
+                    .thenReturn(List.of(zeroRangeRule));
+            when(conversionTableRepository.findAllByPhuongThucAndMonAndTohop(eq(PHUONG_THUC_THPT), eq("LI"), any()))
+                    .thenReturn(Collections.emptyList());
+            when(conversionTableRepository.findAllByPhuongThucAndMonAndTohopIsNull(PHUONG_THUC_THPT, "LI"))
+                    .thenReturn(Collections.emptyList());
+            when(conversionTableRepository.findAllByPhuongThucAndMonAndTohop(eq(PHUONG_THUC_THPT), eq("HO"), any()))
+                    .thenReturn(Collections.emptyList());
+            when(conversionTableRepository.findAllByPhuongThucAndMonAndTohopIsNull(PHUONG_THUC_THPT, "HO"))
+                    .thenReturn(Collections.emptyList());
 
             AspirationScoreResult result = aspirationScoreService.calculateForAspiration(aspiration);
 
