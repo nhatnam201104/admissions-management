@@ -1,5 +1,6 @@
 package com.example.managementadmissionwf.bus.impl;
 
+import com.example.managementadmissionwf.bus.interfaces.BonusScoreService;
 import com.example.managementadmissionwf.bus.interfaces.CandidateService;
 import com.example.managementadmissionwf.dal.entity.XtThisinhxettuyen25;
 import com.example.managementadmissionwf.dal.repository.CandidateRepository;
@@ -7,7 +8,7 @@ import com.example.managementadmissionwf.dto.candidate.CandidateDTO;
 import com.example.managementadmissionwf.dto.common.ImportResult;
 import com.example.managementadmissionwf.dto.common.Paging;
 import com.example.managementadmissionwf.mapper.CandidateMapper;
-import com.example.managementadmissionwf.util.ExcelUtil;
+import com.example.managementadmissionwf.utils.ExcelUtil;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -24,6 +25,8 @@ import org.springframework.validation.annotation.Validated;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -37,10 +40,13 @@ import java.util.Set;
 @Slf4j
 @Validated
 public class CandidateServiceImpl implements CandidateService {
-    
+
+    private static final int MIN_CANDIDATE_AGE = 17;
+
 	private final CandidateRepository candidateRepository;
     private final CandidateMapper candidateMapper;
     private final Validator validator;
+    private final BonusScoreService bonusScoreService;
     
     @Override
     public Paging<CandidateDTO> searchCandidates(String keyword, String khuVuc, String doiTuong, int page, int size) {
@@ -131,9 +137,10 @@ public class CandidateServiceImpl implements CandidateService {
     	
     	entity.setHoVaTen(dto.getHo() + " " + dto.getTen());
         entity = candidateRepository.save(entity);
+        bonusScoreService.upsertForCandidate(entity.getCccd());
         return candidateMapper.toDTO(entity);
     }
-    
+
     @Override
     @Transactional
     public CandidateDTO updateCandidate(CandidateDTO dto) {
@@ -183,8 +190,9 @@ public class CandidateServiceImpl implements CandidateService {
         entity.setEmail(dto.getEmail());
         entity.setDienThoai(dto.getDienThoai());
         entity.setHoVaTen(dto.getHo() + " " + dto.getTen());
-        
+
         entity = candidateRepository.save(entity);
+        bonusScoreService.upsertForCandidate(entity.getCccd());
         return candidateMapper.toDTO(entity);
     }
     
@@ -280,6 +288,14 @@ public class CandidateServiceImpl implements CandidateService {
         Set<ConstraintViolation<CandidateDTO>> violations = validator.validate(dto);
         if (!violations.isEmpty()) {
             throw new ConstraintViolationException(violations);
+        }
+
+        if (dto.getNgaySinh() != null) {
+            int age = Period.between(dto.getNgaySinh(), LocalDate.now()).getYears();
+            if (age < MIN_CANDIDATE_AGE) {
+                throw new RuntimeException(
+                        "Thí sinh phải từ " + MIN_CANDIDATE_AGE + " tuổi trở lên (hiện tại: " + age + ")");
+            }
         }
     }
 

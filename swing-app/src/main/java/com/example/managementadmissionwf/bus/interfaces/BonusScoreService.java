@@ -33,4 +33,14 @@ public interface BonusScoreService {
 
     /** Recompute lại điểm ưu tiên cho toàn bộ thí sinh theo Quy chế tuyển sinh. */
     int recomputeAllPriorityPoints();
+
+    /**
+     * Idempotent upsert: tạo row điểm cộng cho thí sinh nếu chưa có
+     * (diemCc=0), hoặc recompute lại diemUtxt cho row hiện có (giữ nguyên
+     * diemCc đã nhập). Dùng khi tạo/sửa thí sinh để bảng điểm cộng luôn có
+     * row tương ứng.
+     */
+    void upsertForCandidate(@NotBlank(message = "CCCD không được để trống")
+                            @Pattern(regexp = "^\\d{12}$", message = "CCCD phải đúng 12 chữ số")
+                            String cccd);
 }

@@ -8,7 +8,8 @@ import com.example.managementadmissionwf.dto.common.Paging;
 import com.example.managementadmissionwf.dto.request.SubjectGroupRequest;
 import com.example.managementadmissionwf.dto.response.SubjectGroupResponse;
 import com.example.managementadmissionwf.mapper.SubjectGroupMapper;
-import com.example.managementadmissionwf.util.ExcelUtil;
+import com.example.managementadmissionwf.utils.ExcelUtil;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

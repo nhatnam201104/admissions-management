@@ -191,9 +191,9 @@ public class ScoreDetailDialog extends JDialog {
     }
     
     private JPanel createTHPTScorePanel(Map<String, Object> data) {
-        JPanel panel = new JPanel(new GridLayout(3, 4, 4, 3));
+        JPanel panel = new JPanel(new GridLayout(0, 4, 4, 3));
         panel.setBackground(Color.WHITE);
-        
+
         Double to = getScoreValue(data.get("to"));
         Double li = getScoreValue(data.get("li"));
         Double ho = getScoreValue(data.get("ho"));
@@ -202,7 +202,9 @@ public class ScoreDetailDialog extends JDialog {
         Double di = getScoreValue(data.get("di"));
         Double va = getScoreValue(data.get("va"));
         Double n1 = getScoreValue(data.get("n1"));
-        
+        Double nk1 = getScoreValue(data.get("nk1"));
+        Double nk2 = getScoreValue(data.get("nk2"));
+
         panel.add(createLabel("Toán:", true));
         panel.add(createLabel(formatScore(to), false));
         panel.add(createLabel("Lý:", true));
@@ -219,7 +221,11 @@ public class ScoreDetailDialog extends JDialog {
         panel.add(createLabel(formatScore(va), false));
         panel.add(createLabel("Ngoại ngữ:", true));
         panel.add(createLabel(formatScore(n1), false));
-        
+        panel.add(createLabel("NK1:", true));
+        panel.add(createLabel(formatScore(nk1), false));
+        panel.add(createLabel("NK2:", true));
+        panel.add(createLabel(formatScore(nk2), false));
+
         return panel;
     }
     

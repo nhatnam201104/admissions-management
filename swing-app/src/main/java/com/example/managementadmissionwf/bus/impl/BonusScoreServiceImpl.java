@@ -9,7 +9,7 @@ import com.example.managementadmissionwf.dto.common.ImportResult;
 import com.example.managementadmissionwf.dto.score.BonusScoreDTO;
 import com.example.managementadmissionwf.dto.score.BonusScoreViewDTO;
 import com.example.managementadmissionwf.mapper.BonusScoreMapper;
-import com.example.managementadmissionwf.util.ExcelUtil;
+import com.example.managementadmissionwf.utils.ExcelUtil;
 import com.example.managementadmissionwf.utils.PriorityScoreCalculator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -203,5 +203,32 @@ public class BonusScoreServiceImpl implements BonusScoreService {
         }
         log.info("Recompute priority points: updated {} records", updated);
         return updated;
+    }
+
+    @Override
+    @Transactional
+    public void upsertForCandidate(String cccd) {
+        String cleanCccd = cccd.trim();
+        XtThisinhxettuyen25 candidate = candidateRepository.findByCccd(cleanCccd)
+                .orElseThrow(() -> new RuntimeException(
+                        "Không tìm thấy thí sinh để tạo điểm cộng: CCCD=" + cleanCccd));
+        double diemUtxt = PriorityScoreCalculator.calculateForCandidate(candidate);
+
+        Optional<XtDiemcongxettuyen> existing = bonusScoreRepository.findByCccd(cleanCccd);
+        XtDiemcongxettuyen entity;
+        if (existing.isPresent()) {
+            entity = existing.get();
+            entity.setDiemUtxt(diemUtxt);
+            // diemCc giữ nguyên; diemTong tự recompute trong @PreUpdate
+        } else {
+            entity = XtDiemcongxettuyen.builder()
+                    .cccd(cleanCccd)
+                    .diemCc(0.0)
+                    .diemUtxt(diemUtxt)
+                    .build();
+        }
+        bonusScoreRepository.save(entity);
+        log.info("Upsert bonus row CCCD={}, diemUtxt={} (KV={}, ĐT={})",
+                cleanCccd, diemUtxt, candidate.getKhuVuc(), candidate.getDoiTuong());
     }
 }

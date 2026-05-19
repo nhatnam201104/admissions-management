@@ -172,7 +172,7 @@ public class ScoreCalculatorServiceImpl implements ScoreCalculatorService {
             double[] convertedValues = new double[3];
 
             for (int i = 0; i < 3; i++) {
-                Double raw = subjectScoreFromForm(form, subjects[i]);
+                Double raw = subjectScoreForSlot(form, subjects, i);
                 ConversionResult cr = convertScore(raw, phuongThuc, th.getMatohop(), subjects[i]);
                 double value = nullSafe(cr.value(), 0.0);
                 // Cộng điểm khuyến khích cho môn (sau khi quy đổi)
@@ -212,6 +212,45 @@ public class ScoreCalculatorServiceImpl implements ScoreCalculatorService {
     }
 
     // ===================== Lookup điểm môn từ form =====================
+
+    /**
+     * Tập mã môn "chuẩn". Đồng bộ với
+     * {@code AspirationScoreServiceImpl.STANDARD_SUBJECTS} ở swing-app:
+     * mã không thuộc tập này được coi là môn năng khiếu (HAT, VE, GDC,
+     * TIENG_DUC, ...) và map theo vị trí trong tổ hợp vào nk1/nk2.
+     */
+    private static final java.util.Set<String> STANDARD_SUBJECTS = java.util.Set.of(
+            "TO", "LI", "LY", "HO", "HH", "SI", "SH",
+            "SU", "LS", "DI", "DL", "VA", "NV",
+            "AN", "N1", "NL1", "NK1", "NK2"
+    );
+
+    private static boolean isTalentSubject(String code) {
+        if (code == null) return false;
+        return !STANDARD_SUBJECTS.contains(code.trim().toUpperCase(Locale.ROOT));
+    }
+
+    /**
+     * Tra điểm cho 1 slot trong tổ hợp. Môn năng khiếu được map theo vị trí
+     * xuất hiện: môn NK đầu tiên trong tổ hợp → nk1, thứ hai → nk2. Đồng nhất
+     * logic với swing-app để dialog/preview ra cùng kết quả.
+     */
+    private Double subjectScoreForSlot(ScoreCalculatorForm form, String[] subjects, int slotIndex) {
+        String code = subjects[slotIndex];
+        if (code == null) return null;
+        if (isTalentSubject(code)) {
+            int rank = 0;
+            for (int i = 0; i <= slotIndex; i++) {
+                if (isTalentSubject(subjects[i])) rank++;
+            }
+            return switch (rank) {
+                case 1 -> form.getDiemNk1();
+                case 2 -> form.getDiemNk2();
+                default -> null;
+            };
+        }
+        return subjectScoreFromForm(form, code);
+    }
 
     private Double subjectScoreFromForm(ScoreCalculatorForm form, String subjectCode) {
         if (subjectCode == null) {

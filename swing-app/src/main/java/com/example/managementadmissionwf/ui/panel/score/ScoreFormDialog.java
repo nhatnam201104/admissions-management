@@ -35,9 +35,10 @@ public class ScoreFormDialog extends JDialog {
     // THPT fields
     private JFormattedTextField txtToan, txtLy, txtHoa, txtSinh, txtSu, txtDia, txtVan;
     private JFormattedTextField txtN1Thi, txtN1Cc;
+    private JFormattedTextField txtNk1, txtNk2;
 
-    // DGNL fields
-    private JFormattedTextField txtNl1, txtNk1, txtNk2;
+    // DGNL fields (NK1/NK2 đã dời sang THPT — DGNL chỉ còn NL1)
+    private JFormattedTextField txtNl1;
 
     // VSAT fields (8 môn thi V-SAT: Toán, Lý, Hóa, Sinh, Sử, Địa, Anh, Văn)
     private JFormattedTextField txtVsatToan, txtVsatLy, txtVsatHoa, txtVsatSinh;
@@ -128,8 +129,8 @@ public class ScoreFormDialog extends JDialog {
         g.gridx = 0; g.gridy = row++;
         previewContent.add(lblSubjects, g);
 
-        String[] thptLabels = {"Toán", "Lý", "Hóa", "Sinh", "Sử", "Địa", "Văn"};
-        JFormattedTextField[] thptFields = {txtToan, txtLy, txtHoa, txtSinh, txtSu, txtDia, txtVan};
+        String[] thptLabels = {"Toán", "Lý", "Hóa", "Sinh", "Sử", "Địa", "Văn", "NK1", "NK2"};
+        JFormattedTextField[] thptFields = {txtToan, txtLy, txtHoa, txtSinh, txtSu, txtDia, txtVan, txtNk1, txtNk2};
         for (int i = 0; i < thptLabels.length; i++) {
             final int idx = i;
             JLabel lbl = new JLabel(thptLabels[i] + ":");
@@ -155,15 +156,15 @@ public class ScoreFormDialog extends JDialog {
             previewContent.add(val, g);
         }
 
-        // DGNL preview
+        // DGNL preview (chỉ còn NL1 — NK1/NK2 đã dời sang THPT)
         row++;
         JLabel lblDgnl = new JLabel("Điểm ĐGNL:");
         lblDgnl.setFont(new Font("Segoe UI", Font.BOLD, 12));
         g.gridx = 0; g.gridy = row++;
         previewContent.add(lblDgnl, g);
 
-        String[] dgnlLabels = {"NL1", "NK1", "NK2"};
-        JFormattedTextField[] dgnlFields = {txtNl1, txtNk1, txtNk2};
+        String[] dgnlLabels = {"NL1"};
+        JFormattedTextField[] dgnlFields = {txtNl1};
         for (int i = 0; i < dgnlLabels.length; i++) {
             final int idx = i;
             JLabel lbl = new JLabel(dgnlLabels[i] + ":");
@@ -335,6 +336,11 @@ public class ScoreFormDialog extends JDialog {
 
         addRow(p, 5, "N1 Thi:", txtN1Thi, "N1 CC:", txtN1Cc);
 
+        txtNk1 = createNumberField();
+        txtNk2 = createNumberField();
+
+        addRow(p, 6, "NK1:", txtNk1, "NK2:", txtNk2);
+
         return p;
     }
 
@@ -342,11 +348,8 @@ public class ScoreFormDialog extends JDialog {
         JPanel p = basePanel();
 
         txtNl1 = createNumberField();
-        txtNk1 = createNumberField();
-        txtNk2 = createNumberField();
 
         addRow(p, 0, "NL1:", txtNl1, null, null);
-        addRow(p, 2, "NK1:", txtNk1, "NK2:", txtNk2);
 
         return p;
     }
@@ -510,8 +513,9 @@ public class ScoreFormDialog extends JDialog {
 
         if ("DGNL".equals(method)) {
             score.setNl1(getValue(txtNl1));
-            score.setNk1(getValue(txtNk1));
-            score.setNk2(getValue(txtNk2));
+            // NK1/NK2 không thuộc DGNL — đã chuyển sang THPT.
+            score.setNk1(null);
+            score.setNk2(null);
             clearThptFields();
             clearVsatFields();
         } else if ("VSAT".equals(method)) {
@@ -536,6 +540,8 @@ public class ScoreFormDialog extends JDialog {
             score.setVan(getValue(txtVan));
             score.setN1Thi(getValue(txtN1Thi));
             score.setN1Cc(getValue(txtN1Cc));
+            score.setNk1(getValue(txtNk1));
+            score.setNk2(getValue(txtNk2));
             clearDgnlFields();
             clearVsatFields();
         }
@@ -551,12 +557,12 @@ public class ScoreFormDialog extends JDialog {
         score.setVan(null);
         score.setN1Thi(null);
         score.setN1Cc(null);
+        score.setNk1(null);
+        score.setNk2(null);
     }
 
     private void clearDgnlFields() {
         score.setNl1(null);
-        score.setNk1(null);
-        score.setNk2(null);
     }
 
     private void clearVsatFields() {
@@ -588,8 +594,6 @@ public class ScoreFormDialog extends JDialog {
 
         if ("DGNL".equals(method)) {
             valid &= validateScoreField(txtNl1, "NL1", 0, 1200, errors, firstInvalidField);
-            valid &= validateScoreField(txtNk1, "NK1", 0, 100, errors, firstInvalidField);
-            valid &= validateScoreField(txtNk2, "NK2", 0, 100, errors, firstInvalidField);
         } else if ("VSAT".equals(method)) {
             valid &= validateScoreField(txtVsatToan, "Toán", 0, 150, errors, firstInvalidField);
             valid &= validateScoreField(txtVsatLy, "Lý", 0, 150, errors, firstInvalidField);
@@ -609,6 +613,8 @@ public class ScoreFormDialog extends JDialog {
             valid &= validateScoreField(txtVan, "Văn", 0, 10, errors, firstInvalidField);
             valid &= validateScoreField(txtN1Thi, "N1 Thi", 0, 10, errors, firstInvalidField);
             valid &= validateScoreField(txtN1Cc, "N1 CC", 0, 10, errors, firstInvalidField);
+            valid &= validateScoreField(txtNk1, "NK1", 0, 10, errors, firstInvalidField);
+            valid &= validateScoreField(txtNk2, "NK2", 0, 10, errors, firstInvalidField);
         }
 
         if (!valid && !errors.isEmpty()) {

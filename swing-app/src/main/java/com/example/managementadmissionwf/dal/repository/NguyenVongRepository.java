@@ -15,6 +15,27 @@ public interface NguyenVongRepository extends JpaRepository<XtNguyenvongxettuyen
 
     List<XtNguyenvongxettuyen> findByNvKetqua(String nvKetqua);
 
+    /**
+     * Kiểm tra trùng nguyện vọng theo định nghĩa nghiệp vụ:
+     * cùng CCCD + cùng ngành + cùng phương thức + cùng tổ hợp.
+     * Tham số {@code excludeId} cho phép luồng update bỏ qua chính NV đang sửa.
+     * Khi {@code thm} null, match với row có {@code ttThm} cũng null.
+     */
+    @Query("""
+            SELECT COUNT(nv) > 0 FROM XtNguyenvongxettuyen nv
+            WHERE nv.isDeleted = false
+              AND nv.nnCccd = :cccd
+              AND nv.nvManganh = :manganh
+              AND nv.ttPhuongthuc = :phuongThuc
+              AND ((:thm IS NULL AND nv.ttThm IS NULL) OR nv.ttThm = :thm)
+              AND (:excludeId IS NULL OR nv.id <> :excludeId)
+            """)
+    boolean existsDuplicate(@Param("cccd") String cccd,
+                            @Param("manganh") String manganh,
+                            @Param("phuongThuc") String phuongThuc,
+                            @Param("thm") String thm,
+                            @Param("excludeId") Integer excludeId);
+
     @Query("""
             SELECT nv.nvManganh, COUNT(nv.id)
             FROM XtNguyenvongxettuyen nv

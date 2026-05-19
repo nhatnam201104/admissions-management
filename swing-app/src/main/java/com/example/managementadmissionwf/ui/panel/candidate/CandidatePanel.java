@@ -39,12 +39,13 @@ public class CandidatePanel extends AbstractFeaturePanel {
     @Override
     protected void createFilterFields(JPanel filterPanel) {
         filterPanel.add(UIFactory.createFilterLabel("Khu vực:"));
-        cboKhuVuc = UIFactory.createFilterCombo(new String[]{"Tất cả", "KV1", "KV2", "KV3"}, 100);
+        cboKhuVuc = UIFactory.createFilterCombo(
+                new String[]{"Tất cả", "KV1", "KV2-NT", "KV2", "KV3"}, 110);
         filterPanel.add(cboKhuVuc);
 
         filterPanel.add(UIFactory.createFilterLabel("Đối tượng:"));
         cboDoiTuong = UIFactory.createFilterCombo(
-                new String[]{"Tất cả", "Không", "KV1", "KV2-NT", "KV2", "KV3", "Con thương binh"}, 120);
+                new String[]{"Tất cả", "Không", "UT1", "UT2"}, 110);
         filterPanel.add(cboDoiTuong);
     }
 

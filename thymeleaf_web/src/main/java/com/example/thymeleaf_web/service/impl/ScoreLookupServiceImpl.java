@@ -290,7 +290,7 @@ public class ScoreLookupServiceImpl implements ScoreLookupService {
         boolean incomplete = false;
 
         for (int i = 0; i < subjects.length; i++) {
-            Double raw = getSubjectScore(diemThi, subjects[i]);
+            Double raw = getSubjectScoreForSlot(diemThi, subjects, i);
             ConversionResult converted = convertScore(raw, phuongThuc, toHop.getMatohop(), subjects[i]);
             if (raw == null || converted.value() == null) {
                 incomplete = true;
@@ -436,6 +436,46 @@ public class ScoreLookupServiceImpl implements ScoreLookupService {
         return format(rawScore) + " trong [" + format(a) + ", " + format(b) + "] → "
                 + format(c) + " + ((" + format(rawScore) + " - " + format(a) + ") / ("
                 + format(b) + " - " + format(a) + ")) × (" + format(d) + " - " + format(c) + ")";
+    }
+
+    /**
+     * Tập mã môn "chuẩn". Đồng bộ với
+     * {@code AspirationScoreServiceImpl.STANDARD_SUBJECTS} ở swing-app.
+     * Mã không thuộc tập này được coi là môn năng khiếu (HAT, VE, GDC,
+     * TIENG_DUC, ...) và map theo vị trí trong tổ hợp vào nk1/nk2.
+     */
+    private static final java.util.Set<String> STANDARD_SUBJECTS = java.util.Set.of(
+            "TO", "LI", "LY", "HO", "HH", "SI", "SH",
+            "SU", "LS", "DI", "DL", "VA", "NV",
+            "AN", "N1", "NL1", "NK1", "NK2"
+    );
+
+    private static boolean isTalentSubject(String code) {
+        if (code == null) return false;
+        return !STANDARD_SUBJECTS.contains(code.trim().toUpperCase(java.util.Locale.ROOT));
+    }
+
+    /**
+     * Tra điểm cho 1 slot trong tổ hợp. Môn năng khiếu được map theo vị
+     * trí xuất hiện: NK đầu tiên → nk1, NK thứ hai → nk2. Đồng nhất với
+     * {@code AspirationScoreServiceImpl.resolveScoreForSlot} ở swing-app.
+     */
+    private Double getSubjectScoreForSlot(DiemThi diemThi, String[] subjects, int slotIndex) {
+        if (diemThi == null) return null;
+        String code = subjects[slotIndex];
+        if (code == null) return null;
+        if (isTalentSubject(code)) {
+            int rank = 0;
+            for (int i = 0; i <= slotIndex; i++) {
+                if (isTalentSubject(subjects[i])) rank++;
+            }
+            return switch (rank) {
+                case 1 -> diemThi.getNk1();
+                case 2 -> diemThi.getNk2();
+                default -> null;
+            };
+        }
+        return getSubjectScore(diemThi, code);
     }
 
     private Double getSubjectScore(DiemThi diemThi, String subjectCode) {

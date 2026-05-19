@@ -18,8 +18,9 @@ import com.example.managementadmissionwf.dto.CalculationStep;
 import com.example.managementadmissionwf.dto.admission.AdmissionResultDTO;
 import com.example.managementadmissionwf.dto.admission.AspirationImportDTO;
 import com.example.managementadmissionwf.dto.common.ImportResult;
-import com.example.managementadmissionwf.util.ExcelUtil;
 import com.example.managementadmissionwf.utils.AdmissionConstants;
+import com.example.managementadmissionwf.utils.ExcelUtil;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -564,10 +565,61 @@ public class AdmissionResultServiceImpl implements AdmissionResultService {
             return new double[]{0.0, 0.0, 0.0};
         }
         return new double[]{
-                getSubjectScore(score, matchedTohop.getThMon1()),
-                getSubjectScore(score, matchedTohop.getThMon2()),
-                getSubjectScore(score, matchedTohop.getThMon3())
+                nullSafe(getSubjectScoreForSlot(score, matchedTohop, 1), 0.0),
+                nullSafe(getSubjectScoreForSlot(score, matchedTohop, 2), 0.0),
+                nullSafe(getSubjectScoreForSlot(score, matchedTohop, 3), 0.0)
         };
+    }
+
+    /**
+     * Tập mã môn "chuẩn" — văn hoá / ngoại ngữ / ĐGNL. Đồng bộ với
+     * {@link AspirationScoreServiceImpl#STANDARD_SUBJECTS}: mã không thuộc
+     * tập này được coi là môn năng khiếu (HAT, VE, MUA, GDC, TIENG_DUC, ...).
+     */
+    private static final java.util.Set<String> STANDARD_SUBJECTS = java.util.Set.of(
+            "TO", "LI", "LY", "HO", "HH", "SI", "SH",
+            "SU", "LS", "DI", "DL", "VA", "NV",
+            "AN", "N1", "NL1", "NK1", "NK2"
+    );
+
+    private static boolean isTalentSubject(String code) {
+        if (code == null) return false;
+        return !STANDARD_SUBJECTS.contains(code.trim().toUpperCase());
+    }
+
+    /**
+     * Tra điểm cho 1 slot trong tổ hợp. Với môn năng khiếu, map theo vị
+     * trí: môn NK đầu tiên → nk1, thứ hai → nk2. Đồng nhất logic với
+     * {@code AspirationScoreServiceImpl.resolveScoreForSlot} để dialog hiển
+     * thị đúng điểm đã được dùng tính diem_xettuyen.
+     */
+    private Double getSubjectScoreForSlot(XtDiemthixettuyen score, XtNganhTohop tohop, int slotIndex) {
+        if (score == null || tohop == null) return 0.0;
+        String code = switch (slotIndex) {
+            case 1 -> tohop.getThMon1();
+            case 2 -> tohop.getThMon2();
+            case 3 -> tohop.getThMon3();
+            default -> null;
+        };
+        if (code == null) return 0.0;
+        if (isTalentSubject(code)) {
+            int rank = 0;
+            for (int i = 1; i <= slotIndex; i++) {
+                String c = switch (i) {
+                    case 1 -> tohop.getThMon1();
+                    case 2 -> tohop.getThMon2();
+                    case 3 -> tohop.getThMon3();
+                    default -> null;
+                };
+                if (isTalentSubject(c)) rank++;
+            }
+            return switch (rank) {
+                case 1 -> nullSafe(score.getNk1(), 0.0);
+                case 2 -> nullSafe(score.getNk2(), 0.0);
+                default -> 0.0;
+            };
+        }
+        return getSubjectScore(score, code);
     }
 
     private double getSubjectScore(XtDiemthixettuyen score, String subject) {
@@ -582,7 +634,10 @@ public class AdmissionResultServiceImpl implements AdmissionResultService {
             case "SU" -> nullSafe(score.getSu(), 0.0);
             case "DI" -> nullSafe(score.getDi(), 0.0);
             case "VA" -> nullSafe(score.getVa(), 0.0);
-            case "AN" -> {
+            case "NK1" -> nullSafe(score.getNk1(), 0.0);
+            case "NK2" -> nullSafe(score.getNk2(), 0.0);
+            case "NL1" -> nullSafe(score.getNl1(), 0.0);
+            case "AN", "N1" -> {
                 Double n1Thi = score.getN1Thi();
                 Double n1Cc = score.getN1Cc();
                 if (n1Thi == null && n1Cc == null) yield 0.0;
