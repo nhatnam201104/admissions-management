@@ -26,6 +26,29 @@
             id="lookupForm"
             novalidate
           >
+            <!-- Lỗi global từ bindingResult.reject(...) — vd: CCCD/Ngày sinh
+                 không khớp DB hoặc lỗi tổng quát khác. -->
+            <div
+              th:if="${#fields.hasGlobalErrors()}"
+              class="alert alert-danger d-flex align-items-start mb-3"
+              role="alert"
+            >
+              <i class="bi bi-x-circle-fill me-2 mt-1"></i>
+              <div>
+                <div th:each="err : ${#fields.globalErrors()}" th:text="${err}"></div>
+              </div>
+            </div>
+
+            <!-- Flash error từ /ket-qua redirect (chưa xác thực CCCD). -->
+            <div
+              th:if="${errorMessage}"
+              class="alert alert-warning d-flex align-items-center mb-3"
+              role="alert"
+            >
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              <span th:text="${errorMessage}"></span>
+            </div>
+
             <div class="mb-3">
               <label for="cccd" class="form-label fw-semibold">Số CCCD</label>
               <div class="input-group input-group-lg">
@@ -40,12 +63,12 @@
                   inputmode="numeric"
                   autocomplete="off"
                 />
+                <div
+                  class="invalid-feedback"
+                  th:if="${#fields.hasErrors('cccd')}"
+                  th:errors="*{cccd}"
+                ></div>
               </div>
-              <div
-                class="invalid-feedback"
-                th:if="${#fields.hasErrors('cccd')}"
-                th:errors="*{cccd}"
-              ></div>
             </div>
 
             <div class="mb-3">
@@ -59,21 +82,12 @@
                   id="ngaySinh"
                   autocomplete="bday"
                 />
+                <div
+                  class="invalid-feedback"
+                  th:if="${#fields.hasErrors('ngaySinh')}"
+                  th:errors="*{ngaySinh}"
+                ></div>
               </div>
-              <div
-                class="invalid-feedback"
-                th:if="${#fields.hasErrors('ngaySinh')}"
-                th:errors="*{ngaySinh}"
-              ></div>
-            </div>
-
-            <div
-              th:if="${errorMessage}"
-              class="alert alert-warning d-flex align-items-center"
-              role="alert"
-            >
-              <i class="bi bi-exclamation-triangle-fill me-2"></i>
-              <span th:text="${errorMessage}"></span>
             </div>
 
             <button

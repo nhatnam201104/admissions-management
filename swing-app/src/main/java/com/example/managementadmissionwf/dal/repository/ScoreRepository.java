@@ -55,8 +55,10 @@ public interface ScoreRepository extends JpaRepository<XtDiemthixettuyen, Intege
     // Tìm tất cả điểm thi của một thí sinh (hỗ trợ nhiều phương thức)
     List<XtDiemthixettuyen> findAllByCccd(String cccd);
 
-    // Tìm điểm thi theo CCCD và phương thức
-    @Query("SELECT s FROM XtDiemthixettuyen s WHERE s.cccd = :cccd AND s.dPhuongthuc = :phuongThuc")
+    // Tìm điểm thi theo CCCD và phương thức (case-insensitive — bảo vệ
+     // khi import từ Excel có thể lưu "thpt", "Thpt"...).
+    @Query("SELECT s FROM XtDiemthixettuyen s WHERE s.cccd = :cccd "
+            + "AND UPPER(TRIM(s.dPhuongthuc)) = UPPER(TRIM(:phuongThuc))")
     Optional<XtDiemthixettuyen> findByCccdAndDPhuongthuc(@Param("cccd") String cccd, @Param("phuongThuc") String phuongThuc);
 
     // Tìm điểm thi đầu tiên của một thí sinh (legacy support)

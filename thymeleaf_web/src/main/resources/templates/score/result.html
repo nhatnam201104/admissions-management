@@ -25,9 +25,27 @@
             </div>
         </div>
 
-        <div th:if="${result.hasAnyAdmittedAspiration()}" class="alert alert-success d-flex align-items-center mb-4" role="alert">
-            <i class="bi bi-patch-check-fill me-2 fs-5"></i>
-            <span class="fw-semibold">Chúc mừng bạn đã trúng tuyển!</span>
+        <!-- Banner: ưu tiên hiển thị nguyện vọng chính thức được nhận. -->
+        <div th:with="winner=${result.winnerAspiration()}">
+            <div th:if="${winner != null}"
+                 class="alert alert-success d-flex align-items-start mb-4" role="alert">
+                <i class="bi bi-patch-check-fill me-2 fs-4"></i>
+                <div>
+                    <div class="fw-semibold">Chúc mừng! Bạn đã trúng tuyển nguyện vọng <span th:text="${winner.order()}"></span>.</div>
+                    <div class="small text-muted mt-1">
+                        Theo quy chế, mỗi thí sinh chỉ được trúng tuyển vào <strong>1 nguyện vọng</strong> có thứ tự ưu tiên cao nhất trong các NV đủ điểm. Các nguyện vọng còn lại (nếu có) sẽ không được xét tiếp.
+                    </div>
+                    <div class="mt-2">
+                        <span class="badge bg-success me-1">NV<span th:text="${winner.order()}"></span></span>
+                        <span class="fw-semibold" th:text="${winner.maNganh() + ' — ' + winner.tenNganh()}"></span>
+                        <span class="text-muted ms-2">·</span>
+                        <span class="ms-2" th:text="${winner.phuongThucDisplay()}"></span>
+                        <span th:if="${winner.toHopDisplay() != '-'}" class="text-muted ms-1" th:text="'(' + ${winner.toHopDisplay()} + ')'"></span>
+                        <span class="badge bg-success ms-2" th:if="${winner.diemXettuyen() != null}"
+                              th:text="'ĐXT: ' + ${#numbers.formatDecimal(winner.diemXettuyen(), 1, 2)}"></span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Thong tin thi sinh -->
@@ -217,7 +235,7 @@
                         </thead>
                         <tbody>
                         <th:block th:each="nv : ${result.nguyenVongs()}">
-                            <tr th:classappend="${nv.isAdmitted()} ? 'table-success' : (${nv.ketQua() == 'CHO_XET'} ? 'table-warning' : '')">
+                            <tr th:classappend="${nv.finalAdmitted()} ? 'table-success' : (${nv.isOverridden()} ? 'table-secondary' : (${nv.ketQua() == 'CHO_XET'} ? 'table-warning' : ''))">
                                 <td class="text-center fw-semibold" th:text="${nv.order()}"></td>
                                 <td th:text="${nv.maNganh()}"></td>
                                 <td th:text="${nv.tenNganh()}"></td>
@@ -228,15 +246,23 @@
                                 <td class="text-center" th:text="${nv.diemCong() != null ? #numbers.formatDecimal(nv.diemCong(), 1, 2) : '-'}"></td>
                                 <td class="text-center fw-semibold" th:text="${nv.diemXettuyen() != null ? #numbers.formatDecimal(nv.diemXettuyen(), 1, 2) : '-'}"></td>
                                 <td class="text-center">
-                                    <span th:if="${nv.isAdmitted()}" class="badge bg-success">
-                                        <i class="bi bi-check-circle me-1"></i>
+                                    <!-- NV chính thức được nhận -->
+                                    <span th:if="${nv.finalAdmitted()}" class="badge bg-success"
+                                          title="Đây là nguyện vọng có thứ tự ưu tiên cao nhất bạn đã đậu">
+                                        <i class="bi bi-trophy-fill me-1"></i>
+                                        <span th:text="${nv.getKetQuaDisplay()}"></span>
+                                    </span>
+                                    <!-- NV đủ điểm nhưng đã có NV ưu tiên cao hơn được chọn -->
+                                    <span th:if="${nv.isOverridden()}" class="badge bg-secondary"
+                                          title="Đủ điểm nhưng không xét tiếp do đã trúng nguyện vọng có thứ tự cao hơn">
+                                        <i class="bi bi-info-circle me-1"></i>
                                         <span th:text="${nv.getKetQuaDisplay()}"></span>
                                     </span>
                                     <span th:if="${nv.ketQua() == 'CHO_XET'}" class="badge bg-warning text-dark">
                                         <i class="bi bi-hourglass-split me-1"></i>
                                         <span th:text="${nv.getKetQuaDisplay()}"></span>
                                     </span>
-                                    <span th:if="${nv.ketQua() == 'TRUOT'}" class="badge bg-danger">
+                                    <span th:if="${nv.ketQua() == 'TRUOT' or nv.ketQua() == 'THIEU_DIEM'}" class="badge bg-danger">
                                         <i class="bi bi-x-circle me-1"></i>
                                         <span th:text="${nv.getKetQuaDisplay()}"></span>
                                     </span>

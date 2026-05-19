@@ -29,9 +29,9 @@ public class ScoreDetailDialog extends JDialog {
 
     public ScoreDetailDialog(Frame parent, Map<String, Object> scoreDetails) {
         super(parent, "Chi tiết điểm xét tuyển", true);
-        setSize(650, 600);
+        setSize(700, 750);
         setLocationRelativeTo(parent);
-        setResizable(false);
+        setResizable(true);
         
         initComponents(scoreDetails);
     }
@@ -434,7 +434,7 @@ public class ScoreDetailDialog extends JDialog {
         panel.setBackground(COLOR_WARNING);
         panel.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
         
-        JLabel warning = new JLabel("⚠️ DỮ LIỆU CHƯA ĐỦ - Một số điểm thi bị thiếu");
+        JLabel warning = new JLabel("[!] DU LIEU CHUA DU - Mot so diem thi bi thieu");
         warning.setFont(new Font("Segoe UI", Font.BOLD, 12));
         warning.setForeground(new Color(33, 33, 33));
         
@@ -557,9 +557,9 @@ public class ScoreDetailDialog extends JDialog {
                     if (row >= 0 && row < steps.size()) {
                         CalculationStep step = steps.get(row);
                         if (step.isCapApplied() && col == 2) {
-                            table.setToolTipText("Ưu tiên bị giảm vì tổng (ĐTHGXT + ĐC) ≥ 22.5 điểm");
+                            table.setToolTipText("Uu tien bi giam vi tong (DTHGXT + DC) >= 22.5 diem");
                         } else if (step.isIncomplete()) {
-                            table.setToolTipText("⚠️ Dữ liệu thiếu - điểm mặc định là 0.00");
+                            table.setToolTipText("[!] Du lieu thieu - diem mac dinh la 0.00");
                         } else {
                             table.setToolTipText(null);
                         }

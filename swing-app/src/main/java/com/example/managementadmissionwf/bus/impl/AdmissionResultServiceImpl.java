@@ -1,7 +1,6 @@
 package com.example.managementadmissionwf.bus.impl;
 
 import com.example.managementadmissionwf.bus.interfaces.AdmissionResultService;
-import com.example.managementadmissionwf.bus.interfaces.AspirationScoreService;
 import com.example.managementadmissionwf.dal.entity.XtBangquydoi;
 import com.example.managementadmissionwf.dal.entity.XtDiemthixettuyen;
 import com.example.managementadmissionwf.dal.entity.XtNganh;
@@ -10,6 +9,7 @@ import com.example.managementadmissionwf.dal.entity.XtNguyenvongxettuyen;
 import com.example.managementadmissionwf.dal.entity.XtThisinhxettuyen25;
 import com.example.managementadmissionwf.dal.repository.BangquydoiRepository;
 import com.example.managementadmissionwf.dal.repository.CandidateRepository;
+import com.example.managementadmissionwf.dal.repository.ConversionTableRepository;
 import com.example.managementadmissionwf.dal.repository.MajorRepository;
 import com.example.managementadmissionwf.dal.repository.NganhTohopRepository;
 import com.example.managementadmissionwf.dal.repository.NguyenVongRepository;
@@ -23,7 +23,6 @@ import com.example.managementadmissionwf.utils.AdmissionConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -53,8 +52,8 @@ public class AdmissionResultServiceImpl implements AdmissionResultService {
     @Autowired private NganhTohopRepository nganhTohopRepository;
     @Autowired private ScoreRepository scoreRepository;
     @Autowired private BangquydoiRepository bangquydoiRepository;
+    @Autowired private ConversionTableRepository conversionTableRepository;
     @Autowired private AdmissionExportService exportService;
-    @Autowired private AspirationScoreService aspirationScoreService;
     @Autowired private AspirationImportHelper aspirationImportHelper;
 
 
@@ -264,8 +263,18 @@ public class AdmissionResultServiceImpl implements AdmissionResultService {
             details.put("hs3", 1.0);
         }
 
-        // Score per subject
-        Optional<XtDiemthixettuyen> scoreOpt = scoreRepository.findByCccdAndDPhuongthuc(cccd, phuongThuc);
+        // Score per subject — tìm điểm theo ĐÚNG phương thức của nguyện vọng.
+        // KHÔNG fallback sang phương thức khác để tránh hiển thị sai lệch
+        // (ví dụ NV phương thức VSAT mà show điểm THPT). Nếu không có điểm
+        // cho đúng phương thức, để details trống và đánh dấu thiếu điểm bên
+        // dưới (isIncomplete=true).
+        Optional<XtDiemthixettuyen> scoreOpt = (phuongThuc != null && !phuongThuc.isBlank())
+                ? scoreRepository.findByCccdAndDPhuongthuc(cccd, phuongThuc)
+                : Optional.empty();
+        if (scoreOpt.isEmpty()) {
+            details.put("scoreMissingForMethod", true);
+        }
+
         scoreOpt.ifPresentOrElse(score -> {
             details.put("to", score.getTo());
             details.put("li", score.getLi());
@@ -279,7 +288,7 @@ public class AdmissionResultServiceImpl implements AdmissionResultService {
             details.put("nk2", score.getNk2());
             details.put("n1", score.getN1Thi() != null ? score.getN1Thi() : score.getN1Cc());
 
-            if ("VSAT".equals(phuongThuc)) {
+            if ("VSAT".equals(details.get("phuongThuc"))) {
                 attachVsatConvertedScores(details, score, matchedTohop);
             }
         }, () -> {
@@ -295,7 +304,11 @@ public class AdmissionResultServiceImpl implements AdmissionResultService {
             details.put("nk2", null);
         });
 
-        calculateFormulaBreakdown(details, nv, manganh, phuongThuc, matchedTohop, scoreOpt.orElse(null));
+        // Dùng phuongThuc của đúng nguyện vọng (không còn fallback sang phương
+        // thức khác). Nếu thiếu điểm, breakdown sẽ tự đánh dấu isIncomplete.
+        String effectivePhuongThuc = details.getOrDefault("phuongThuc", "THPT").toString();
+        calculateFormulaBreakdown(details, nv, manganh, effectivePhuongThuc, matchedTohop, scoreOpt.orElse(null));
+
         return details;
     }
 
@@ -354,7 +367,7 @@ public class AdmissionResultServiceImpl implements AdmissionResultService {
         double diemCong = nullSafe(nv.getDiemCong(), 0.0);
         double diemUtqd = nullSafe(nv.getDiemUtqd(), 0.0);
 
-        double dthxt = calculateDTHXT(details, phuongThuc, matchedTohop, score);
+        double dthxt = calculateDTHXT(details, phuongThuc, matchedTohop, score, manganh);
         double dthgxt = calculateDTHGXT(phuongThuc, dthxt, tohopGoc, nv.getTtThm());
         double dut = calculateDUT(dthgxt, dthxt, diemCong, diemUtqd);
 
@@ -364,13 +377,14 @@ public class AdmissionResultServiceImpl implements AdmissionResultService {
         details.put("formulaSteps", buildFormulaSteps(phuongThuc, matchedTohop, dthxt, dthgxt, dut,
                 tohopGoc, diemCong, diemUtqd));
         details.put("calculationSteps", buildStructuredSteps(phuongThuc, details, matchedTohop, score,
-                dthxt, dthgxt, dut, tohopGoc, diemCong, diemUtqd));
+                dthxt, dthgxt, dut, tohopGoc, diemCong, diemUtqd, manganh));
     }
 
     private List<CalculationStep> buildStructuredSteps(String phuongThuc, Map<String, Object> details,
                                                        XtNganhTohop matchedTohop, XtDiemthixettuyen score,
                                                        double dthxt, double dthgxt, double dut,
-                                                       String tohopGoc, double diemCong, double diemUtqd) {
+                                                       String tohopGoc, double diemCong, double diemUtqd,
+                                                       String manganh) {
         List<CalculationStep> steps = new ArrayList<>();
         double diemXettuyen = dthgxt + diemCong + dut;
         boolean isCapApplied = (dthgxt + diemCong) >= 22.5 && diemUtqd > 0;
@@ -383,7 +397,7 @@ public class AdmissionResultServiceImpl implements AdmissionResultService {
         double step1Result = buildStep1Result(phuongThuc, details, matchedTohop, score);
         steps.add(new CalculationStep(1, "Điểm đã quy đổi", step1Formula, step1Result, false, false, isIncomplete));
 
-        String step2Formula = buildStep2Formula(phuongThuc, matchedTohop, step1Result, step1Result);
+        String step2Formula = buildStep2Formula(phuongThuc, matchedTohop, step1Result, step1Result, manganh);
         steps.add(new CalculationStep(2, "Công thức ĐTHXT", step2Formula, dthxt, false, false, isIncomplete));
 
         String step3Formula;
@@ -461,27 +475,31 @@ public class AdmissionResultServiceImpl implements AdmissionResultService {
                 double a = rule.getDDiema(), b = rule.getDDiemb();
                 double c = rule.getDDiemc();
                 double d = rule.getDDiemd() != null ? rule.getDDiemd() : c + 2;
-                return String.format("%.0f ∈ [%.0f,%.0f] → %.0f + ((%.0f-%.0f)/(%.0f-%.0f)) × (%.0f-%.0f)",
+                return String.format("%.0f in [%.0f,%.0f] -> %.0f + ((%.0f-%.0f)/(%.0f-%.0f)) x (%.0f-%.0f)",
                         x, a, b, c, x, a, b, a, d, c);
             }
         }
-        return String.format("%.0f (không có trong bảng quy đổi)", x);
+        return String.format("%.0f (khong co trong bang quy doi)", x);
     }
 
     private String buildStep2Formula(String phuongThuc, XtNganhTohop matchedTohop,
-                                     double weightedSum, double rawScore) {
+                                     double weightedSum, double rawScore, String manganh) {
         if ("DGNL".equals(phuongThuc)) {
-            List<XtBangquydoi> rules = bangquydoiRepository.findByDPhuongthuc("DGNL");
+            String tohopGocForDgnl = majorRepository.findByManganh(manganh)
+                .map(XtNganh::getNTohopgoc).orElse(null);
+            List<XtBangquydoi> rules = (tohopGocForDgnl != null)
+                ? conversionTableRepository.findAllByPhuongThucAndMonIsNullAndTohop("DGNL", tohopGocForDgnl)
+                : List.of();
             if (!rules.isEmpty()) {
                 return buildInterpolationFormula(rawScore, rules);
             }
-            return String.format("%.0f / 40 (thang 30)", rawScore);
+            return String.format("%.0f x 30 / 1200 (thang 30)", rawScore);
         }
         double w1 = matchedTohop != null && matchedTohop.getHsmon1() != null ? matchedTohop.getHsmon1() : 1.0;
         double w2 = matchedTohop != null && matchedTohop.getHsmon2() != null ? matchedTohop.getHsmon2() : 1.0;
         double w3 = matchedTohop != null && matchedTohop.getHsmon3() != null ? matchedTohop.getHsmon3() : 1.0;
         double w = w1 + w2 + w3;
-        return String.format("[(%.2f/%.1f)] × 3.0", weightedSum, w);
+        return String.format("[(%.2f/%.1f)] x 3.0", weightedSum, w);
     }
 
     private String buildStep4Formula(double dthxt, double diemCong, double diemUtqd, boolean isCapApplied) {
@@ -489,20 +507,24 @@ public class AdmissionResultServiceImpl implements AdmissionResultService {
             return "0.00 (không có ưu tiên)";
         }
         if (isCapApplied) {
-            return String.format("(30-%.2f-%.2f)/7.5 × %.2f", dthxt, diemCong, diemUtqd);
+            return String.format("(30-%.2f-%.2f)/7.5 x %.2f", dthxt, diemCong, diemUtqd);
         }
         return String.format("%.2f (đầy đủ)", diemUtqd);
     }
 
     private double calculateDTHXT(Map<String, Object> details, String phuongThuc,
-                                  XtNganhTohop matchedTohop, XtDiemthixettuyen score) {
+                                  XtNganhTohop matchedTohop, XtDiemthixettuyen score, String manganh) {
         if (score == null) {
             return 0.0;
         }
         switch (phuongThuc) {
             case "DGNL" -> {
                 double nl1 = nullSafe(score.getNl1(), 0.0);
-                List<XtBangquydoi> rules = bangquydoiRepository.findByDPhuongthuc("DGNL");
+                String tohopGocForDgnl = majorRepository.findByManganh(manganh)
+                    .map(XtNganh::getNTohopgoc).orElse(null);
+                List<XtBangquydoi> rules = (tohopGocForDgnl != null)
+                    ? conversionTableRepository.findAllByPhuongThucAndMonIsNullAndTohop("DGNL", tohopGocForDgnl)
+                    : List.of();
                 if (rules.isEmpty()) {
                     return nl1 * 30.0 / 1200.0;
                 }
@@ -603,40 +625,40 @@ public class AdmissionResultServiceImpl implements AdmissionResultService {
                                      double dthxt, double dthgxt, double dut,
                                      String tohopGoc, double diemCong, double diemUtqd) {
         StringBuilder sb = new StringBuilder();
-        sb.append("═══ CÔNG THỨC TÍNH ĐIỂM - ").append(phuongThuc).append(" ═══\n\n");
+        sb.append("=== CONG THUC TINH DIEM - ").append(phuongThuc).append(" ===\n\n");
 
-        sb.append("📌 Bước 2: Tính Điểm Tổ Hợp Xét Tuyển (ĐTHXT)\n");
-        sb.append("   ĐTHXT = ").append(String.format("%.2f", dthxt)).append(" / 30\n\n");
+        sb.append("[Buoc 2] Tinh Diem To Hop Xet Tuyen (DTHXT)\n");
+        sb.append("   DTHXT = ").append(String.format("%.2f", dthxt)).append(" / 30\n\n");
 
-        sb.append("📌 Bước 3: Tính Điểm Tổ Hợp Gốc (ĐTHGXT)\n");
+        sb.append("[Buoc 3] Tinh Diem To Hop Goc (DTHGXT)\n");
         if ("DGNL".equals(phuongThuc)) {
-            sb.append("   ĐTHGXT = ĐTHXT (không áp dụng ma trận độ lệch)\n");
+            sb.append("   DTHGXT = DTHXT (khong ap dung ma tran do lech)\n");
         } else {
             double deviation = getDeviationScore(tohopGoc, matchedTohop != null ? matchedTohop.getMatohop() : null);
-            sb.append("   ĐTHGXT = ĐTHXT - Mức chênh lệch\n");
+            sb.append("   DTHGXT = DTHXT - Muc chenh lech\n");
             sb.append("          = ").append(String.format("%.2f", dthxt));
             sb.append(" - ").append(String.format("%.2f", deviation));
             sb.append(" = ").append(String.format("%.2f", dthgxt)).append("\n");
         }
-        sb.append("   ĐTHGXT = ").append(String.format("%.2f", dthgxt)).append(" / 30\n\n");
+        sb.append("   DTHGXT = ").append(String.format("%.2f", dthgxt)).append(" / 30\n\n");
 
-        sb.append("📌 Bước 4: Tính Điểm Ưu Tiên (ĐƯT)\n");
-        sb.append("   Tổng = ĐTHGXT + ĐC = ").append(String.format("%.2f", dthgxt));
+        sb.append("[Buoc 4] Tinh Diem Uu Tien (DUT)\n");
+        sb.append("   Tong = DTHGXT + DC = ").append(String.format("%.2f", dthgxt));
         sb.append(" + ").append(String.format("%.2f", diemCong));
         sb.append(" = ").append(String.format("%.2f", dthgxt + diemCong)).append("\n");
 
         if (dthgxt + diemCong < 22.5) {
-            sb.append("   Vì Tổng < 22.5 → ĐƯT = Mức ưu tiên\n");
+            sb.append("   Vi Tong < 22.5 -> DUT = Muc uu tien\n");
         } else {
-            sb.append("   Vì Tổng ≥ 22.5 → ĐƯT = [(30 - ĐTHXT - ĐC) / 7.5] × MĐƯT\n");
+            sb.append("   Vi Tong >= 22.5 -> DUT = [(30 - DTHXT - DC) / 7.5] x MDUT\n");
             double heSo = (30.0 - dthxt - diemCong) / 7.5;
-            sb.append("             = [").append(String.format("%.2f", heSo)).append("] × ");
+            sb.append("             = [").append(String.format("%.2f", heSo)).append("] x ");
             sb.append(String.format("%.2f", diemUtqd)).append("\n");
         }
-        sb.append("   ĐƯT = ").append(String.format("%.2f", dut)).append(" / 30\n\n");
+        sb.append("   DUT = ").append(String.format("%.2f", dut)).append(" / 30\n\n");
 
-        sb.append("📌 Bước 5: Tính Điểm Xét Tuyển (ĐXT)\n");
-        sb.append("   ĐXT = ĐTHGXT + ĐC + ĐƯT\n");
+        sb.append("[Buoc 5] Tinh Diem Xet Tuyen (DXT)\n");
+        sb.append("   DXT = DTHGXT + DC + DUT\n");
         sb.append("      = ").append(String.format("%.2f", dthgxt));
         sb.append(" + ").append(String.format("%.2f", diemCong));
         sb.append(" + ").append(String.format("%.2f", dut));
@@ -708,18 +730,27 @@ public class AdmissionResultServiceImpl implements AdmissionResultService {
                             && !"TRUNG_TUYEN".equals(nv.getNvKetqua())
                             && !"TRUOT".equals(nv.getNvKetqua())))
                 .sorted((a, b) -> {
-                    // TUYEN_THANG ưu tiên trước
+                    // TUYEN_THANG ưu tiên trước (chính sách của trường).
                     boolean aTT = "TUYEN_THANG".equals(a.getTtPhuongthuc());
                     boolean bTT = "TUYEN_THANG".equals(b.getTtPhuongthuc());
                     if (aTT && !bTT) return -1;
                     if (!aTT && bTT) return 1;
-                    int cmp = Double.compare(
-                            b.getDiemXettuyen() != null ? b.getDiemXettuyen() : 0,
-                            a.getDiemXettuyen() != null ? a.getDiemXettuyen() : 0);
-                    if (cmp != 0) return cmp;
-                    return Integer.compare(
+
+                    // QUAN TRỌNG: xét NV theo THỨ TỰ ƯU TIÊN trước (nvTt ASC).
+                    // Tất cả NV1 của mọi thí sinh phải được xử lý trước NV2 của
+                    // bất kỳ ai. Nếu thí sinh đã đậu NV1, các NV sau (dù điểm
+                    // cao hơn) sẽ tự động bị đánh dấu TRUOT vì
+                    // {@code admittedCandidates[cccd]} đã true.
+                    int byNvTt = Integer.compare(
                             a.getNvTt() != null ? a.getNvTt() : 999,
                             b.getNvTt() != null ? b.getNvTt() : 999);
+                    if (byNvTt != 0) return byNvTt;
+
+                    // Trong cùng nvTt, ưu tiên điểm xét tuyển cao hơn để cạnh
+                    // tranh chỉ tiêu giữa các thí sinh.
+                    return Double.compare(
+                            b.getDiemXettuyen() != null ? b.getDiemXettuyen() : 0,
+                            a.getDiemXettuyen() != null ? a.getDiemXettuyen() : 0);
                 })
                 .collect(Collectors.toList());
 

@@ -21,6 +21,21 @@ public record ScoreLookupResult(
         return nguyenVongs != null && nguyenVongs.stream().anyMatch(AspirationDto::isAdmitted);
     }
 
+    /**
+     * Trả về nguyện vọng được nhận chính thức (NV ưu tiên cao nhất trong các
+     * NV đủ điểm). Trả {@code null} nếu thí sinh không đậu nguyện vọng nào.
+     */
+    public AspirationDto winnerAspiration() {
+        if (nguyenVongs == null) {
+            return null;
+        }
+        return nguyenVongs.stream()
+                .filter(AspirationDto::finalAdmitted)
+                .findFirst()
+                .orElse(null);
+    }
+
+
     public ScoreLookupExamScore primaryDiemThi() {
         return diemThiList.isEmpty() ? null : diemThiList.get(0);
     }

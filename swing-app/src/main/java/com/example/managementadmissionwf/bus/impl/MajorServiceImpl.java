@@ -4,9 +4,11 @@ import com.example.managementadmissionwf.bus.interfaces.AdmissionResultService;
 import com.example.managementadmissionwf.bus.interfaces.MajorService;
 import com.example.managementadmissionwf.dal.entity.XtNganh;
 import com.example.managementadmissionwf.dal.entity.XtNganhTohop;
+import com.example.managementadmissionwf.dal.entity.XtTohopMonthi;
 import com.example.managementadmissionwf.dal.repository.MajorRepository;
 import com.example.managementadmissionwf.dal.repository.NganhTohopRepository;
 import com.example.managementadmissionwf.dal.repository.NguyenVongRepository;
+import com.example.managementadmissionwf.dal.repository.SubjectGroupRepository;
 import com.example.managementadmissionwf.dto.admission.AdmissionResultDTO;
 import com.example.managementadmissionwf.dto.common.ImportResult;
 import com.example.managementadmissionwf.dto.common.Paging;
@@ -56,6 +58,7 @@ public class MajorServiceImpl implements MajorService {
 
     private final MajorRepository majorRepository;
     private final NganhTohopRepository nganhTohopRepository;
+    private final SubjectGroupRepository subjectGroupRepository;
     private final MajorMapper majorMapper;
     private final NganhTohopMapper nganhTohopMapper;
     private final AdmissionResultService admissionResultService;
@@ -101,7 +104,13 @@ public class MajorServiceImpl implements MajorService {
     public MajorDTO getByMaNganh(String maNganh) {
         XtNganh entity = majorRepository.findByManganhAndIsDeletedFalse(maNganh)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy ngành với mã: " + maNganh));
-        return majorMapper.toResponse(entity);
+        MajorDTO dto = majorMapper.toResponse(entity);
+        // Load tổ hợp xét tuyển — mapper không tự load vì XtNganh không
+        // có quan hệ @OneToMany. Trước đây trả null → MajorDetailDialog
+        // hiển thị bảng tổ hợp rỗng.
+        List<XtNganhTohop> links = nganhTohopRepository.findByManganh(entity.getManganh());
+        dto.setTohopList(nganhTohopMapper.toResponseList(links));
+        return dto;
     }
 
     private void updateMajorStatistics(XtNganh nganh) {
@@ -310,7 +319,17 @@ public class MajorServiceImpl implements MajorService {
                     }
 
                     updateMajorStatistics(entity);
+                    // Sau updateMajorStatistics, sl_* bị đè bằng số trúng
+                    // tuyển thực tế (= 0 khi mới import). Khôi phục lại giá
+                    // trị từ Excel — đây là chỉ tiêu phân phối phương thức,
+                    // không phải số trúng tuyển. updateMajorStatistics chỉ
+                    // hữu ích khi gọi từ refreshAllStatistics() sau khi xét.
+                    if (dto.getSlXtt() != null) entity.setSlXtt(dto.getSlXtt());
+                    if (dto.getSlDgnl() != null) entity.setSlDgnl(dto.getSlDgnl());
+                    if (dto.getSlVsat() != null) entity.setSlVsat(dto.getSlVsat());
+                    if (dto.getSlThpt() != null) entity.setSlThpt(dto.getSlThpt());
                     majorRepository.save(entity);
+                    autoLinkSubjectGroups(entity);
                     validData.add(dto);
 
                 } catch (DataIntegrityViolationException e) {
@@ -353,5 +372,71 @@ public class MajorServiceImpl implements MajorService {
         }
         majorRepository.saveAll(updatedMajors);
         log.info("Đã refresh thống kê sl_* cho {} ngành", updated);
+    }
+
+    /**
+     * Tự động tạo liên kết {@code xt_nganh_tohop} cho ngành dựa trên tổ hợp
+     * gốc ({@code n_tohopgoc}). Được gọi sau khi import 1 ngành từ Excel:
+     * vì file majors.xlsx không chứa thông tin tổ hợp, app phải suy ra dựa
+     * trên nhóm khối (cùng ký tự đầu của mã tổ hợp gốc):
+     * <ul>
+     *   <li>"A00" → liên kết với A00, A01, A02 (nếu tồn tại trong xt_tohop_monthi)</li>
+     *   <li>"B00" → B00, B03, B08, ...</li>
+     *   <li>"C00" → C00, C01, C02, ...</li>
+     *   <li>"D01" → D01, D07, D08, ...</li>
+     *   <li>"M00" → M00, M01, ... (riêng vì không cùng prefix với D)</li>
+     * </ul>
+     * Hệ số mặc định 1.0 cho cả 3 môn. Bỏ qua các tổ hợp đã liên kết.
+     */
+    private void autoLinkSubjectGroups(XtNganh nganh) {
+        String tohopGoc = nganh.getNTohopgoc();
+        if (tohopGoc == null || tohopGoc.isBlank()) {
+            log.debug("Bỏ qua auto-link cho ngành {} vì n_tohopgoc trống", nganh.getManganh());
+            return;
+        }
+        String prefix = String.valueOf(tohopGoc.charAt(0)).toUpperCase();
+
+        // Lấy tất cả tổ hợp cùng nhóm khối từ xt_tohop_monthi
+        List<XtTohopMonthi> candidates = subjectGroupRepository.findAll().stream()
+                .filter(t -> t.getMatohop() != null
+                        && t.getMatohop().toUpperCase().startsWith(prefix))
+                .toList();
+
+        if (candidates.isEmpty()) {
+            // Nếu không có tổ hợp cùng prefix, tối thiểu liên kết với chính tổ hợp gốc
+            subjectGroupRepository.findByMatohop(tohopGoc)
+                    .ifPresent(t -> linkOne(nganh.getManganh(), t));
+            return;
+        }
+
+        int created = 0;
+        for (XtTohopMonthi t : candidates) {
+            if (linkOne(nganh.getManganh(), t)) {
+                created++;
+            }
+        }
+        log.info("Auto-link {} tổ hợp cho ngành {} (prefix={})",
+                created, nganh.getManganh(), prefix);
+    }
+
+    /** Tạo 1 bản ghi xt_nganh_tohop nếu chưa tồn tại. Trả về true nếu insert. */
+    private boolean linkOne(String manganh, XtTohopMonthi tohop) {
+        if (nganhTohopRepository.existsByManganhAndMatohopAndIsDeletedFalse(
+                manganh, tohop.getMatohop())) {
+            return false;
+        }
+        XtNganhTohop link = XtNganhTohop.builder()
+                .manganh(manganh)
+                .matohop(tohop.getMatohop())
+                .thMon1(tohop.getMon1())
+                .hsmon1(1.0)
+                .thMon2(tohop.getMon2())
+                .hsmon2(1.0)
+                .thMon3(tohop.getMon3())
+                .hsmon3(1.0)
+                .isDeleted(false)
+                .build();
+        nganhTohopRepository.save(link);
+        return true;
     }
 }

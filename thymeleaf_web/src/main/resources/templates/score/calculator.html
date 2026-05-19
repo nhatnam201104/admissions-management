@@ -1,0 +1,762 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{layout/main :: head(~{::title})}">
+    <title>Quy Đổi Điểm & Gợi Ý Ngành</title>
+  </head>
+  <body>
+    <div th:replace="~{layout/header :: header}"></div>
+
+    <main class="calculator-page my-3">
+      <div class="container">
+        <div class="calc-header">
+          <h4 class="mb-1">
+            <i class="bi bi-calculator me-2"></i>Quy đổi điểm & gợi ý ngành
+          </h4>
+          <small class="text-muted">
+            Nhập điểm thi để quy đổi sang thang 30, xem các tổ hợp khả thi
+            và gợi ý ngành phù hợp dựa trên điểm sàn của từng ngành.
+          </small>
+        </div>
+
+        <!-- ===== Method tabs (3 phương thức) ===== -->
+        <div class="method-tabs mt-3 mb-3">
+          <button type="button" class="method-tab" data-method="VSAT"
+                  th:classappend="${calculatorForm.phuongThuc == 'VSAT'} ? 'active'">
+            <i class="bi bi-clipboard-data me-1"></i>VSAT <small>(150)</small>
+          </button>
+          <button type="button" class="method-tab" data-method="THPT"
+                  th:classappend="${calculatorForm.phuongThuc == 'THPT'} ? 'active'">
+            <i class="bi bi-mortarboard me-1"></i>THPT <small>(10)</small>
+          </button>
+          <button type="button" class="method-tab" data-method="DGNL"
+                  th:classappend="${calculatorForm.phuongThuc == 'DGNL'} ? 'active'">
+            <i class="bi bi-cpu me-1"></i>ĐGNL <small>(1200)</small>
+          </button>
+        </div>
+
+        <div class="row g-3">
+          <!-- ===== CỘT TRÁI: NHẬP ĐIỂM ===== -->
+          <div class="col-lg-7">
+            <div class="calc-card">
+              <div class="calc-card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                  <span data-method-title="VSAT">Nhập điểm V-SAT của bạn</span>
+                  <span data-method-title="THPT" hidden>Nhập điểm THPT của bạn</span>
+                  <span data-method-title="DGNL" hidden>Nhập điểm ĐGNL của bạn</span>
+                </h6>
+                <button type="button" class="btn-clear" id="btnClearAll">
+                  <i class="bi bi-arrow-counterclockwise me-1"></i>Xóa tất cả
+                </button>
+              </div>
+
+              <form id="calcForm" novalidate>
+                <input type="hidden" name="phuongThuc" id="phuongThuc"
+                       th:value="${calculatorForm.phuongThuc}" />
+
+                <!-- ===== VSAT / THPT: 8 môn dạng card slider ===== -->
+                <div data-method-section="VSAT,THPT" class="subject-grid">
+                  <!-- Toán -->
+                  <div class="subject-card">
+                    <div class="subject-row">
+                      <div class="subject-icon"><i class="bi bi-rulers"></i></div>
+                      <div class="subject-name">Toán</div>
+                      <div class="subject-value-badge" data-bind="diemToan">0</div>
+                    </div>
+                    <input type="range" class="subject-slider"
+                           name="diemToan" data-subject="TO"
+                           min="0" max="150" step="1" value="0"
+                           th:attr="value=${calculatorForm.diemToan != null ? calculatorForm.diemToan : 0}" />
+                    <div class="subject-scale">
+                      <span>0</span>
+                      <span data-bind-max>150</span>
+                    </div>
+                    <div class="subject-converted" data-vsat-only data-converted="TO" hidden>
+                      <i class="bi bi-arrow-right-short"></i>
+                      <span class="subject-converted-value">0.00</span>
+                      <small>/ 10</small>
+                    </div>
+                  </div>
+
+                  <!-- Vật lí -->
+                  <div class="subject-card">
+                    <div class="subject-row">
+                      <div class="subject-icon"><i class="bi bi-lightning-charge"></i></div>
+                      <div class="subject-name">Vật lí</div>
+                      <div class="subject-value-badge" data-bind="diemLy">0</div>
+                    </div>
+                    <input type="range" class="subject-slider"
+                           name="diemLy" data-subject="LI"
+                           min="0" max="150" step="1" value="0"
+                           th:attr="value=${calculatorForm.diemLy != null ? calculatorForm.diemLy : 0}" />
+                    <div class="subject-scale"><span>0</span><span data-bind-max>150</span></div>
+                    <div class="subject-converted" data-vsat-only data-converted="LI" hidden>
+                      <i class="bi bi-arrow-right-short"></i>
+                      <span class="subject-converted-value">0.00</span>
+                      <small>/ 10</small>
+                    </div>
+                  </div>
+
+                  <!-- Hóa học -->
+                  <div class="subject-card">
+                    <div class="subject-row">
+                      <div class="subject-icon"><i class="bi bi-droplet"></i></div>
+                      <div class="subject-name">Hóa học</div>
+                      <div class="subject-value-badge" data-bind="diemHoa">0</div>
+                    </div>
+                    <input type="range" class="subject-slider"
+                           name="diemHoa" data-subject="HO"
+                           min="0" max="150" step="1" value="0"
+                           th:attr="value=${calculatorForm.diemHoa != null ? calculatorForm.diemHoa : 0}" />
+                    <div class="subject-scale"><span>0</span><span data-bind-max>150</span></div>
+                    <div class="subject-converted" data-vsat-only data-converted="HO" hidden>
+                      <i class="bi bi-arrow-right-short"></i>
+                      <span class="subject-converted-value">0.00</span>
+                      <small>/ 10</small>
+                    </div>
+                  </div>
+
+                  <!-- Sinh học -->
+                  <div class="subject-card">
+                    <div class="subject-row">
+                      <div class="subject-icon"><i class="bi bi-tree"></i></div>
+                      <div class="subject-name">Sinh học</div>
+                      <div class="subject-value-badge" data-bind="diemSinh">0</div>
+                    </div>
+                    <input type="range" class="subject-slider"
+                           name="diemSinh" data-subject="SI"
+                           min="0" max="150" step="1" value="0"
+                           th:attr="value=${calculatorForm.diemSinh != null ? calculatorForm.diemSinh : 0}" />
+                    <div class="subject-scale"><span>0</span><span data-bind-max>150</span></div>
+                    <div class="subject-converted" data-vsat-only data-converted="SI" hidden>
+                      <i class="bi bi-arrow-right-short"></i>
+                      <span class="subject-converted-value">0.00</span>
+                      <small>/ 10</small>
+                    </div>
+                  </div>
+
+                  <!-- Ngữ văn -->
+                  <div class="subject-card">
+                    <div class="subject-row">
+                      <div class="subject-icon"><i class="bi bi-book"></i></div>
+                      <div class="subject-name">Ngữ văn</div>
+                      <div class="subject-value-badge" data-bind="diemVan">0</div>
+                    </div>
+                    <input type="range" class="subject-slider"
+                           name="diemVan" data-subject="VA"
+                           min="0" max="150" step="1" value="0"
+                           th:attr="value=${calculatorForm.diemVan != null ? calculatorForm.diemVan : 0}" />
+                    <div class="subject-scale"><span>0</span><span data-bind-max>150</span></div>
+                    <div class="subject-converted" data-vsat-only data-converted="VA" hidden>
+                      <i class="bi bi-arrow-right-short"></i>
+                      <span class="subject-converted-value">0.00</span>
+                      <small>/ 10</small>
+                    </div>
+                  </div>
+
+                  <!-- Lịch sử -->
+                  <div class="subject-card">
+                    <div class="subject-row">
+                      <div class="subject-icon"><i class="bi bi-bank"></i></div>
+                      <div class="subject-name">Lịch sử</div>
+                      <div class="subject-value-badge" data-bind="diemSu">0</div>
+                    </div>
+                    <input type="range" class="subject-slider"
+                           name="diemSu" data-subject="SU"
+                           min="0" max="150" step="1" value="0"
+                           th:attr="value=${calculatorForm.diemSu != null ? calculatorForm.diemSu : 0}" />
+                    <div class="subject-scale"><span>0</span><span data-bind-max>150</span></div>
+                    <div class="subject-converted" data-vsat-only data-converted="SU" hidden>
+                      <i class="bi bi-arrow-right-short"></i>
+                      <span class="subject-converted-value">0.00</span>
+                      <small>/ 10</small>
+                    </div>
+                  </div>
+
+                  <!-- Địa lý -->
+                  <div class="subject-card">
+                    <div class="subject-row">
+                      <div class="subject-icon"><i class="bi bi-globe-asia-australia"></i></div>
+                      <div class="subject-name">Địa lý</div>
+                      <div class="subject-value-badge" data-bind="diemDia">0</div>
+                    </div>
+                    <input type="range" class="subject-slider"
+                           name="diemDia" data-subject="DI"
+                           min="0" max="150" step="1" value="0"
+                           th:attr="value=${calculatorForm.diemDia != null ? calculatorForm.diemDia : 0}" />
+                    <div class="subject-scale"><span>0</span><span data-bind-max>150</span></div>
+                    <div class="subject-converted" data-vsat-only data-converted="DI" hidden>
+                      <i class="bi bi-arrow-right-short"></i>
+                      <span class="subject-converted-value">0.00</span>
+                      <small>/ 10</small>
+                    </div>
+                  </div>
+
+                  <!-- Tiếng Anh -->
+                  <div class="subject-card">
+                    <div class="subject-row">
+                      <div class="subject-icon"><i class="bi bi-translate"></i></div>
+                      <div class="subject-name">Tiếng Anh</div>
+                      <div class="subject-value-badge" data-bind="diemAnh">0</div>
+                    </div>
+                    <input type="range" class="subject-slider"
+                           name="diemAnh" data-subject="N1"
+                           min="0" max="150" step="1" value="0"
+                           th:attr="value=${calculatorForm.diemAnh != null ? calculatorForm.diemAnh : 0}" />
+                    <div class="subject-scale"><span>0</span><span data-bind-max>150</span></div>
+                    <div class="subject-converted" data-vsat-only data-converted="N1" hidden>
+                      <i class="bi bi-arrow-right-short"></i>
+                      <span class="subject-converted-value">0.00</span>
+                      <small>/ 10</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ===== DGNL: 1 slider duy nhất 0-1200 ===== -->
+                <div data-method-section="DGNL" class="dgnl-block" hidden>
+                  <div class="subject-card subject-card-dgnl">
+                    <div class="subject-row">
+                      <div class="subject-icon"><i class="bi bi-cpu"></i></div>
+                      <div class="subject-name">Điểm ĐGNL</div>
+                      <div class="subject-value-badge" data-bind="diemDgnl">0</div>
+                    </div>
+                    <input type="range" class="subject-slider"
+                           name="diemDgnl" data-subject="NL1"
+                           min="0" max="1200" step="5" value="0"
+                           th:attr="value=${calculatorForm.diemDgnl != null ? calculatorForm.diemDgnl : 0}" />
+                    <div class="subject-scale"><span>0</span><span>1200</span></div>
+                  </div>
+                  <div class="alert alert-info mt-3 mb-0 small">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Phương thức ĐGNL không yêu cầu chọn tổ hợp. Hệ thống sẽ
+                    quy đổi điểm theo tổ hợp gốc của từng ngành.
+                  </div>
+                </div>
+
+                <hr class="my-3" />
+
+                <!-- ===== Ưu tiên + điểm cộng (gọn) ===== -->
+                <div class="row g-2 priority-row">
+                  <div class="col-md-3 col-6">
+                    <label class="form-label small">Đối tượng ƯT</label>
+                    <select class="form-select form-select-sm" name="doiTuongUuTien">
+                      <option th:value="0" th:selected="${calculatorForm.doiTuongUuTien == null or calculatorForm.doiTuongUuTien == 0}">Không</option>
+                      <option th:value="0.5" th:selected="${calculatorForm.doiTuongUuTien == 0.5}">UT2 (+0.5)</option>
+                      <option th:value="1" th:selected="${calculatorForm.doiTuongUuTien == 1}">UT1 (+1.0)</option>
+                      <option th:value="2" th:selected="${calculatorForm.doiTuongUuTien == 2}">UT đặc biệt (+2.0)</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3 col-6">
+                    <label class="form-label small">Khu vực ƯT</label>
+                    <select class="form-select form-select-sm" name="khuVucUuTien">
+                      <option th:value="0" th:selected="${calculatorForm.khuVucUuTien == null or calculatorForm.khuVucUuTien == 0}">KV3</option>
+                      <option th:value="0.25" th:selected="${calculatorForm.khuVucUuTien == 0.25}">KV2 (+0.25)</option>
+                      <option th:value="0.5" th:selected="${calculatorForm.khuVucUuTien == 0.5}">KV2-NT (+0.5)</option>
+                      <option th:value="0.75" th:selected="${calculatorForm.khuVucUuTien == 0.75}">KV1 (+0.75)</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3 col-6">
+                    <label class="form-label small">Điểm cộng (CC, KK)</label>
+                    <input type="number" step="0.25" min="0" max="5"
+                           class="form-control form-control-sm"
+                           name="diemCong" value="0"
+                           th:attr="value=${calculatorForm.diemCong != null ? calculatorForm.diemCong : 0}" />
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- ===== CỘT PHẢI: KẾT QUẢ ===== -->
+          <div class="col-lg-5">
+            <div class="calc-card result-panel">
+              <div class="calc-card-header">
+                <h6 class="mb-0">
+                  <i class="bi bi-bar-chart-steps me-1"></i>Kết quả quy đổi
+                </h6>
+              </div>
+
+              <!-- Tổ hợp môn xét tuyển -->
+              <div class="result-section" data-method-section="VSAT,THPT">
+                <div class="result-section-title">
+                  <i class="bi bi-grid-3x3 me-1"></i>Tổ hợp môn xét tuyển
+                  <span class="result-counter" id="tohopCounter">0</span>
+                </div>
+                <div class="result-list result-list-scroll" id="tohopList">
+                  <div class="result-empty">Nhập điểm để xem tổ hợp khả thi</div>
+                </div>
+              </div>
+
+              <!-- Gợi ý ngành phù hợp -->
+              <div class="result-section">
+                <div class="result-section-title">
+                  <i class="bi bi-mortarboard me-1"></i>Gợi ý ngành phù hợp
+                  <span class="result-counter" id="majorCounter">0/0</span>
+                </div>
+
+                <!-- Filter level chips -->
+                <div class="level-filters">
+                  <button type="button" class="level-chip active" data-filter="ALL">Tất cả</button>
+                  <button type="button" class="level-chip" data-filter="VUA_SUC">
+                    <span class="dot dot-vua-suc"></span>Vừa sức
+                  </button>
+                  <button type="button" class="level-chip" data-filter="THU_THACH">
+                    <span class="dot dot-thu-thach"></span>Thử thách
+                  </button>
+                  <button type="button" class="level-chip" data-filter="KHO">
+                    <span class="dot dot-kho"></span>Khó
+                  </button>
+                </div>
+
+                <div class="result-list result-list-scroll" id="majorList">
+                  <div class="result-empty">Nhập điểm để xem gợi ý ngành</div>
+                </div>
+
+                <div class="result-pagination" id="majorPagination" hidden>
+                  <button type="button" class="btn-page" id="pagePrev">
+                    <i class="bi bi-chevron-left"></i>
+                  </button>
+                  <span id="pageInfo">1 / 1</span>
+                  <button type="button" class="btn-page" id="pageNext">
+                    <i class="bi bi-chevron-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div th:replace="~{layout/footer :: footer}"></div>
+
+    <style>
+      /* ===== Header & method tabs ===== */
+      .calc-header h4 { color: #1a5276; font-weight: 700; }
+      .method-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+      .method-tab {
+        padding: 0.55rem 1.1rem; border-radius: 999px;
+        background: #f8fafc; border: 1px solid #dbe7f0;
+        color: #2c3e50; font-weight: 500; cursor: pointer;
+        transition: all 0.18s ease;
+      }
+      .method-tab:hover { background: #eaf2f8; color: #1a5276; }
+      .method-tab.active {
+        background: #1a5276; border-color: #1a5276; color: #fff;
+        box-shadow: 0 2px 8px rgba(26, 82, 118, 0.25);
+      }
+      .method-tab.active small { color: rgba(255,255,255,.75); }
+
+      /* ===== Cards ===== */
+      .calc-card {
+        background: #fff; border: 1px solid #e9ecef;
+        border-radius: 14px; padding: 1.25rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      }
+      .calc-card-header h6 { color: #1a5276; font-weight: 700; }
+      .btn-clear {
+        border: none; background: transparent;
+        color: #c0392b; font-size: 0.85rem; cursor: pointer;
+        padding: 0.3rem 0.5rem; border-radius: 6px;
+      }
+      .btn-clear:hover { background: #fdf3f2; }
+
+      /* ===== Subject grid (slider cards) ===== */
+      .subject-grid {
+        display: grid; grid-template-columns: repeat(2, minmax(0,1fr));
+        gap: 0.75rem;
+      }
+      @media (max-width: 576px) {
+        .subject-grid { grid-template-columns: 1fr; }
+      }
+      .subject-card {
+        background: #fff; border: 1px solid #e9ecef;
+        border-left: 3px solid #c0392b;
+        border-radius: 10px; padding: 0.7rem 0.85rem;
+        transition: border-color 0.15s;
+      }
+      .subject-card:focus-within { border-color: #1a5276; }
+      .subject-card-dgnl { border-left-color: #1a5276; padding: 1rem; }
+      .subject-row {
+        display: flex; align-items: center; gap: 0.6rem;
+        margin-bottom: 0.5rem;
+      }
+      .subject-icon {
+        width: 28px; height: 28px; border-radius: 50%;
+        background: #fdf3f2; color: #c0392b;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.95rem;
+      }
+      .subject-name { flex: 1; font-weight: 600; color: #2c3e50; }
+      .subject-value-badge {
+        min-width: 48px; text-align: center;
+        padding: 0.2rem 0.55rem; border-radius: 999px;
+        background: #fdf3f2; color: #c0392b;
+        font-weight: 700; font-size: 0.95rem;
+      }
+      .subject-slider {
+        width: 100%; -webkit-appearance: none; appearance: none;
+        height: 4px; background: #e9ecef; border-radius: 2px;
+        outline: none; cursor: pointer;
+      }
+      .subject-slider::-webkit-slider-thumb {
+        -webkit-appearance: none; appearance: none;
+        width: 16px; height: 16px; border-radius: 50%;
+        background: #c0392b; cursor: pointer;
+        border: 2px solid #fff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      }
+      .subject-slider::-moz-range-thumb {
+        width: 16px; height: 16px; border-radius: 50%;
+        background: #c0392b; cursor: pointer; border: 2px solid #fff;
+      }
+      .subject-scale {
+        display: flex; justify-content: space-between;
+        font-size: 0.72rem; color: #8898a8; margin-top: 0.25rem;
+      }
+      .subject-converted {
+        margin-top: 0.5rem;
+        padding: 0.3rem 0.55rem;
+        background: #e8f5e9; border-radius: 6px;
+        display: inline-flex; align-items: center; gap: 0.2rem;
+        font-size: 0.82rem; color: #1b5e20;
+      }
+      .subject-converted .subject-converted-value {
+        font-weight: 700; font-size: 0.95rem;
+      }
+      .subject-converted small { color: #2e7d32; opacity: 0.75; }
+
+      /* ===== Priority row ===== */
+      .priority-row .form-label { color: #34495e; font-weight: 500; }
+
+      /* ===== Result panel ===== */
+      .result-panel { position: sticky; top: 1rem; }
+      .result-section { margin-top: 1rem; }
+      .result-section-title {
+        display: flex; align-items: center; gap: 0.4rem;
+        font-weight: 700; color: #1a5276;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e9ecef; margin-bottom: 0.5rem;
+      }
+      .result-counter {
+        margin-left: auto;
+        font-size: 0.78rem; font-weight: 500;
+        padding: 0.18rem 0.6rem; border-radius: 999px;
+        background: #f0f6fb; color: #1a5276;
+      }
+      .result-list-scroll { max-height: 280px; overflow-y: auto; padding-right: 0.25rem; }
+      .result-list-scroll::-webkit-scrollbar { width: 6px; }
+      .result-list-scroll::-webkit-scrollbar-thumb { background: #c0d6e8; border-radius: 3px; }
+      .result-empty {
+        text-align: center; padding: 1.5rem 0.5rem;
+        color: #8898a8; font-size: 0.88rem; font-style: italic;
+      }
+
+      .tohop-item, .major-item {
+        display: flex; align-items: center; gap: 0.6rem;
+        padding: 0.55rem 0.75rem;
+        border: 1px solid #e9ecef; border-radius: 10px;
+        margin-bottom: 0.4rem; background: #fff;
+      }
+      .tohop-item .tohop-code { font-weight: 700; color: #1a5276; min-width: 42px; }
+      .tohop-item .tohop-text { flex: 1; font-size: 0.82rem; color: #5d6b7a; }
+      .tohop-item .tohop-score {
+        font-weight: 700; color: #c0392b; font-size: 1.05rem;
+      }
+      .tohop-item .tohop-score small { color: #8898a8; font-weight: 500; font-size: 0.7rem; }
+
+      .major-item .major-info { flex: 1; min-width: 0; }
+      .major-item .major-name {
+        font-weight: 600; color: #2c3e50; font-size: 0.9rem;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .major-item .major-meta {
+        font-size: 0.75rem; color: #8898a8; margin-top: 0.15rem;
+      }
+      .major-item .major-score { font-weight: 700; color: #c0392b; font-size: 1rem; }
+
+      /* Level badges */
+      .level-badge {
+        display: inline-block; padding: 0.2rem 0.55rem;
+        border-radius: 999px; font-size: 0.72rem; font-weight: 600;
+      }
+      .badge-vua-suc { background: #e8f5e9; color: #1b5e20; }
+      .badge-thu-thach { background: #fff3e0; color: #b25d00; }
+      .badge-kho { background: #fdf3f2; color: #c0392b; }
+      .badge-chua-ro { background: #f0f6fb; color: #1a5276; }
+
+      /* Filter chips */
+      .level-filters {
+        display: flex; gap: 0.4rem; margin-bottom: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .level-chip {
+        padding: 0.25rem 0.7rem; font-size: 0.78rem;
+        background: #f8fafc; border: 1px solid #dbe7f0;
+        border-radius: 999px; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 0.3rem;
+        color: #34495e;
+      }
+      .level-chip.active { background: #1a5276; color: #fff; border-color: #1a5276; }
+      .level-chip .dot {
+        width: 8px; height: 8px; border-radius: 50%;
+      }
+      .dot-vua-suc { background: #2e7d32; }
+      .dot-thu-thach { background: #ef6c00; }
+      .dot-kho { background: #c0392b; }
+
+      /* Pagination */
+      .result-pagination {
+        display: flex; align-items: center; justify-content: center;
+        gap: 0.6rem; margin-top: 0.5rem; font-size: 0.85rem;
+      }
+      .btn-page {
+        width: 28px; height: 28px; border-radius: 50%;
+        border: 1px solid #dbe7f0; background: #fff; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        color: #1a5276;
+      }
+      .btn-page:disabled { opacity: 0.4; cursor: not-allowed; }
+    </style>
+
+    <script th:inline="javascript">
+      (function() {
+        const PAGE_SIZE = 8;
+        const apiUrl = /*[[@{/tinh-diem/api/calculate}]]*/ '/tinh-diem/api/calculate';
+
+        const form = document.getElementById('calcForm');
+        const phuongThucInput = document.getElementById('phuongThuc');
+        let currentMethod = phuongThucInput.value || 'VSAT';
+        let currentLevelFilter = 'ALL';
+        let currentPage = 1;
+        let lastSuggestions = [];
+        let debounceTimer = null;
+
+        applyMethodUI(currentMethod);
+        bindEvents();
+        // Trigger initial calc nếu có giá trị nào > 0
+        scheduleCalc();
+
+        function bindEvents() {
+          // Method tabs
+          document.querySelectorAll('.method-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+              currentMethod = tab.dataset.method;
+              phuongThucInput.value = currentMethod;
+              applyMethodUI(currentMethod);
+              scheduleCalc();
+            });
+          });
+
+          // Sliders + selects + number inputs
+          form.addEventListener('input', (e) => {
+            if (e.target.matches('.subject-slider, input[name="diemCong"]')) {
+              updateBadges();
+              scheduleCalc();
+            }
+          });
+          form.addEventListener('change', (e) => {
+            if (e.target.matches('select[name="doiTuongUuTien"], select[name="khuVucUuTien"]')) {
+              scheduleCalc();
+            }
+          });
+
+          // Clear all
+          document.getElementById('btnClearAll').addEventListener('click', () => {
+            form.querySelectorAll('.subject-slider').forEach(s => { s.value = 0; });
+            form.querySelector('input[name="diemCong"]').value = 0;
+            form.querySelector('select[name="doiTuongUuTien"]').value = 0;
+            form.querySelector('select[name="khuVucUuTien"]').value = 0;
+            updateBadges();
+            scheduleCalc();
+          });
+
+          // Level filter chips
+          document.querySelectorAll('.level-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+              document.querySelectorAll('.level-chip').forEach(c => c.classList.remove('active'));
+              chip.classList.add('active');
+              currentLevelFilter = chip.dataset.filter;
+              currentPage = 1;
+              renderMajors();
+            });
+          });
+
+          // Pagination
+          document.getElementById('pagePrev').addEventListener('click', () => {
+            if (currentPage > 1) { currentPage--; renderMajors(); }
+          });
+          document.getElementById('pageNext').addEventListener('click', () => {
+            const total = filterSuggestions().length;
+            const max = Math.max(1, Math.ceil(total / PAGE_SIZE));
+            if (currentPage < max) { currentPage++; renderMajors(); }
+          });
+        }
+
+        function applyMethodUI(method) {
+          // Tab styling
+          document.querySelectorAll('.method-tab').forEach(t => {
+            t.classList.toggle('active', t.dataset.method === method);
+          });
+          // Section visibility
+          document.querySelectorAll('[data-method-section]').forEach(el => {
+            const methods = el.dataset.methodSection.split(',');
+            el.hidden = !methods.includes(method);
+          });
+          // Title
+          document.querySelectorAll('[data-method-title]').forEach(el => {
+            el.hidden = el.dataset.methodTitle !== method;
+          });
+          // Slider max + step theo phương thức
+          const isThpt = method === 'THPT';
+          document.querySelectorAll('.subject-grid .subject-slider').forEach(s => {
+            s.max = isThpt ? '10' : '150';
+            s.step = isThpt ? '0.1' : '1';
+            if (parseFloat(s.value) > parseFloat(s.max)) s.value = s.max;
+          });
+          document.querySelectorAll('.subject-grid [data-bind-max]').forEach(el => {
+            el.textContent = isThpt ? '10' : '150';
+          });
+          // Ẩn badge điểm quy đổi nếu không phải VSAT
+          if (method !== 'VSAT') {
+            document.querySelectorAll('[data-converted]').forEach(el => {
+              el.hidden = true;
+            });
+          }
+          updateBadges();
+        }
+
+        function updateBadges() {
+          form.querySelectorAll('[data-bind]').forEach(badge => {
+            const name = badge.dataset.bind;
+            const input = form.querySelector(`[name="${name}"]`);
+            if (input) badge.textContent = input.value;
+          });
+        }
+
+        function scheduleCalc() {
+          if (debounceTimer) clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(doCalc, 200);
+        }
+
+        async function doCalc() {
+          const formData = new FormData(form);
+          try {
+            const resp = await fetch(apiUrl, { method: 'POST', body: formData });
+            if (!resp.ok) return;
+            const data = await resp.json();
+            renderTohop(data.tohopResults || []);
+            renderConvertedScores(data.convertedScores || []);
+            lastSuggestions = data.suggestions || [];
+            currentPage = 1;
+            updateMajorCounter(data.qualifiedCount || 0, data.totalMajors || 0);
+            renderMajors();
+          } catch (err) {
+            console.warn('calc error', err);
+          }
+        }
+
+        function renderConvertedScores(rows) {
+          // Reset hết badge converted
+          document.querySelectorAll('[data-converted]').forEach(el => {
+            el.hidden = true;
+            el.querySelector('.subject-converted-value').textContent = '0.00';
+          });
+          // Chỉ hiện ở phương thức VSAT (THPT là identity, không cần;
+          // DGNL không dùng môn).
+          if (currentMethod !== 'VSAT') return;
+          rows.forEach(row => {
+            if (row.convertedScore == null) return;
+            const el = document.querySelector(`[data-converted="${row.subjectCode}"]`);
+            if (!el) return;
+            el.querySelector('.subject-converted-value').textContent =
+                row.convertedScore.toFixed(2);
+            el.hidden = false;
+          });
+        }
+
+        function renderTohop(list) {
+          const container = document.getElementById('tohopList');
+          const counter = document.getElementById('tohopCounter');
+          const valid = list.filter(r => r.fullScore && r.diemThxt != null);
+          counter.textContent = valid.length;
+          if (valid.length === 0) {
+            container.innerHTML = '<div class="result-empty">Chưa đủ điểm cho tổ hợp nào</div>';
+            return;
+          }
+          valid.sort((a, b) => b.diemThxt - a.diemThxt);
+          container.innerHTML = valid.map(r => `
+            <div class="tohop-item">
+              <span class="tohop-code">${escapeHtml(r.matohop)}</span>
+              <span class="tohop-text">${escapeHtml(r.subjectsText)}</span>
+              <span class="tohop-score">${r.diemThxt.toFixed(2)}<small>/30</small></span>
+            </div>
+          `).join('');
+        }
+
+        function filterSuggestions() {
+          if (currentLevelFilter === 'ALL') return lastSuggestions;
+          return lastSuggestions.filter(s => s.level === currentLevelFilter);
+        }
+
+        function updateMajorCounter(qualified, total) {
+          document.getElementById('majorCounter').textContent = `${qualified}/${total} đạt`;
+        }
+
+        function renderMajors() {
+          const filtered = filterSuggestions();
+          const container = document.getElementById('majorList');
+          const pagination = document.getElementById('majorPagination');
+          if (filtered.length === 0) {
+            container.innerHTML = '<div class="result-empty">Không có ngành phù hợp với bộ lọc hiện tại</div>';
+            pagination.hidden = true;
+            return;
+          }
+          const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+          if (currentPage > totalPages) currentPage = totalPages;
+          const start = (currentPage - 1) * PAGE_SIZE;
+          const slice = filtered.slice(start, start + PAGE_SIZE);
+          container.innerHTML = slice.map(s => {
+            const sanText = s.diemSan != null ? `Ngưỡng ${s.diemSan.toFixed(1)}` : 'Chưa công bố';
+            return `
+              <div class="major-item">
+                <div class="major-info">
+                  <div class="major-name" title="${escapeHtml(s.tennganh)}">${escapeHtml(s.tennganh)}</div>
+                  <div class="major-meta">${escapeHtml(s.matohop)} • ${sanText}</div>
+                </div>
+                <span class="major-score">${s.diemXt.toFixed(2)}</span>
+                <span class="level-badge ${badgeClass(s.level)}">${levelLabel(s.level)}</span>
+              </div>
+            `;
+          }).join('');
+          pagination.hidden = totalPages <= 1;
+          document.getElementById('pageInfo').textContent = `${currentPage} / ${totalPages}`;
+          document.getElementById('pagePrev').disabled = currentPage === 1;
+          document.getElementById('pageNext').disabled = currentPage === totalPages;
+        }
+
+        function levelLabel(level) {
+          return ({
+            VUA_SUC: 'Vừa sức',
+            THU_THACH: 'Thử thách',
+            KHO: 'Khó',
+            CHUA_CONG_BO: 'Chưa rõ'
+          })[level] || level;
+        }
+        function badgeClass(level) {
+          return ({
+            VUA_SUC: 'badge-vua-suc',
+            THU_THACH: 'badge-thu-thach',
+            KHO: 'badge-kho',
+            CHUA_CONG_BO: 'badge-chua-ro'
+          })[level] || 'badge-chua-ro';
+        }
+        function escapeHtml(s) {
+          if (s == null) return '';
+          return String(s).replace(/[&<>"']/g, m => ({
+            '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+          })[m]);
+        }
+      })();
+    </script>
+  </body>
+</html>

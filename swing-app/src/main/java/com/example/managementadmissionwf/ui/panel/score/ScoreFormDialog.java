@@ -238,20 +238,6 @@ public class ScoreFormDialog extends JDialog {
             }
         }
     }
-
-    private void updatePreviewMethodLabel() {
-        for (java.awt.Component c : tabbedPane.getComponents()) {
-            if (c instanceof JPanel) {
-                for (java.awt.Component c2 : ((JPanel) c).getComponents()) {
-                    if (c2 instanceof JLabel && "lblPreviewMethod".equals(c2.getName())) {
-                        ((JLabel) c2).setText(getSelectedMethod());
-                        return;
-                    }
-                }
-            }
-        }
-    }
-
     private JPanel createHeaderPanel() {
         JPanel header = new JPanel(new GridBagLayout());
         header.setBorder(BorderFactory.createEmptyBorder(10, 20, 5, 20));

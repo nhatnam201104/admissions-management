@@ -107,10 +107,4 @@ public final class AdmissionConstants {
         return 0.0;
     }
 
-    /**
-     * Lấy mức độ lệch cho phương thức ĐGNL (luôn trả về 0 vì không áp dụng ma trận).
-     */
-    public static double getDeviationScoreForDGNL() {
-        return 0.0;
-    }
 }

@@ -126,6 +126,29 @@
             <div id="noResults" class="text-center text-muted py-4 d-none">
               Không tìm thấy ngành phù hợp.
             </div>
+
+            <!-- ===== Pagination ===== -->
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3 d-print-none"
+                 id="paginationBar">
+              <div class="d-flex align-items-center gap-2 small text-muted">
+                <span>Hiển thị</span>
+                <select class="form-select form-select-sm" id="pageSizeSelect" style="width:auto">
+                  <option value="20">20</option>
+                  <option value="50" selected>50</option>
+                  <option value="100">100</option>
+                  <option value="200">200</option>
+                </select>
+                <span>ngành / trang</span>
+                <span id="pageRangeInfo" class="ms-2"></span>
+              </div>
+              <div class="d-flex align-items-center gap-1">
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnFirst" title="Trang đầu">«</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnPrev" title="Trang trước">‹</button>
+                <span class="px-2 small" id="pageInfo">Trang 1/1</span>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnNext" title="Trang sau">›</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnLast" title="Trang cuối">»</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -133,22 +156,78 @@
 
     <div th:replace="~{layout/footer :: footer}"></div>
     <script>
-      document
-        .getElementById("filterInput")
-        .addEventListener("input", function () {
-          var keyword = this.value.toLowerCase().trim();
-          var rows = document.querySelectorAll(".major-row");
-          var visibleCount = 0;
-          rows.forEach(function (row) {
-            var text = row.getAttribute("data-search") || "";
-            var visible = text.indexOf(keyword) !== -1;
-            row.style.display = visible ? "" : "none";
-            if (visible) visibleCount++;
-          });
-          document
-            .getElementById("noResults")
-            .classList.toggle("d-none", visibleCount > 0);
+      (function() {
+        const filterInput = document.getElementById('filterInput');
+        const noResults = document.getElementById('noResults');
+        const pageSizeSelect = document.getElementById('pageSizeSelect');
+        const btnFirst = document.getElementById('btnFirst');
+        const btnPrev = document.getElementById('btnPrev');
+        const btnNext = document.getElementById('btnNext');
+        const btnLast = document.getElementById('btnLast');
+        const pageInfo = document.getElementById('pageInfo');
+        const pageRangeInfo = document.getElementById('pageRangeInfo');
+        const paginationBar = document.getElementById('paginationBar');
+        const allRows = Array.from(document.querySelectorAll('.major-row'));
+
+        let currentPage = 1;
+        let pageSize = parseInt(pageSizeSelect.value, 10) || 50;
+        let filteredRows = allRows.slice();
+
+        function applyFilter() {
+          const keyword = (filterInput.value || '').toLowerCase().trim();
+          if (!keyword) {
+            filteredRows = allRows.slice();
+          } else {
+            filteredRows = allRows.filter(row =>
+              (row.getAttribute('data-search') || '').includes(keyword));
+          }
+          currentPage = 1;
+          render();
+        }
+
+        function totalPages() {
+          return Math.max(1, Math.ceil(filteredRows.length / pageSize));
+        }
+
+        function render() {
+          // Ẩn tất cả
+          allRows.forEach(r => r.style.display = 'none');
+          const totalPg = totalPages();
+          if (currentPage > totalPg) currentPage = totalPg;
+          const start = (currentPage - 1) * pageSize;
+          const end = Math.min(start + pageSize, filteredRows.length);
+          for (let i = start; i < end; i++) {
+            filteredRows[i].style.display = '';
+          }
+          // Renumber STT theo thứ tự visible (giữ index gốc của data, nhưng
+          // user thường mong số STT chạy liền). Ở đây ta giữ STT gốc.
+          noResults.classList.toggle('d-none', filteredRows.length > 0);
+          paginationBar.classList.toggle('d-none', filteredRows.length === 0);
+          pageInfo.textContent = 'Trang ' + currentPage + '/' + totalPg;
+          if (filteredRows.length > 0) {
+            pageRangeInfo.textContent = '(' + (start + 1) + '–' + end + ' / ' + filteredRows.length + ' ngành)';
+          } else {
+            pageRangeInfo.textContent = '';
+          }
+          btnFirst.disabled = currentPage <= 1;
+          btnPrev.disabled = currentPage <= 1;
+          btnNext.disabled = currentPage >= totalPg;
+          btnLast.disabled = currentPage >= totalPg;
+        }
+
+        filterInput.addEventListener('input', applyFilter);
+        pageSizeSelect.addEventListener('change', () => {
+          pageSize = parseInt(pageSizeSelect.value, 10) || 50;
+          currentPage = 1;
+          render();
         });
+        btnFirst.addEventListener('click', () => { currentPage = 1; render(); });
+        btnPrev.addEventListener('click', () => { if (currentPage > 1) { currentPage--; render(); } });
+        btnNext.addEventListener('click', () => { if (currentPage < totalPages()) { currentPage++; render(); } });
+        btnLast.addEventListener('click', () => { currentPage = totalPages(); render(); });
+
+        render();
+      })();
     </script>
   </body>
 </html>
