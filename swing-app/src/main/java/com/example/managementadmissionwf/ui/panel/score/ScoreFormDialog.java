@@ -634,6 +634,10 @@ public class ScoreFormDialog extends JDialog {
 
     private boolean validateScoreField(JFormattedTextField field, String fieldName, double min, double max,
                                        java.util.List<String> errors, JComponent[] firstInvalidField) {
+        if (isPlaceholder(field)) {
+            return true;
+        }
+
         String rawText = field.getText();
         if (rawText != null && rawText.trim().isEmpty()) {
             return true;
@@ -794,6 +798,8 @@ public class ScoreFormDialog extends JDialog {
     }
 
     private Double getValue(JFormattedTextField f) {
+        if (isPlaceholder(f)) return null;
+
         String t = f.getText() == null ? "" : f.getText().trim();
         if (t.isEmpty()) return null;
 
@@ -851,9 +857,14 @@ public class ScoreFormDialog extends JDialog {
             f.setText(String.valueOf(v));
             f.setForeground(Color.BLACK);
         } else {
-            f.setText("-");
+            f.setText("0.0");
             f.setForeground(Color.GRAY);
         }
+    }
+
+    private boolean isPlaceholder(JFormattedTextField f) {
+        String t = f.getText() == null ? "" : f.getText().trim();
+        return Color.GRAY.equals(f.getForeground()) && (t.isEmpty() || "0.0".equals(t));
     }
 
     private void clearAllScoreFields() {

@@ -5,6 +5,7 @@ import com.example.managementadmissionwf.dto.major.MajorDTO;
 import com.example.managementadmissionwf.dto.major.MajorTohopDTO;
 import com.example.managementadmissionwf.dto.common.Paging;
 import com.example.managementadmissionwf.dto.response.SubjectGroupResponse;
+import com.example.managementadmissionwf.ui.util.UIFactory;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -257,7 +258,7 @@ public class MajorFormDialog extends JDialog {
         JTable table = new JTable(tohopTableModel);
         table.setFont(MAIN_FONT);
         table.setRowHeight(28);
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
+        UIFactory.applyStandardHeaderStyle(table);
 
         JScrollPane tableScroll = new JScrollPane(table);
         panel.add(tableScroll, BorderLayout.CENTER);

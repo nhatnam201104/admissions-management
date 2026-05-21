@@ -1,6 +1,7 @@
 package com.example.managementadmissionwf.ui.panel.admission;
 
 import com.example.managementadmissionwf.dto.CalculationStep;
+import com.example.managementadmissionwf.ui.util.UIFactory;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -547,10 +548,8 @@ public class ScoreDetailDialog extends JDialog {
             table.getColumnModel().getColumn(3).setPreferredWidth(80);
             
             // Header styling
+            UIFactory.applyStandardHeaderStyle(table);
             JTableHeader header = table.getTableHeader();
-            header.setFont(new Font("Segoe UI", Font.BOLD, 11));
-            header.setBackground(new Color(52, 73, 94));
-            header.setForeground(COLOR_WHITE);
             header.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
             
             // Create tooltip for cap applied

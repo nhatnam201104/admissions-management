@@ -2,6 +2,7 @@ package com.example.managementadmissionwf.ui.panel.score;
 
 import com.example.managementadmissionwf.dto.score.ScoreDTO;
 import com.example.managementadmissionwf.dto.score.BonusScoreDTO;
+import com.example.managementadmissionwf.ui.util.UIFactory;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -47,9 +48,7 @@ public class ScoreListPanel extends JPanel {
 
         table = new JTable(tableModel);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
-        table.getTableHeader().setBackground(new Color(44, 62, 80));
-        table.getTableHeader().setForeground(Color.WHITE);
+        UIFactory.applyStandardHeaderStyle(table);
         table.setRowHeight(25);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 

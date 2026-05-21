@@ -110,12 +110,26 @@ public final class UIFactory {
         table.setSelectionForeground(Color.BLACK);
         table.getTableHeader().setReorderingAllowed(false);
 
-        JTableHeader header = table.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        header.setBackground(new Color(232, 240, 254));
-        header.setPreferredSize(new Dimension(100, 40));
+        applyStandardHeaderStyle(table);
 
         return table;
+    }
+
+    /**
+     * Áp style chuẩn cho header của một JTable đã tạo sẵn.
+     * Dùng khi panel tự khởi tạo JTable (không qua createStandardTable) nhưng vẫn muốn header đồng nhất.
+     */
+    public static void applyStandardHeaderStyle(JTable table) {
+        if (table == null) return;
+        JTableHeader header = table.getTableHeader();
+        if (header == null) return;
+
+        header.setBackground(UIConstants.TABLE_HEADER_BG);
+        header.setForeground(UIConstants.TABLE_HEADER_FG);
+        header.setFont(UIConstants.TABLE_HEADER_FONT);
+        header.setOpaque(true);
+        header.setPreferredSize(new Dimension(100, UIConstants.TABLE_HEADER_HEIGHT));
+        header.setReorderingAllowed(false);
     }
 
     public static JScrollPane createStandardScrollPane(JTable table) {
