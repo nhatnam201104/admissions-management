@@ -55,12 +55,19 @@ public class AspirationImportHelper {
             return "NV " + dto.getNvTt() + " của CCCD " + cccd + " đã tồn tại";
         }
 
+        String phuongThuc = dto.getPhuongThuc() != null ? dto.getPhuongThuc() : "THPT";
+        String toHop = dto.getToHop();
+        if (nguyenVongRepository.existsDuplicate(cccd, maNganh, phuongThuc, toHop, null)) {
+            String tohopMsg = toHop != null ? " + tổ hợp " + toHop : "";
+            return "NV trùng (CCCD " + cccd + " + ngành " + maNganh + " + phương thức " + phuongThuc + tohopMsg + ") đã tồn tại";
+        }
+
         XtNguyenvongxettuyen aspiration = XtNguyenvongxettuyen.builder()
                 .nnCccd(cccd)
                 .nvManganh(maNganh)
                 .nvTt(dto.getNvTt())
-                .ttPhuongthuc(dto.getPhuongThuc() != null ? dto.getPhuongThuc() : "THPT")
-                .ttThm(dto.getToHop())
+                .ttPhuongthuc(phuongThuc)
+                .ttThm(toHop)
                 .nvKetqua("CHO_XET")
                 .build();
         aspiration = nguyenVongRepository.save(aspiration);

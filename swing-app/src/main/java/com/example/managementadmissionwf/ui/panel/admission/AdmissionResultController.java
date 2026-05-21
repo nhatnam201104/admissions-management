@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-
 @Component
 public class AdmissionResultController {
 
@@ -33,17 +32,17 @@ public class AdmissionResultController {
 
     @Autowired
     private AdmissionResultService service;
-    
+
     @Autowired
     private StatisticService statisticService;
 
     private List<AdmissionResultDTO> currentResults = List.of();
-    
+
     public void setAdmissionPanel(AdmissionPanel admissionPanel, ResultTable resultTable) {
         this.admissionPanel = admissionPanel;
         this.resultTable = resultTable;
     }
-    
+
     public void loadResults() {
         List<AdmissionResultDTO> list = service.getAllResults();
         updateTable(list);
@@ -55,7 +54,7 @@ public class AdmissionResultController {
         updateTable(list);
         updateStatistics();
     }
-    
+
     private void updateStatistics() {
         try {
             StatisticSummary summary = statisticService.getSummary();
@@ -70,14 +69,15 @@ public class AdmissionResultController {
     public void updateResult() {
         int row = resultTable.getTable().getSelectedRow();
         if (row == -1) {
-            JOptionPane.showMessageDialog(admissionPanel, "Vui lòng chọn 1 thí sinh trên bảng!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(admissionPanel, "Vui lòng chọn 1 thí sinh trên bảng!", "Cảnh báo",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         Integer id = (Integer) resultTable.getTable().getValueAt(row, 0);
 
-        String[] options = {"TRUNG_TUYEN", "TRUOT", "CHO_XET"};
-        int choice = JOptionPane.showOptionDialog(admissionPanel, "Chọn trạng thái mới:", "Cập nhật Kết Quả", 
+        String[] options = { "TRUNG_TUYEN", "TRUOT", "CHO_XET" };
+        int choice = JOptionPane.showOptionDialog(admissionPanel, "Chọn trạng thái mới:", "Cập nhật Kết Quả",
                 JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
 
         if (choice >= 0) {
@@ -90,12 +90,13 @@ public class AdmissionResultController {
     public void handleExportExcel() {
         Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(admissionPanel);
         ResultExportDialog dialog = new ResultExportDialog(parentFrame, "Excel (.xlsx)");
-        dialog.setVisible(true); 
+        dialog.setVisible(true);
 
         if (dialog.isConfirmed()) {
             List<AdmissionResultDTO> listToExport = resolveExportRows(dialog.getSelectedScope());
             if (listToExport.isEmpty()) {
-                JOptionPane.showMessageDialog(admissionPanel, "Không có dữ liệu để xuất.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(admissionPanel, "Không có dữ liệu để xuất.", "Cảnh báo",
+                        JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
@@ -127,7 +128,8 @@ public class AdmissionResultController {
         if (dialog.isConfirmed()) {
             List<AdmissionResultDTO> listToExport = resolveExportRows(dialog.getSelectedScope());
             if (listToExport.isEmpty()) {
-                JOptionPane.showMessageDialog(admissionPanel, "Không có dữ liệu để xuất.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(admissionPanel, "Không có dữ liệu để xuất.", "Cảnh báo",
+                        JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
@@ -186,23 +188,23 @@ public class AdmissionResultController {
     }
 
     public void handleAutomaticAdmission() {
-        int confirm = JOptionPane.showConfirmDialog(admissionPanel, 
-            "Bạn có chắc muốn xét tuyển tự động cho tất cả nguyện vọng?\n" +
-            "Hệ thống sẽ tính điểm chuẩn dựa trên chỉ tiêu và cập nhật kết quả.",
-            "Xác nhận xét tuyển", 
-            JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-        
+        int confirm = JOptionPane.showConfirmDialog(admissionPanel,
+                "Bạn có chắc muốn xét tuyển tự động cho tất cả nguyện vọng?\n" +
+                        "Hệ thống sẽ tính điểm chuẩn dựa trên chỉ tiêu và cập nhật kết quả.",
+                "Xác nhận xét tuyển",
+                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
         if (confirm == JOptionPane.YES_OPTION) {
             try {
                 int count = service.handleAutomaticAdmission();
                 loadResults();
-                JOptionPane.showMessageDialog(admissionPanel, 
-                    "Xét tuyển hoàn thành!\n" + count + " thí sinh trúng tuyển.", 
-                    "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(admissionPanel,
+                        "Xét tuyển hoàn thành!\n" + count + " thí sinh trúng tuyển.",
+                        "Thông báo", JOptionPane.INFORMATION_MESSAGE);
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(admissionPanel, 
-                    "Lỗi khi xét tuyển: " + e.getMessage(), 
-                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(admissionPanel,
+                        "Lỗi khi xét tuyển: " + e.getMessage(),
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -227,8 +229,8 @@ public class AdmissionResultController {
             ImportResult<AspirationImportDTO> result = service.importAspirationsFromExcel(is);
             String detail = result.getErrorCount() > 0
                     ? "\n\nChi tiết lỗi (5 đầu):\n- "
-                      + String.join("\n- ", result.getErrors().subList(0,
-                            Math.min(5, result.getErrors().size())))
+                            + String.join("\n- ", result.getErrors().subList(0,
+                                    Math.min(5, result.getErrors().size())))
                     : "";
             String msg = String.format("Tổng dòng: %d\nThành công: %d\nLỗi: %d%s",
                     result.getTotalRows(), result.getSuccessCount(),
@@ -245,11 +247,11 @@ public class AdmissionResultController {
         }
     }
 
-
     public void showScoreDetail() {
         int row = resultTable.getTable().getSelectedRow();
         if (row == -1) {
-            JOptionPane.showMessageDialog(admissionPanel, "Vui lòng chọn 1 thí sinh trên bảng!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(admissionPanel, "Vui lòng chọn 1 thí sinh trên bảng!", "Cảnh báo",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -265,54 +267,60 @@ public class AdmissionResultController {
     public void editAspiration() {
         int row = resultTable.getTable().getSelectedRow();
         if (row == -1) {
-            JOptionPane.showMessageDialog(admissionPanel, "Vui lòng chọn 1 nguyện vọng!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(admissionPanel, "Vui lòng chọn 1 nguyện vọng!", "Cảnh báo",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         Integer id = (Integer) resultTable.getTable().getValueAt(row, 0);
         NguyenVongRepository repo = ApplicationContextHolder.getBean(NguyenVongRepository.class);
-        
+
         repo.findById(id).ifPresentOrElse(nv -> {
             Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(admissionPanel);
             AspirationFormDialog dialog = new AspirationFormDialog(parentFrame, this, nv);
             dialog.setVisible(true);
         }, () -> {
-            JOptionPane.showMessageDialog(admissionPanel, "Không tìm thấy nguyện vọng!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(admissionPanel, "Không tìm thấy nguyện vọng!", "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
         });
     }
 
     public void deleteAspiration() {
         int row = resultTable.getTable().getSelectedRow();
         if (row == -1) {
-            JOptionPane.showMessageDialog(admissionPanel, "Vui lòng chọn 1 nguyện vọng!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(admissionPanel, "Vui lòng chọn 1 nguyện vọng!", "Cảnh báo",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         Integer id = (Integer) resultTable.getTable().getValueAt(row, 0);
         NguyenVongRepository repo = ApplicationContextHolder.getBean(NguyenVongRepository.class);
-        
+
         repo.findById(id).ifPresentOrElse(nv -> {
             // Kiểm tra trạng thái - không cho xóa NV đã xét (TRUNG_TUYEN hoặc TRUOT)
             String ketQua = nv.getNvKetqua();
-            if (ketQua != null && !("CHO_XET".equals(ketQua) || "CHO_XET" == ketQua)) {
-                JOptionPane.showMessageDialog(admissionPanel, 
-                    "Không thể xóa nguyện vọng đã được xét tuyển!", 
-                    "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            if (ketQua != null && 
+                !(("CHO_XET".equals(ketQua)) || ("THIEU_DIEM".equals(ketQua)))) {
+                JOptionPane.showMessageDialog(admissionPanel,
+                        "Không thể xóa nguyện vọng đã được xét tuyển!",
+                        "Cảnh báo", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            
-            int confirm = JOptionPane.showConfirmDialog(admissionPanel, 
-                "Bạn có chắc muốn xóa nguyện vọng này?", "Xác nhận xóa", 
-                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-            
+
+            int confirm = JOptionPane.showConfirmDialog(admissionPanel,
+                    "Bạn có chắc muốn xóa nguyện vọng này?", "Xác nhận xóa",
+                    JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
             if (confirm == JOptionPane.YES_OPTION) {
                 nv.setIsDeleted(true);
                 repo.save(nv);
                 loadResults();
-                JOptionPane.showMessageDialog(admissionPanel, "Xóa thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(admissionPanel, "Xóa thành công!", "Thông báo",
+                        JOptionPane.INFORMATION_MESSAGE);
             }
         }, () -> {
-            JOptionPane.showMessageDialog(admissionPanel, "Không tìm thấy nguyện vọng!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(admissionPanel, "Không tìm thấy nguyện vọng!", "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
         });
     }
 

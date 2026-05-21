@@ -1,4 +1,4 @@
-package com.example.managementadmissionwf.util;
+package com.example.managementadmissionwf.utils;
 
 import com.example.managementadmissionwf.annotation.ExcelColumn;
 import org.apache.poi.ss.usermodel.*;

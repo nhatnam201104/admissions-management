@@ -7,7 +7,8 @@ import com.example.managementadmissionwf.dto.ConversionTableDTO;
 import com.example.managementadmissionwf.dto.common.ImportResult;
 import com.example.managementadmissionwf.dto.common.Paging;
 import com.example.managementadmissionwf.mapper.ConversionTableMapper;
-import com.example.managementadmissionwf.util.ExcelUtil;
+import com.example.managementadmissionwf.utils.ExcelUtil;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

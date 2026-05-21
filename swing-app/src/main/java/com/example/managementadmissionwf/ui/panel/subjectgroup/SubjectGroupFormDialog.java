@@ -15,7 +15,8 @@ public class SubjectGroupFormDialog extends JDialog {
 
     private static final String[] DEFAULT_SUBJECTS = {
             "TO", "LI", "HO", "SI", "SU", "DI", "VA",
-            "N1", "NL1", "NK1", "NK2"
+            "N1", "NL1", "NK1", "NK2",
+            "HAT", "VE", "MUA", "TIENG_DUC", "NHAC", "KICH", "TDTT", "DAN"
     };
 
     private final DefaultComboBoxModel<String> comboBoxModel1 = new DefaultComboBoxModel<>(DEFAULT_SUBJECTS);

@@ -3,6 +3,7 @@ package com.example.managementadmissionwf.ui.panel.candidate;
 import com.example.managementadmissionwf.dto.candidate.CandidateDTO;
 import com.example.managementadmissionwf.mapper.CandidateMapper;
 import com.example.managementadmissionwf.ui.util.UIConstants;
+import com.example.managementadmissionwf.utils.PriorityScoreCalculator;
 
 import javax.swing.*;
 import java.awt.*;
@@ -133,14 +134,16 @@ public class CandidateFormDialog extends JDialog {
         gbc.gridx = 2;
         panel.add(createLabel("Đối tượng *:"), gbc);
         gbc.gridx = 3;
-        cboDoiTuong = createComboBox(new String[]{"Không", "KV1", "KV2-NT", "KV2", "KV3", "Con thương binh"});
+        cboDoiTuong = createComboBox(PriorityScoreCalculator.DOI_TUONG_OPTIONS.toArray(new String[0]));
+        cboDoiTuong.setRenderer(priorityRenderer(PriorityScoreCalculator.DOI_TUONG_POINTS));
         panel.add(cboDoiTuong, gbc);
-        
+
         // Khu vực
         gbc.gridx = 0; gbc.gridy = 5;
         panel.add(createLabel("Khu vực *:"), gbc);
         gbc.gridx = 1;
-        cboKhuVuc = createComboBox(new String[]{"KV1", "KV2", "KV3"});
+        cboKhuVuc = createComboBox(PriorityScoreCalculator.KHU_VUC_OPTIONS.toArray(new String[0]));
+        cboKhuVuc.setRenderer(priorityRenderer(PriorityScoreCalculator.KHU_VUC_POINTS));
         panel.add(cboKhuVuc, gbc);
         
         return panel;
@@ -270,8 +273,8 @@ public class CandidateFormDialog extends JDialog {
         }
 
         int age = java.time.Period.between(dob, today).getYears();
-        if (age < 15) {
-            JOptionPane.showMessageDialog(this, "Thí sinh không hợp lệ (Phải từ 15 tuổi trở lên. Tuổi hiện tại: " + age + ")", "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
+        if (age < 17) {
+            JOptionPane.showMessageDialog(this, "Thí sinh không hợp lệ (Phải từ 17 tuổi trở lên. Tuổi hiện tại: " + age + ")", "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
             return false;
         }
 
@@ -363,6 +366,18 @@ public class CandidateFormDialog extends JDialog {
         comboBox.setPreferredSize(new Dimension(150, 30));
         comboBox.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         return comboBox;
+    }
+
+    private DefaultListCellRenderer priorityRenderer(java.util.Map<String, Double> points) {
+        return new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value,
+                    int index, boolean isSelected, boolean cellHasFocus) {
+                String code = value == null ? "" : value.toString();
+                String label = PriorityScoreCalculator.displayLabel(code, points);
+                return super.getListCellRendererComponent(list, label, index, isSelected, cellHasFocus);
+            }
+        };
     }
     
     private JButton createButton(String text, Color bgColor) {

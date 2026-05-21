@@ -12,7 +12,7 @@ public enum ToolbarAction {
     EXPORT_PDF("Xuất PDF", "picture_as_pdf", new Color(231, 76, 60), 120),
     PRINT("In danh sách", "print", new Color(52, 152, 219), 135),
     UPDATE("Cập nhật KQ", "refresh", new Color(243, 156, 18), 145), 
-    VIEW_DETAIL("Chi tiết điểm", "info", new Color(52, 152, 219), 140),
+    VIEW_DETAIL("Chi tiết", "info", new Color(52, 152, 219), 140),
     BONUS_SCORE("Điểm cộng", "stars", new Color(155, 89, 182), 120),
     AUTO_ADMISSION("Xét tuyển", "check_circle", new Color(155, 89, 182), 110);
 

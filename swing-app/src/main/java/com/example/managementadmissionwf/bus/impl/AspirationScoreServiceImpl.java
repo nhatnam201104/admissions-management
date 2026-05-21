@@ -18,6 +18,23 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AspirationScoreServiceImpl implements AspirationScoreService {
 
+    /**
+     * Tập mã môn "chuẩn" — văn hoá / ngoại ngữ / ĐGNL. Bất kỳ mã môn nào
+     * KHÔNG nằm trong tập này được coi là môn năng khiếu (HAT, VE, MUA,
+     * TIENG_DUC, NHAC, ...). Định nghĩa bằng negation cho phép thêm môn
+     * năng khiếu mới mà không phải sửa code.
+     */
+    private static final java.util.Set<String> STANDARD_SUBJECTS = java.util.Set.of(
+            "TO", "LI", "LY", "HO", "HH", "SI", "SH",
+            "SU", "LS", "DI", "DL", "VA", "NV",
+            "AN", "N1", "NL1", "NK1", "NK2"
+    );
+
+    private static boolean isTalentSubject(String code) {
+        if (code == null) return false;
+        return !STANDARD_SUBJECTS.contains(code.trim().toUpperCase());
+    }
+
     private final ScoreRepository scoreRepository;
     private final BonusScoreRepository bonusScoreRepository;
     private final ConversionTableRepository conversionTableRepository;
@@ -229,9 +246,9 @@ public class AspirationScoreServiceImpl implements AspirationScoreService {
     private AspirationScoreResult calculateForTohopThpt(XtNguyenvongxettuyen aspiration,
                                                          XtDiemthixettuyen score,
                                                          XtNganhTohop tohop) {
-        Double rawMon1 = getScoreField(score, tohop.getThMon1());
-        Double rawMon2 = getScoreField(score, tohop.getThMon2());
-        Double rawMon3 = getScoreField(score, tohop.getThMon3());
+        Double rawMon1 = resolveScoreForSlot(score, tohop, 1);
+        Double rawMon2 = resolveScoreForSlot(score, tohop, 2);
+        Double rawMon3 = resolveScoreForSlot(score, tohop, 3);
         if (rawMon1 == null || rawMon2 == null || rawMon3 == null) {
             logMissingSubject(aspiration, tohop, "THPT", rawMon1, rawMon2, rawMon3);
             return null;
@@ -268,16 +285,20 @@ public class AspirationScoreServiceImpl implements AspirationScoreService {
     private AspirationScoreResult calculateForTohopVsat(XtNguyenvongxettuyen aspiration,
                                                          XtDiemthixettuyen score,
                                                          XtNganhTohop tohop) {
-        Double rawMon1 = getScoreField(score, tohop.getThMon1());
-        Double rawMon2 = getScoreField(score, tohop.getThMon2());
-        Double rawMon3 = getScoreField(score, tohop.getThMon3());
+        Double rawMon1 = resolveScoreForSlot(score, tohop, 1);
+        Double rawMon2 = resolveScoreForSlot(score, tohop, 2);
+        Double rawMon3 = resolveScoreForSlot(score, tohop, 3);
         if (rawMon1 == null || rawMon2 == null || rawMon3 == null) {
             logMissingSubject(aspiration, tohop, "VSAT", rawMon1, rawMon2, rawMon3);
             return null;
         }
-        Double convertedMon1 = convertScoreVsat(rawMon1, tohop.getMatohop(), tohop.getThMon1());
-        Double convertedMon2 = convertScoreVsat(rawMon2, tohop.getMatohop(), tohop.getThMon2());
-        Double convertedMon3 = convertScoreVsat(rawMon3, tohop.getMatohop(), tohop.getThMon3());
+        // Talent subjects bypass VSAT scale conversion (NK trên thang 10, không phải 150).
+        Double convertedMon1 = isTalentSubject(tohop.getThMon1())
+                ? rawMon1 : convertScoreVsat(rawMon1, tohop.getMatohop(), tohop.getThMon1());
+        Double convertedMon2 = isTalentSubject(tohop.getThMon2())
+                ? rawMon2 : convertScoreVsat(rawMon2, tohop.getMatohop(), tohop.getThMon2());
+        Double convertedMon3 = isTalentSubject(tohop.getThMon3())
+                ? rawMon3 : convertScoreVsat(rawMon3, tohop.getMatohop(), tohop.getThMon3());
         return buildTohopResult(aspiration, tohop, "VSAT",
                 rawMon1, rawMon2, rawMon3,
                 convertedMon1, convertedMon2, convertedMon3);
@@ -381,6 +402,58 @@ public class AspirationScoreServiceImpl implements AspirationScoreService {
     }
 
     // ================= HELPER: MAP MÃ MÔN → ĐIỂM =================
+
+    /**
+     * Tra điểm cho 1 slot trong tổ hợp. Với môn năng khiếu (mã không thuộc
+     * tập chuẩn), map theo vị trí: môn NK đầu tiên trong tổ hợp → nk1, thứ
+     * hai → nk2, thứ ba+ → log warn + null. Slot quá 2 môn NK là lỗi cấu
+     * hình (entity chỉ có 2 cột nk1/nk2), nhưng không throw để các tổ hợp
+     * khác của ngành vẫn tính được điểm.
+     *
+     * <p>Với môn chuẩn (TO/LI/HO/SI/SU/DI/VA/AN/N1/NL1/NK1/NK2), gọi
+     * {@link #getScoreField(XtDiemthixettuyen, String)} như cũ.
+     */
+    private Double resolveScoreForSlot(XtDiemthixettuyen score, XtNganhTohop tohop, int slotIndex) {
+        String code = subjectCodeForSlot(tohop, slotIndex);
+        if (code == null) return null;
+
+        if (isTalentSubject(code)) {
+            int talentRank = computeTalentRank(tohop, slotIndex);
+            return switch (talentRank) {
+                case 1 -> score.getNk1();
+                case 2 -> score.getNk2();
+                default -> {
+                    log.warn("Tổ hợp {} có quá 2 môn năng khiếu (slot {}={}), bỏ qua",
+                            tohop.getMatohop(), slotIndex, code);
+                    yield null;
+                }
+            };
+        }
+        return getScoreField(score, code);
+    }
+
+    private static String subjectCodeForSlot(XtNganhTohop tohop, int slotIndex) {
+        return switch (slotIndex) {
+            case 1 -> tohop.getThMon1();
+            case 2 -> tohop.getThMon2();
+            case 3 -> tohop.getThMon3();
+            default -> null;
+        };
+    }
+
+    /**
+     * Đếm slot năng khiếu đứng trước (kể cả slot hiện tại) trong tổ hợp.
+     * Trả về thứ hạng 1, 2, 3... Dùng để map môn NK theo vị trí xuất hiện
+     * vào nk1/nk2.
+     */
+    private static int computeTalentRank(XtNganhTohop tohop, int currentSlot) {
+        int rank = 0;
+        for (int i = 1; i <= currentSlot; i++) {
+            String c = subjectCodeForSlot(tohop, i);
+            if (isTalentSubject(c)) rank++;
+        }
+        return rank;
+    }
 
     private Double getScoreField(XtDiemthixettuyen score, String monCode) {
         // Normalize: bảng xt_tohop_monthi định nghĩa Tiếng Anh là "AN" (A01,

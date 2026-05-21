@@ -8,7 +8,8 @@ import com.example.managementadmissionwf.dal.repository.ScoreRepository;
 import com.example.managementadmissionwf.dto.common.ImportResult;
 import com.example.managementadmissionwf.dto.score.ScoreDTO;
 import com.example.managementadmissionwf.mapper.ScoreMapper;
-import com.example.managementadmissionwf.util.ExcelUtil;
+import com.example.managementadmissionwf.utils.ExcelUtil;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

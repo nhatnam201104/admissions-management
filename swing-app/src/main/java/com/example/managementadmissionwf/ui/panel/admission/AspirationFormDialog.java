@@ -46,7 +46,7 @@ public class AspirationFormDialog extends JDialog {
         super(parent, aspiration == null ? "Thêm nguyện vọng" : "Sửa nguyện vọng", true);
         this.controller = controller;
         this.editingAspiration = aspiration;
-        setSize(480, 520);
+        setSize(750, 520);
         setLocationRelativeTo(parent);
         initComponents();
         populateData();
@@ -302,12 +302,12 @@ public class AspirationFormDialog extends JDialog {
         }
 
         Integer nvSo = (Integer) cboNvSo.getSelectedItem();
+        NguyenVongRepository nguyenVongRepository = ApplicationContextHolder.getBean(NguyenVongRepository.class);
 
         // Check trùng cccd + nvTt, và tối đa 5 nguyện vọng
         if (editingAspiration == null) {
-            NguyenVongRepository nguyenVongRepository = ApplicationContextHolder.getBean(NguyenVongRepository.class);
             List<XtNguyenvongxettuyen> existingNVs = nguyenVongRepository.findByNnCccd(cccd);
-            
+
             // Check trùng nguyện vọng số
             boolean exists = existingNVs.stream()
                 .anyMatch(nv -> nvSo.equals(nv.getNvTt()));
@@ -315,12 +315,23 @@ public class AspirationFormDialog extends JDialog {
                 JOptionPane.showMessageDialog(this, "Nguyện vọng số " + nvSo + " đã tồn tại cho thí sinh này!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            
+
             // Check tối đa 5 nguyện vọng
             if (existingNVs.size() >= 5) {
                 JOptionPane.showMessageDialog(this, "Thí sinh đã có 5 nguyện vọng, không thể thêm!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
+        }
+
+        // Check trùng nguyện vọng theo (CCCD + ngành + phương thức + tổ hợp).
+        // Áp dụng cho cả create lẫn update; với update phải loại trừ chính NV đang sửa.
+        Integer excludeId = editingAspiration != null ? editingAspiration.getId() : null;
+        if (nguyenVongRepository.existsDuplicate(cccd, selectedManganh, phuongThuc, selectedTohop, excludeId)) {
+            String tohopMsg = selectedTohop != null ? " và tổ hợp " + selectedTohop : "";
+            JOptionPane.showMessageDialog(this,
+                    "Thí sinh đã có nguyện vọng cùng ngành (" + selectedManganh + "), cùng phương thức (" + phuongThuc + ")" + tohopMsg + "!",
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
         }
 
         // Save nguyện vọng

@@ -221,7 +221,7 @@
                     </div>
                     <input type="range" class="subject-slider"
                            name="diemDgnl" data-subject="NL1"
-                           min="0" max="1200" step="5" value="0"
+                           min="0" max="1200" step="1" value="0"
                            th:attr="value=${calculatorForm.diemDgnl != null ? calculatorForm.diemDgnl : 0}" />
                     <div class="subject-scale"><span>0</span><span>1200</span></div>
                   </div>
@@ -239,19 +239,18 @@
                   <div class="col-md-3 col-6">
                     <label class="form-label small">Đối tượng ƯT</label>
                     <select class="form-select form-select-sm" name="doiTuongUuTien">
-                      <option th:value="0" th:selected="${calculatorForm.doiTuongUuTien == null or calculatorForm.doiTuongUuTien == 0}">Không</option>
-                      <option th:value="0.5" th:selected="${calculatorForm.doiTuongUuTien == 0.5}">UT2 (+0.5)</option>
-                      <option th:value="1" th:selected="${calculatorForm.doiTuongUuTien == 1}">UT1 (+1.0)</option>
-                      <option th:value="2" th:selected="${calculatorForm.doiTuongUuTien == 2}">UT đặc biệt (+2.0)</option>
+                      <option th:value="0" th:selected="${calculatorForm.doiTuongUuTien == null or calculatorForm.doiTuongUuTien == 0}">Không (0đ)</option>
+                      <option th:value="1" th:selected="${calculatorForm.doiTuongUuTien == 1}">UT2 — nhóm 05–07 (+1.0đ)</option>
+                      <option th:value="2" th:selected="${calculatorForm.doiTuongUuTien == 2}">UT1 — nhóm 01–04 (+2.0đ)</option>
                     </select>
                   </div>
                   <div class="col-md-3 col-6">
                     <label class="form-label small">Khu vực ƯT</label>
                     <select class="form-select form-select-sm" name="khuVucUuTien">
-                      <option th:value="0" th:selected="${calculatorForm.khuVucUuTien == null or calculatorForm.khuVucUuTien == 0}">KV3</option>
-                      <option th:value="0.25" th:selected="${calculatorForm.khuVucUuTien == 0.25}">KV2 (+0.25)</option>
-                      <option th:value="0.5" th:selected="${calculatorForm.khuVucUuTien == 0.5}">KV2-NT (+0.5)</option>
-                      <option th:value="0.75" th:selected="${calculatorForm.khuVucUuTien == 0.75}">KV1 (+0.75)</option>
+                      <option th:value="0" th:selected="${calculatorForm.khuVucUuTien == null or calculatorForm.khuVucUuTien == 0}">KV3 (0đ)</option>
+                      <option th:value="0.25" th:selected="${calculatorForm.khuVucUuTien == 0.25}">KV2 (+0.25đ)</option>
+                      <option th:value="0.5" th:selected="${calculatorForm.khuVucUuTien == 0.5}">KV2-NT (+0.50đ)</option>
+                      <option th:value="0.75" th:selected="${calculatorForm.khuVucUuTien == 0.75}">KV1 (+0.75đ)</option>
                     </select>
                   </div>
                   <div class="col-md-3 col-6">

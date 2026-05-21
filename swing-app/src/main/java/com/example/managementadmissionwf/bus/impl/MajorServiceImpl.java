@@ -16,7 +16,8 @@ import com.example.managementadmissionwf.dto.major.MajorDTO;
 import com.example.managementadmissionwf.dto.major.MajorTohopDTO;
 import com.example.managementadmissionwf.mapper.MajorMapper;
 import com.example.managementadmissionwf.mapper.NganhTohopMapper;
-import com.example.managementadmissionwf.util.ExcelUtil;
+import com.example.managementadmissionwf.utils.ExcelUtil;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;

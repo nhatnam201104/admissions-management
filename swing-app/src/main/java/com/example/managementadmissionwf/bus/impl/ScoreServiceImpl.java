@@ -9,7 +9,8 @@ import com.example.managementadmissionwf.dal.repository.ScoreRepository;
 import com.example.managementadmissionwf.dto.common.ImportResult;
 import com.example.managementadmissionwf.dto.score.ScoreDTO;
 import com.example.managementadmissionwf.mapper.ScoreMapper;
-import com.example.managementadmissionwf.util.ExcelUtil;
+import com.example.managementadmissionwf.utils.ExcelUtil;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,7 +40,6 @@ public class ScoreServiceImpl implements ScoreService {
     private static final double THPT_MAX_SCORE = 10;
     private static final double VSAT_MAX_SCORE = 150;
     private static final double DGNL_NL1_MAX_SCORE = 1200;
-    private static final double DGNL_NK_MAX_SCORE = 100;
 
     private static final Set<String> VALID_METHODS = Set.of(METHOD_THPT, METHOD_DGNL, METHOD_VSAT);
 
@@ -300,8 +300,7 @@ public class ScoreServiceImpl implements ScoreService {
         switch (dto.getPhuongThuc()) {
             case METHOD_DGNL -> {
                 validateRange("NL1", dto.getNl1(), 0, DGNL_NL1_MAX_SCORE);
-                validateRange("NK1", dto.getNk1(), 0, DGNL_NK_MAX_SCORE);
-                validateRange("NK2", dto.getNk2(), 0, DGNL_NK_MAX_SCORE);
+                // NK1/NK2 không thuộc DGNL — đã chuyển sang THPT.
             }
             case METHOD_VSAT -> {
                 validateRange("Toán", dto.getToan(), 0, VSAT_MAX_SCORE);
@@ -323,6 +322,8 @@ public class ScoreServiceImpl implements ScoreService {
                 validateRange("Văn", dto.getVan(), 0, THPT_MAX_SCORE);
                 validateRange("N1 Thi", dto.getN1Thi(), 0, THPT_MAX_SCORE);
                 validateRange("N1 CC", dto.getN1Cc(), 0, THPT_MAX_SCORE);
+                validateRange("NK1", dto.getNk1(), 0, THPT_MAX_SCORE);
+                validateRange("NK2", dto.getNk2(), 0, THPT_MAX_SCORE);
             }
         }
     }

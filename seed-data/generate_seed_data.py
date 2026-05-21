@@ -296,8 +296,9 @@ VN_FIRSTNAMES = ["An", "Bình", "Chi", "Dũng", "Phúc", "Giang", "Hà",
 NOI_SINH = ["Hà Nội", "TP.HCM", "Đà Nẵng", "Cần Thơ", "Hải Phòng", "Quảng Ninh",
             "Thanh Hóa", "Nghệ An", "Huế", "Bình Dương", "Đồng Nai", "Long An",
             "Tiền Giang", "Khánh Hòa", "Đắk Lắk", "Bình Định", "Phú Thọ"]
-KHU_VUC = ["KV1", "KV2", "KV2-NT", "KV3"]
-DOI_TUONG = ["KT1", "KT2", "KT3", "UT1", "UT2"]
+KHU_VUC = ["KV1", "KV2-NT", "KV2", "KV3"]
+DOI_TUONG = ["Không", "UT1", "UT2"]
+DOI_TUONG_WEIGHTS = [0.70, 0.10, 0.20]  # Không 70%, UT1 10%, UT2 20%
 
 
 def gen_thisinh(n=120, rng=None):
@@ -329,7 +330,7 @@ def gen_thisinh(n=120, rng=None):
             "dien_thoai": sdt,
             "email": email,
             "noi_sinh": rng.choice(NOI_SINH),
-            "doi_tuong": rng.choice(DOI_TUONG),
+            "doi_tuong": rng.choices(DOI_TUONG, weights=DOI_TUONG_WEIGHTS, k=1)[0],
             "khu_vuc": rng.choice(KHU_VUC),
         })
     return rows
@@ -388,7 +389,9 @@ def gen_diem_cong(thisinh_list, rng=None):
     rng = rng or random.Random(11)
     rows = []
     for ts in thisinh_list:
-        utxt = {"KV1": 0.75, "KV2": 0.5, "KV2-NT": 0.5, "KV3": 0.0}.get(ts["khu_vuc"], 0.0)
+        kv_pts = {"KV1": 0.75, "KV2-NT": 0.5, "KV2": 0.25, "KV3": 0.0}.get(ts["khu_vuc"], 0.0)
+        dt_pts = {"Không": 0.0, "UT1": 2.0, "UT2": 1.0}.get(ts["doi_tuong"], 0.0)
+        utxt = round(kv_pts + dt_pts, 2)
         cc = rng.choice([0.0, 0.0, 0.5, 1.0, 1.5, 2.0]) if rng.random() < 0.35 else 0.0
         rows.append({
             "cccd": ts["cccd"],
