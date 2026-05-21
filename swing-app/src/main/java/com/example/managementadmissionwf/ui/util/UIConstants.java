@@ -36,6 +36,12 @@ public class UIConstants {
     public static final Color BORDER_LIGHT = new Color(200, 200, 200);
     public static final Color BORDER_FOCUS = new Color(66, 133, 244);
 
+    // Table header (chuẩn hóa toàn app)
+    public static final Color TABLE_HEADER_BG = new Color(44, 62, 80);
+    public static final Color TABLE_HEADER_FG = Color.WHITE;
+    public static final Font  TABLE_HEADER_FONT = new Font("Segoe UI", Font.BOLD, 13);
+    public static final int   TABLE_HEADER_HEIGHT = 32;
+
     // ========================================
     // FONTS
     // ========================================

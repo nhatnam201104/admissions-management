@@ -64,10 +64,20 @@ public interface ScoreRepository extends JpaRepository<XtDiemthixettuyen, Intege
     // Tìm điểm thi đầu tiên của một thí sinh (legacy support)
     Optional<XtDiemthixettuyen> findFirstByCccd(String cccd);
 
-    // Kiểm tra tồn tại với CCCD và phương thức
+    // Kiểm tra tồn tại với CCCD và phương thức (chỉ tính record active, bỏ qua soft-deleted)
     @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END " +
-           "FROM XtDiemthixettuyen s WHERE s.cccd = :cccd AND s.dPhuongthuc = :phuongThuc")
+           "FROM XtDiemthixettuyen s WHERE s.cccd = :cccd AND s.dPhuongthuc = :phuongThuc " +
+           "AND s.isDeleted = false")
     boolean existsByCccdAndDPhuongthuc(@Param("cccd") String cccd, @Param("phuongThuc") String phuongThuc);
+
+    // Tìm record đã soft-delete để restore khi thí sinh được tạo lại với cùng (cccd, phuongthuc).
+    // Dùng native query vì @SQLRestriction trên entity sẽ filter mất record có is_deleted=true.
+    @Query(value = "SELECT * FROM xt_diemthixettuyen " +
+                   "WHERE cccd = :cccd AND UPPER(TRIM(d_phuongthuc)) = UPPER(TRIM(:phuongThuc)) " +
+                   "AND is_deleted = true LIMIT 1",
+           nativeQuery = true)
+    Optional<XtDiemthixettuyen> findSoftDeletedByCccdAndPhuongthuc(@Param("cccd") String cccd,
+                                                                   @Param("phuongThuc") String phuongThuc);
 
     Optional<XtDiemthixettuyen> findByCccd(String cccd);
 

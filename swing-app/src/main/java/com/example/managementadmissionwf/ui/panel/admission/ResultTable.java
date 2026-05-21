@@ -1,5 +1,7 @@
 package com.example.managementadmissionwf.ui.panel.admission;
 
+import com.example.managementadmissionwf.ui.util.UIFactory;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -57,9 +59,7 @@ public class ResultTable extends JPanel {
 
         table = new JTable(tableModel);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        table.getTableHeader().setBackground(new Color(44, 62, 80));
-        table.getTableHeader().setForeground(Color.WHITE);
+        UIFactory.applyStandardHeaderStyle(table);
         table.setRowHeight(30);
         table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);

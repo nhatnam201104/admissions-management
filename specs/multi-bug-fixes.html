@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Multi Bug Fixes — Admissions Management</title>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; max-width: 960px; margin: 2rem auto; padding: 0 1.5rem; line-height: 1.55; color: #222; }
+  h1 { border-bottom: 2px solid #2980b9; padding-bottom: 0.4rem; }
+  h2 { color: #2980b9; margin-top: 2rem; border-left: 4px solid #2980b9; padding-left: 0.6rem; }
+  h3 { color: #34495e; margin-top: 1.4rem; }
+  code { background: #f4f4f4; padding: 0.1rem 0.3rem; border-radius: 3px; font-family: Consolas, monospace; }
+  pre { background: #f7f7f9; border: 1px solid #e1e1e8; padding: 0.8rem; overflow-x: auto; border-radius: 4px; }
+  table { border-collapse: collapse; width: 100%; margin: 0.6rem 0; }
+  th, td { border: 1px solid #ddd; padding: 0.45rem 0.7rem; text-align: left; vertical-align: top; }
+  th { background: #f4f8fb; }
+  .frontmatter { background: #fdf6e3; border: 1px solid #e8d8a3; padding: 0.8rem 1rem; border-radius: 4px; font-family: Consolas, monospace; font-size: 0.92rem; }
+  .agent-ref { background: #fff8e1; border-left: 4px solid #ffb300; padding: 0.6rem 1rem; margin-top: 2rem; }
+  .badge { display: inline-block; padding: 0.1rem 0.5rem; background: #e74c3c; color: #fff; border-radius: 3px; font-size: 0.8rem; }
+  ul { padding-left: 1.4rem; }
+  hr { border: 0; border-top: 1px dashed #bbb; margin: 2.5rem 0; }
+</style>
+</head>
+<body>
+
+<div class="frontmatter">
+  title: Multi Bug Fixes — Aspiration Validation, Age, NK Scores, Talent Subject Mapping<br>
+  status: ready<br>
+  created: 2026-05-20<br>
+  updated: 2026-05-20<br>
+  refs:<br>
+  &nbsp;&nbsp;specs: [priority-uef-and-auto-bonus-row.md]<br>
+  &nbsp;&nbsp;files:<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;- swing-app/src/main/java/com/example/managementadmissionwf/ui/panel/admission/AspirationFormDialog.java<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;- swing-app/src/main/java/com/example/managementadmissionwf/bus/impl/AspirationImportHelper.java<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;- swing-app/src/main/java/com/example/managementadmissionwf/dal/repository/NguyenVongRepository.java<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;- swing-app/src/main/java/com/example/managementadmissionwf/ui/panel/candidate/CandidateFormDialog.java<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;- swing-app/src/main/java/com/example/managementadmissionwf/ui/panel/score/ScoreFormDialog.java<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;- swing-app/src/main/java/com/example/managementadmissionwf/bus/impl/ScoreServiceImpl.java<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;- swing-app/src/main/java/com/example/managementadmissionwf/bus/impl/AspirationScoreServiceImpl.java<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;- swing-app/src/main/java/com/example/managementadmissionwf/ui/panel/subjectgroup/SubjectGroupFormDialog.java
+</div>
+
+<h1>Multi Bug Fixes — Aspiration Validation, Age, NK Scores, Talent Subject Mapping</h1>
+
+<h2>Intent</h2>
+<p>
+  Khắc phục bốn bug làm dữ liệu tuyển sinh không nhất quán và logic tính điểm sai cho ngành năng khiếu:
+  (1) thí sinh đăng ký trùng nguyện vọng cùng ngành/cùng phương thức/cùng tổ hợp,
+  (2) độ tuổi tối thiểu đang cho phép 15 tuổi (UEF yêu cầu ≥17),
+  (3) điểm năng khiếu (NK1/NK2) đang đặt sai chỗ ở phương thức ĐGNL trong khi nghiệp vụ thuộc THPT,
+  (4) tổ hợp xét tuyển có môn năng khiếu (HAT, VE, TIENG_DUC...) không map được sang cột <code>nk1</code>/<code>nk2</code> trong điểm thí sinh — mọi NV ngành năng khiếu hiện đều thiếu điểm.
+</p>
+
+<h2>Decisions</h2>
+
+<h3>Bug 1 — Định nghĩa "trùng nguyện vọng"</h3>
+<ul>
+  <li>Trùng = cùng <code>nn_cccd</code> + cùng <code>nv_manganh</code> + cùng <code>tt_phuongthuc</code> + cùng <code>tt_thm</code> (tổ hợp).</li>
+  <li>Lưu ý: <code>nv_tt</code> (số thứ tự NV 1–5) <em>không</em> tham gia định nghĩa trùng — vì nếu cùng ngành/phương thức/tổ hợp mà chỉ khác số thứ tự thì vẫn là trùng về bản chất nghiệp vụ. Số thứ tự đã có check riêng (existing logic giữ nguyên).</li>
+  <li>Cho phép thí sinh đăng ký cùng ngành nhưng khác phương thức (THPT/ĐGNL/VSAT) hoặc khác tổ hợp — đây là pattern hợp lệ trong tuyển sinh UEF.</li>
+  <li>Áp dụng cả cho create và update (tránh cập nhật làm trùng với NV khác của chính thí sinh đó).</li>
+  <li>Không làm trùng với chính NV đang sửa (loại trừ <code>id</code> hiện tại qua tham số <code>excludeId</code>).</li>
+</ul>
+
+<h3>Bug 2 — Tuổi tối thiểu</h3>
+<ul>
+  <li>Đổi <code>age &lt; 15</code> → <code>age &lt; 17</code> tại <code>CandidateFormDialog</code>.</li>
+  <li>Đồng bộ thông báo lỗi.</li>
+  <li>Thêm validate cùng quy tắc tại <code>CandidateServiceImpl.normalizeAndValidate()</code> để bảo vệ luồng import (Bean Validation chỉ có <code>@Past</code> hiện tại không đủ).</li>
+</ul>
+
+<h3>Bug 3 — Dời NK từ ĐGNL sang THPT</h3>
+<ul>
+  <li>NK1/NK2 thuộc <code>createThptPanel()</code>, bỏ khỏi <code>createDgnlPanel()</code>.</li>
+  <li>Khi method = THPT thì lưu NK1/NK2; khi method = DGNL thì <code>setNk1/Nk2(null)</code> (clear, không validate).</li>
+  <li>Validation range NK ở <code>ScoreFormDialog.validateForm()</code> và <code>ScoreServiceImpl.validateScoreRangeByMethod()</code> chuyển sang nhánh THPT.</li>
+  <li>Thang điểm NK ở THPT là 0–10 (đồng nhất với các môn THPT khác). Bỏ thang 0–100 cũ ở DGNL — đó là số sai do nghiệp vụ NK không thuộc ĐGNL ngay từ đầu.</li>
+  <li>Cập nhật rõ <code>ScoreServiceImpl.validateScoreRangeByMethod()</code>: nhánh DGNL bỏ validate NK1/NK2; nhánh THPT thêm <code>validateRange("NK1", dto.getNk1(), 0, THPT_MAX_SCORE)</code> và NK2 (THPT_MAX_SCORE = 10).</li>
+  <li>Schema DB không đổi: cột <code>nk1</code>/<code>nk2</code> trong <code>xt_diemthixettuyen</code> đã tồn tại độc lập phương thức.</li>
+  <li>Preview tab cập nhật: NK1/NK2 hiển thị trong nhóm "Điểm các môn THPT", không phải nhóm "Điểm ĐGNL".</li>
+</ul>
+
+<h3>Bug 4 — Map môn năng khiếu vào nk1/nk2 theo vị trí</h3>
+<ul>
+  <li>Map <em>theo vị trí</em> trong tổ hợp: môn năng khiếu đầu tiên gặp trong <code>th_mon1/2/3</code> → <code>nk1</code>, môn thứ hai → <code>nk2</code>.</li>
+  <li>Định nghĩa "môn năng khiếu" = mã môn không thuộc tập môn văn hóa/ngoại ngữ/ĐGNL chuẩn (TO, LI/LY, HO/HH, SI/SH, SU/LS, DI/DL, VA/NV, AN/N1, NL1, NK1, NK2). Bất kỳ mã khác (HAT, VE, TIENGDUC, NHAC, MUA, KICH, ...) được coi là môn năng khiếu.</li>
+  <li>Không thay đổi schema DB, không thêm cột metadata.</li>
+  <li>Refactor <code>getScoreField(score, monCode)</code> → <code>getScoreField(score, tohop, slotIndex)</code> để biết slot trong tổ hợp khi map NK theo vị trí.</li>
+  <li>Một tổ hợp tối đa 2 môn năng khiếu (giới hạn vật lý của <code>nk1</code>/<code>nk2</code>); nếu vượt → log warn và return null cho slot dư.</li>
+  <li><code>SubjectGroupFormDialog.DEFAULT_SUBJECTS</code> bổ sung các môn năng khiếu phổ biến để giảm phải tự nhập.</li>
+  <li><strong>Phụ thuộc Bug 3:</strong> Bug 4 chỉ đúng khi NK1/NK2 đã được nhập ở phương thức THPT (sau Bug 3). Tổ hợp năng khiếu hiện tại chỉ thuộc phương thức THPT trong nghiệp vụ UEF — VSAT/ĐGNL không có ngành năng khiếu nên không cần xử lý 2 phương thức kia.</li>
+  <li><strong>VSAT scale safety:</strong> trong nhánh VSAT, môn năng khiếu (nếu có do data import sai) sẽ <em>bypass</em> <code>convertScoreVsat()</code> để tránh quy đổi sai thang (NK trên thang 10, VSAT trên thang 150). Cụ thể: <code>calculateForTohopVsat</code> chỉ convert các môn không phải năng khiếu; với slot năng khiếu, dùng raw value làm convertedValue luôn (giống THPT identity).</li>
+</ul>
+
+<h2>Approach</h2>
+<p>
+  Mỗi bug được fix tại tầng phù hợp — UI cho user input, service cho luồng import/server-side. Bug 1 thêm
+  query <code>existsByCccdAndManganhAndPhuongthucAndThm</code> trong repository và gọi từ cả
+  <code>AspirationFormDialog.save()</code> lẫn <code>AspirationImportHelper.saveAspirationRow()</code> để bảo vệ
+  cả 2 đường ghi. Bug 2 chỉnh hằng số tuổi và đồng bộ validate sang service. Bug 3 thuần UI/validation:
+  di chuyển field NK, đổi nhánh save/validate, không động tới schema. Bug 4 thay vì hardcode 8 môn,
+  ta nhận diện môn năng khiếu bằng <em>negation</em> (không nằm trong tập chuẩn) và map theo thứ tự xuất hiện
+  trong tổ hợp — giải pháp này không yêu cầu migration và xử lý được mọi môn năng khiếu mới mà UEF có thể thêm.
+</p>
+
+<h2>Scope</h2>
+<table>
+  <tr><th>Bug</th><th>In</th><th>Out</th></tr>
+  <tr>
+    <td>1 — Trùng NV</td>
+    <td>Validate trên create/update tại UI và import; thêm query repository.</td>
+    <td>Không backfill clean dữ liệu trùng đã có; không xóa NV trùng tự động.</td>
+  </tr>
+  <tr>
+    <td>2 — Tuổi ≥17</td>
+    <td>Validate UI + service. Cập nhật message.</td>
+    <td>Không thêm config "min age" (giữ hằng số trong code, đồng nhất với hằng số khác trong project).</td>
+  </tr>
+  <tr>
+    <td>3 — NK sang THPT</td>
+    <td>UI ScoreFormDialog (panel/preview/load/save), validate UI + service. Migration giữ nguyên.</td>
+    <td>Không thay đổi entity/schema; không thay đổi cách tính điểm xét tuyển ngoài việc map field.</td>
+  </tr>
+  <tr>
+    <td>4 — Map NK theo vị trí</td>
+    <td>Refactor <code>getScoreField()</code> trong AspirationScoreServiceImpl, mở rộng DEFAULT_SUBJECTS, unit test cho mapping.</td>
+    <td>Không thêm cột vào DB; không thay đổi UI nhập điểm; không hỗ trợ &gt;2 môn năng khiếu/tổ hợp.</td>
+  </tr>
+</table>
+
+<h2>Future Notes</h2>
+<ul>
+  <li>Nếu nghiệp vụ về sau cần &gt;2 môn năng khiếu/tổ hợp, sẽ cần thêm cột <code>nk3, nk4</code> trong <code>xt_diemthixettuyen</code> hoặc tách bảng <code>xt_diem_nangkhieu</code> dạng key-value (cccd, mon_nk, diem). Hiện chưa có nhu cầu.</li>
+  <li>Có thể cân nhắc thêm cột <code>la_mon_nk BOOLEAN</code> trong bảng danh mục môn để xác định môn NK rõ ràng thay vì negation. Để dành cho lần refactor sau khi danh mục môn được chuẩn hóa.</li>
+  <li>Backfill data: viết script đếm các record NV đang trùng + script reset điểm cho NV ngành năng khiếu đã bị mark THIEU_DIEM oan — có thể chạy sau khi bug 4 được merge.</li>
+</ul>
+
+<h2>Progress</h2>
+<p>implementing — done. All 4 bugs implemented + 8 unit tests pass + main code compiles. Pre-existing test failures in <code>AspirationScoreServiceImplTest</code> (8 failures + 15 errors) confirmed not introduced by this work — verified by running same test on main HEAD. See <a href="multi-bug-fixes.implementation-notes.html">implementation notes</a> for details.</p>
+
+<h2>Review</h2>
+<p><em>Filled in after completion.</em></p>
+
+<h2>Learnings</h2>
+<p><em>Filled in after completion.</em></p>
+
+<hr>
+
+<div class="agent-ref">
+<strong>Agent reference — not for user review.</strong> Working notes cho <code>implement-spec</code>.
+
+<h2>Implementation Notes</h2>
+
+<h3>Bug 1 — Trùng nguyện vọng</h3>
+
+<p><strong>File:</strong> <code>swing-app/src/main/java/com/example/managementadmissionwf/dal/repository/NguyenVongRepository.java</code></p>
+<p>Thêm method:</p>
+<pre>@Query("""
+    SELECT COUNT(nv) > 0 FROM XtNguyenvongxettuyen nv
+    WHERE nv.isDeleted = false
+      AND nv.nnCccd = :cccd
+      AND nv.nvManganh = :manganh
+      AND nv.ttPhuongthuc = :phuongThuc
+      AND (:thm IS NULL AND nv.ttThm IS NULL OR nv.ttThm = :thm)
+      AND (:excludeId IS NULL OR nv.id &lt;&gt; :excludeId)
+    """)
+boolean existsDuplicate(@Param("cccd") String cccd,
+                        @Param("manganh") String manganh,
+                        @Param("phuongThuc") String phuongThuc,
+                        @Param("thm") String thm,
+                        @Param("excludeId") Integer excludeId);
+</pre>
+
+<p><strong>File:</strong> <code>AspirationFormDialog.java</code> (~line 307, sau check <code>nvSo</code>):</p>
+<pre>Integer excludeId = editingAspiration != null ? editingAspiration.getId() : null;
+boolean dup = nguyenVongRepository.existsDuplicate(cccd, selectedManganh, phuongThuc, selectedTohop, excludeId);
+if (dup) {
+    JOptionPane.showMessageDialog(this,
+        "Thí sinh đã có nguyện vọng cùng ngành, cùng phương thức và cùng tổ hợp!",
+        "Lỗi", JOptionPane.ERROR_MESSAGE);
+    return;
+}
+</pre>
+
+<p><strong>File:</strong> <code>AspirationImportHelper.java</code> (~line 56, sau check NV trùng số):</p>
+<pre>String thm = dto.getToHop();
+String pt = dto.getPhuongThuc() != null ? dto.getPhuongThuc() : "THPT";
+if (nguyenVongRepository.existsDuplicate(cccd, maNganh, pt, thm, null)) {
+    return "NV trùng (cùng CCCD + ngành " + maNganh + " + phương thức " + pt
+            + (thm != null ? " + tổ hợp " + thm : "") + ") đã tồn tại";
+}
+</pre>
+
+<h3>Bug 2 — Tuổi ≥17</h3>
+
+<p><strong>File:</strong> <code>CandidateFormDialog.java</code>:276</p>
+<pre>// Trước:
+if (age &lt; 15) { ... "Phải từ 15 tuổi trở lên..." }
+// Sau:
+if (age &lt; 17) {
+    JOptionPane.showMessageDialog(this,
+        "Thí sinh không hợp lệ (Phải từ 17 tuổi trở lên. Tuổi hiện tại: " + age + ")",
+        "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
+    return false;
+}
+</pre>
+
+<p><strong>File:</strong> <code>CandidateServiceImpl.java</code> (trong <code>normalizeAndValidate</code> — line ~268, sau bean validation):</p>
+<pre>import java.time.Period;
+import java.time.LocalDate;
+
+private static final int MIN_CANDIDATE_AGE = 17;
+
+// Trong normalizeAndValidate, sau khi đã trim/null-check ngaySinh:
+if (dto.getNgaySinh() != null) {
+    int age = Period.between(dto.getNgaySinh(), LocalDate.now()).getYears();
+    if (age &lt; MIN_CANDIDATE_AGE) {
+        throw new RuntimeException(
+            "Thí sinh phải từ " + MIN_CANDIDATE_AGE + " tuổi trở lên (hiện tại: " + age + ")");
+    }
+}
+</pre>
+<p>Lý do bắt buộc check ở service: <code>@Past</code> chỉ chặn ngày tương lai, không kiểm tra độ tuổi tối thiểu. Luồng import (CSV/Excel) bypass UI nên không có UI guard — phải chặn ở service.</p>
+
+<h3>Bug 3 — Dời NK từ ĐGNL sang THPT</h3>
+
+<p><strong>File:</strong> <code>ScoreFormDialog.java</code></p>
+<ol>
+  <li><strong>createThptPanel()</strong> (line 317): thêm dòng <code>addRow(p, 6, "NK1:", txtNk1, "NK2:", txtNk2);</code> sau <code>txtN1Cc</code>. Khởi tạo <code>txtNk1 = createNumberField(); txtNk2 = createNumberField();</code> trong panel này thay vì DGNL.</li>
+  <li><strong>createDgnlPanel()</strong> (line 341): chỉ còn NL1.
+    <pre>private JPanel createDgnlPanel() {
+    JPanel p = basePanel();
+    txtNl1 = createNumberField();
+    addRow(p, 0, "NL1:", txtNl1, null, null);
+    return p;
+}</pre></li>
+  <li><strong>applyFormValues()</strong> (line 504):
+    <ul>
+      <li>nhánh DGNL: bỏ <code>setNk1/Nk2</code>; thêm <code>score.setNk1(null); score.setNk2(null);</code>.</li>
+      <li>nhánh THPT (else): thêm <code>score.setNk1(getValue(txtNk1)); score.setNk2(getValue(txtNk2));</code>.</li>
+    </ul>
+  </li>
+  <li><strong>clearThptFields()</strong> (line 544): thêm <code>score.setNk1(null); score.setNk2(null);</code>.</li>
+  <li><strong>clearDgnlFields()</strong> (line 556): bỏ <code>setNk1/Nk2(null)</code>, chỉ còn <code>setNl1(null)</code>.</li>
+  <li><strong>validateForm()</strong> (line 587): nhánh DGNL chỉ validate NL1; nhánh THPT thêm <code>validateScoreField(txtNk1, "NK1", 0, 10, ...)</code> và <code>txtNk2</code>.</li>
+  <li><strong>Preview tab</strong> (line 158-189): chuyển NK1/NK2 ra khỏi nhóm "Điểm ĐGNL", đặt chung nhóm THPT. Đổi nhóm DGNL chỉ còn NL1.</li>
+  <li><strong>loadData()</strong> (line 463): NK1/NK2 vẫn load từ score như cũ — không cần sửa, chỉ cần các field tồn tại trong panel mới.</li>
+</ol>
+
+<p><strong>File:</strong> <code>ScoreServiceImpl.java</code> (line 299):</p>
+<pre>case METHOD_DGNL -> {
+    validateRange("NL1", dto.getNl1(), 0, DGNL_NL1_MAX_SCORE);
+    // Bỏ validate NK1/NK2
+}
+default -> { // THPT
+    // ... các môn cũ
+    validateRange("N1 Thi", dto.getN1Thi(), 0, THPT_MAX_SCORE);
+    validateRange("N1 CC", dto.getN1Cc(), 0, THPT_MAX_SCORE);
+    validateRange("NK1", dto.getNk1(), 0, THPT_MAX_SCORE); // 0-10
+    validateRange("NK2", dto.getNk2(), 0, THPT_MAX_SCORE);
+}
+</pre>
+
+<h3>Bug 4 — Map môn năng khiếu theo vị trí</h3>
+
+<p><strong>File:</strong> <code>AspirationScoreServiceImpl.java</code></p>
+
+<p>Định nghĩa tập môn chuẩn (cấp class):</p>
+<pre>private static final java.util.Set&lt;String&gt; STANDARD_SUBJECTS = java.util.Set.of(
+    "TO", "LI", "LY", "HO", "HH", "SI", "SH",
+    "SU", "LS", "DI", "DL", "VA", "NV",
+    "AN", "N1", "NL1", "NK1", "NK2"
+);
+
+private static boolean isTalentSubject(String code) {
+    if (code == null) return false;
+    return !STANDARD_SUBJECTS.contains(code.trim().toUpperCase());
+}
+</pre>
+
+<p>Refactor signature <code>getScoreField</code>: cần biết tổ hợp + vị trí slot để map NK theo vị trí. Dùng resolver tách riêng:</p>
+<pre>private Double resolveScoreForSlot(XtDiemthixettuyen score, XtNganhTohop tohop, int slotIndex) {
+    String code = switch (slotIndex) {
+        case 1 -> tohop.getThMon1();
+        case 2 -> tohop.getThMon2();
+        case 3 -> tohop.getThMon3();
+        default -> null;
+    };
+    if (code == null) return null;
+
+    // Nếu là môn năng khiếu → map theo vị trí xuất hiện trong tổ hợp.
+    if (isTalentSubject(code)) {
+        int talentRank = computeTalentRank(tohop, slotIndex);
+        return switch (talentRank) {
+            case 1 -> score.getNk1();
+            case 2 -> score.getNk2();
+            default -> {
+                log.warn("Tổ hợp {} có quá 2 môn năng khiếu (slot {}={}), bỏ qua",
+                        tohop.getMatohop(), slotIndex, code);
+                yield null;
+            }
+        };
+    }
+    return getScoreField(score, code);
+}
+
+/** Đếm slot năng khiếu đứng trước (kể cả slot hiện tại) → trả về thứ hạng 1, 2, 3... */
+private int computeTalentRank(XtNganhTohop tohop, int currentSlot) {
+    int rank = 0;
+    for (int i = 1; i &lt;= currentSlot; i++) {
+        String c = switch (i) {
+            case 1 -> tohop.getThMon1();
+            case 2 -> tohop.getThMon2();
+            case 3 -> tohop.getThMon3();
+            default -> null;
+        };
+        if (isTalentSubject(c)) rank++;
+    }
+    return rank;
+}
+</pre>
+
+<p>Cập nhật caller (line 232-234) cho THPT:</p>
+<pre>Double rawMon1 = resolveScoreForSlot(score, tohop, 1);
+Double rawMon2 = resolveScoreForSlot(score, tohop, 2);
+Double rawMon3 = resolveScoreForSlot(score, tohop, 3);
+</pre>
+
+<p><strong>VSAT path (line 271-280) — xử lý đặc biệt cho talent subjects:</strong></p>
+<pre>Double rawMon1 = resolveScoreForSlot(score, tohop, 1);
+Double rawMon2 = resolveScoreForSlot(score, tohop, 2);
+Double rawMon3 = resolveScoreForSlot(score, tohop, 3);
+if (rawMon1 == null || rawMon2 == null || rawMon3 == null) {
+    logMissingSubject(aspiration, tohop, "VSAT", rawMon1, rawMon2, rawMon3);
+    return null;
+}
+// Talent subjects bypass VSAT scale conversion (NK1/NK2 ở thang 10, không phải 150).
+Double convertedMon1 = isTalentSubject(tohop.getThMon1()) ? rawMon1 : convertScoreVsat(rawMon1, tohop.getMatohop(), tohop.getThMon1());
+Double convertedMon2 = isTalentSubject(tohop.getThMon2()) ? rawMon2 : convertScoreVsat(rawMon2, tohop.getMatohop(), tohop.getThMon2());
+Double convertedMon3 = isTalentSubject(tohop.getThMon3()) ? rawMon3 : convertScoreVsat(rawMon3, tohop.getMatohop(), tohop.getThMon3());
+</pre>
+
+<p>Lưu ý: <code>getScoreField</code> cũ giữ lại để dùng cho nhánh non-talent — chỉ cần đảm bảo nó <strong>không</strong> còn fallthrough sai (case <code>"NK1"</code>/<code>"NK2"</code> giữ nguyên cho tổ hợp ĐGNL có literal NK1/NK2).</p>
+
+<p><strong>File:</strong> <code>SubjectGroupFormDialog.java</code>:18 — thêm các môn NK phổ biến vào DEFAULT_SUBJECTS:</p>
+<pre>private static final String[] DEFAULT_SUBJECTS = {
+    "TO", "LI", "HO", "SI", "SU", "DI", "VA",
+    "N1", "NL1", "NK1", "NK2",
+    "HAT", "VE", "MUA", "TIENG_DUC", "NHAC", "KICH", "TDTT", "DAN"
+};
+</pre>
+
+<h3>Tests cần thêm</h3>
+<p><strong>File:</strong> <code>swing-app/src/test/java/com/example/managementadmissionwf/bus/impl/AspirationScoreServiceImplTalentTest.java</code></p>
+<ul>
+  <li>Tổ hợp [TO, VA, HAT] với score nk1=8.0 → map HAT vào nk1.</li>
+  <li>Tổ hợp [VE, HAT, TO] với score nk1=8.0, nk2=7.5 → VE→nk1, HAT→nk2.</li>
+  <li>Tổ hợp [HAT, VE, MUA] (3 môn NK) → MUA bị log warn, return null.</li>
+  <li>Tổ hợp [TO, LI, HO] (không có NK) → không động đến nk1/nk2.</li>
+  <li>Tổ hợp ĐGNL [NL1, NK1, NK2] (literal) → map đúng các cột tương ứng (giữ behavior cũ).</li>
+</ul>
+<p><strong>File:</strong> <code>NguyenVongRepositoryDuplicateTest.java</code> — test query <code>existsDuplicate</code> với matrix các trường hợp (khác phương thức = không trùng, khác tổ hợp = không trùng, ...)</p>
+<p><strong>File:</strong> <code>CandidateAgeValidationTest.java</code> — test 16 tuổi reject, 17 tuổi accept, 18 tuổi accept.</p>
+
+<h3>Thứ tự thực hiện đề xuất</h3>
+<ol>
+  <li>Bug 2 (đơn giản nhất, không phụ thuộc).</li>
+  <li>Bug 1 (thêm query + 2 chỗ gọi).</li>
+  <li>Bug 3 (UI thuần, không động tới logic tính điểm).</li>
+  <li>Bug 4 (refactor có rủi ro nhất, làm cuối + nhiều test).</li>
+</ol>
+
+<h3>Manual test plan</h3>
+<ul>
+  <li>Tạo NV cùng ngành/phương thức/tổ hợp lần 2 → báo lỗi.</li>
+  <li>Tạo NV cùng ngành/phương thức nhưng khác tổ hợp → cho phép.</li>
+  <li>Sửa NV existing → không tự báo trùng với chính nó.</li>
+  <li>Tạo thí sinh sinh năm 2010 (16 tuổi) → reject. Sinh 2009 (17 tuổi) → accept.</li>
+  <li>Form điểm: chọn THPT → thấy NK1/NK2; chọn DGNL → chỉ thấy NL1; switch qua lại → fields clear đúng.</li>
+  <li>Tạo ngành "Thiết kế đồ họa" với tổ hợp <code>[VE, HAT, TO]</code>; tạo thí sinh có nk1=8.5, nk2=7.0, to=9.0 → tính được điểm xét tuyển không bị THIEU_DIEM.</li>
+</ul>
+</div>
+
+</body>
+</html>

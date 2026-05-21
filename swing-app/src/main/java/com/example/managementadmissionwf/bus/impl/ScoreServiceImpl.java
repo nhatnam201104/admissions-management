@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Slf4j
@@ -170,13 +171,24 @@ public class ScoreServiceImpl implements ScoreService {
 
         validateScore(dto);
 
-        // Kiểm tra trùng (cccd + phuongThuc) - mỗi thí sinh chỉ có 1 record cho mỗi phương thức
+        // Kiểm tra trùng (cccd + phuongThuc) - chỉ tính record active
         if (scoreRepository.existsByCccdAndDPhuongthuc(cccd, dto.getPhuongThuc())) {
             throw new RuntimeException("Thí sinh đã có điểm cho phương thức: " + dto.getPhuongThuc());
         }
 
-        XtDiemthixettuyen entity = scoreMapper.toEntity(dto);
-        entity.setIsDeleted(false);
+        // Nếu tồn tại record cũ đã soft-delete (CCCD trùng phuongthuc), restore + ghi đè dữ liệu mới
+        // để tránh vi phạm unique constraint (cccd, d_phuongthuc) ở DB.
+        Optional<XtDiemthixettuyen> softDeleted =
+                scoreRepository.findSoftDeletedByCccdAndPhuongthuc(cccd, dto.getPhuongThuc());
+        XtDiemthixettuyen entity;
+        if (softDeleted.isPresent()) {
+            entity = softDeleted.get();
+            scoreMapper.updateEntityFromDto(dto, entity);
+            entity.setIsDeleted(false);
+        } else {
+            entity = scoreMapper.toEntity(dto);
+            entity.setIsDeleted(false);
+        }
 
         ScoreDTO saved = scoreMapper.toDto(scoreRepository.save(entity));
         recalculateAspirationScores(cccd);

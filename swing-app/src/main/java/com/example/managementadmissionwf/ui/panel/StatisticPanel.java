@@ -130,7 +130,7 @@ public class StatisticPanel extends JPanel {
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         buttons.setBackground(Color.WHITE);
 
-        JButton btnMatrix = new JButton("Trúng tuyển ngành × phương thức");
+        JButton btnMatrix = new JButton("Số lượng trúng tuyển theo từng ngành");
         btnMatrix.addActionListener(e -> showMajorMethodMatrix());
 
         JButton btnRefresh = new JButton("Làm mới");

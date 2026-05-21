@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Implementation Notes — multi-bug-fixes</title>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; max-width: 960px; margin: 2rem auto; padding: 0 1.5rem; line-height: 1.55; color: #222; }
+  h1 { border-bottom: 2px solid #c0392b; padding-bottom: 0.4rem; }
+  h2 { color: #c0392b; margin-top: 2rem; border-left: 4px solid #c0392b; padding-left: 0.6rem; }
+  h3 { color: #34495e; margin-top: 1.4rem; }
+  code { background: #f4f4f4; padding: 0.1rem 0.3rem; border-radius: 3px; font-family: Consolas, monospace; }
+  pre { background: #f7f7f9; border: 1px solid #e1e1e8; padding: 0.8rem; overflow-x: auto; border-radius: 4px; }
+  .entry { background: #fff8e1; border-left: 4px solid #ffb300; padding: 0.6rem 1rem; margin: 1rem 0; border-radius: 3px; }
+  .entry.decision { background: #e8f5e9; border-left-color: #43a047; }
+  .entry.tradeoff { background: #fce4ec; border-left-color: #e91e63; }
+  .entry.deviation { background: #ffebee; border-left-color: #d32f2f; }
+  .ts { color: #666; font-size: 0.85rem; font-family: Consolas, monospace; }
+  .tag { display: inline-block; padding: 0.05rem 0.4rem; background: #607d8b; color: #fff; border-radius: 3px; font-size: 0.75rem; margin-right: 0.4rem; }
+  .tag.decision { background: #43a047; }
+  .tag.tradeoff { background: #e91e63; }
+  .tag.deviation { background: #d32f2f; }
+  .tag.note { background: #ffb300; }
+</style>
+</head>
+<body>
+
+<h1>Implementation Notes — multi-bug-fixes.html</h1>
+
+<p>File ghi chú song hành với việc implement <a href="multi-bug-fixes.html">multi-bug-fixes.html</a>. Lưu các quyết định khi gặp tình huống không có trong spec, các điểm phải thay đổi so với spec, và các trade-off.</p>
+
+<h2>Started</h2>
+<p class="ts">2026-05-20 — Bắt đầu implement theo thứ tự đề xuất trong spec: Bug 2 → Bug 1 → Bug 3 → Bug 4.</p>
+
+<h2>Decisions / Notes</h2>
+
+<div class="entry decision">
+  <span class="tag decision">DECISION</span>
+  <span class="ts">2026-05-20 11:35</span>
+  <p><strong>Format file notes:</strong> Dùng HTML cùng dạng với spec để user xem nhất quán. Mỗi entry có timestamp + tag (DECISION / TRADEOFF / DEVIATION / NOTE).</p>
+</div>
+
+<!-- Các entry mới sẽ được append vào đây trong quá trình implement -->
+
+<div class="entry">
+  <span class="tag note">NOTE</span>
+  <span class="ts">2026-05-20 11:38</span>
+  <strong>Bug 2 — done.</strong>
+  <ul>
+    <li>UI: <code>CandidateFormDialog.java:276</code> đổi <code>age &lt; 15</code> → <code>age &lt; 17</code> + message.</li>
+    <li>Service: <code>CandidateServiceImpl.normalizeAndValidate()</code> thêm check <code>age &lt; MIN_CANDIDATE_AGE</code> sau khi qua bean validation. Dùng hằng số <code>private static final int MIN_CANDIDATE_AGE = 17;</code>.</li>
+    <li>Test: thêm <code>CandidateServiceImplAgeValidationTest</code> với 3 case (16 reject, 17 accept, 18 accept).</li>
+  </ul>
+</div>
+
+<div class="entry">
+  <span class="tag note">NOTE</span>
+  <span class="ts">2026-05-20 11:42</span>
+  <strong>Bug 1 — done.</strong>
+  <ul>
+    <li>Repository: thêm <code>existsDuplicate(cccd, manganh, phuongThuc, thm, excludeId)</code> trong <code>NguyenVongRepository</code>. Query xử lý case <code>thm</code> null (match với row cũng có <code>ttThm</code> null) và <code>excludeId</code> null (không loại trừ).</li>
+    <li>UI: trong <code>AspirationFormDialog.save()</code> gọi <code>existsDuplicate</code> sau check NV số và max 5. Áp dụng cho cả create và update.</li>
+    <li>Import: trong <code>AspirationImportHelper.saveAspirationRow()</code> gọi <code>existsDuplicate</code> trước khi build entity.</li>
+  </ul>
+</div>
+
+<div class="entry decision">
+  <span class="tag decision">DECISION</span>
+  <span class="ts">2026-05-20 11:42</span>
+  <strong>Refactor nhẹ AspirationFormDialog.</strong>
+  <p>Spec dự kiến thêm 1 biến <code>nguyenVongRepository</code> bên ngoài block <code>if (editingAspiration == null)</code>. Đã consolidate biến cũ trong block và biến mới thành 1 biến duy nhất ở scope ngoài để tránh lookup bean 2 lần (ApplicationContextHolder.getBean). Giảm nhiễu code, không thay đổi behavior.</p>
+</div>
+
+<div class="entry tradeoff">
+  <span class="tag tradeoff">TRADEOFF</span>
+  <span class="ts">2026-05-20 11:42</span>
+  <strong>Không viết integration test cho query <code>existsDuplicate</code>.</strong>
+  <p>Project chưa setup Testcontainers cho test repository (kiểm tra <code>swing-app/src/test/java/...repository/</code> trống). Viết test JPA in-memory với @DataJpaTest cũng cần config phụ. Tin tưởng query là JPQL chuẩn — sẽ verify bằng manual test trong khi smoke-test UI.</p>
+</div>
+
+<div class="entry">
+  <span class="tag note">NOTE</span>
+  <span class="ts">2026-05-20 11:43</span>
+  <strong>Bug 3 — done.</strong>
+  <ul>
+    <li><code>ScoreFormDialog.java</code>: tách field declaration <code>txtNk1, txtNk2</code> ra khỏi DGNL cluster, đưa vào THPT cluster. <code>createThptPanel()</code> thêm row 6 cho NK; <code>createDgnlPanel()</code> chỉ còn NL1 (1 row).</li>
+    <li><code>applyFormValues()</code>: nhánh DGNL <code>setNk1/Nk2(null)</code>; nhánh THPT thêm <code>setNk1/Nk2</code>. <code>clearThptFields()</code> nullify thêm NK1/NK2; <code>clearDgnlFields()</code> chỉ còn NL1.</li>
+    <li><code>validateForm()</code>: nhánh DGNL bỏ validate NK; nhánh THPT thêm validate NK1/NK2 range 0–10.</li>
+    <li>Preview tab: NK1/NK2 chuyển vào group THPT, nhóm DGNL chỉ còn NL1.</li>
+    <li><code>ScoreServiceImpl.validateScoreRangeByMethod()</code>: bỏ NK validate ở DGNL, thêm vào nhánh default (THPT) range 0–THPT_MAX_SCORE (10). Hằng số <code>DGNL_NK_MAX_SCORE = 100</code> bị xoá vì không còn dùng.</li>
+  </ul>
+</div>
+
+<div class="entry deviation">
+  <span class="tag deviation">DEVIATION</span>
+  <span class="ts">2026-05-20 11:43</span>
+  <strong>Xoá hằng số <code>DGNL_NK_MAX_SCORE</code>.</strong>
+  <p>Spec không nhắc rõ việc xoá constant. Sau khi NK chuyển khỏi DGNL, hằng <code>DGNL_NK_MAX_SCORE = 100</code> không còn được tham chiếu — giữ lại sẽ là dead code. Quyết định xoá để code không dẫn người đọc tương lai về thang 100 sai. Nếu sau này có behavior nào cần thang 100 cho NK ở 1 phương thức nào đó, có thể tái thêm.</p>
+</div>
+
+<div class="entry">
+  <span class="tag note">NOTE</span>
+  <span class="ts">2026-05-20 11:46</span>
+  <strong>Bug 4 — done.</strong>
+  <ul>
+    <li>Thêm <code>STANDARD_SUBJECTS</code> Set + helpers <code>isTalentSubject()</code>, <code>resolveScoreForSlot()</code>, <code>computeTalentRank()</code>, <code>subjectCodeForSlot()</code> trong <code>AspirationScoreServiceImpl</code>.</li>
+    <li><code>calculateForTohopThpt</code> và <code>calculateForTohopVsat</code> chuyển sang gọi <code>resolveScoreForSlot</code>.</li>
+    <li>VSAT path: bypass <code>convertScoreVsat()</code> cho talent subjects (NK trên thang 10, không phải 150) — dùng raw value làm convertedValue.</li>
+    <li><code>SubjectGroupFormDialog.DEFAULT_SUBJECTS</code>: thêm HAT, VE, MUA, TIENG_DUC, NHAC, KICH, TDTT, DAN.</li>
+    <li>Test: <code>AspirationScoreServiceImplTalentTest</code> với 5 case (1 NK, 2 NK, 3 NK, no NK, literal NK1/NK2).</li>
+  </ul>
+</div>
+
+<div class="entry decision">
+  <span class="tag decision">DECISION</span>
+  <span class="ts">2026-05-20 11:46</span>
+  <strong>Tách helpers ra static methods.</strong>
+  <p><code>subjectCodeForSlot</code>, <code>computeTalentRank</code>, <code>isTalentSubject</code> đều stateless → đặt static để nhấn mạnh chúng không phụ thuộc DI/repository nào. Giúp test dễ và logic rõ ràng hơn.</p>
+</div>
+
+<div class="entry tradeoff">
+  <span class="tag tradeoff">TRADEOFF</span>
+  <span class="ts">2026-05-20 11:46</span>
+  <strong>Test case literal NK1/NK2 chỉ verify "không null".</strong>
+  <p>Tổ hợp ĐGNL [NL1, NK1, NK2] đi qua nhánh DGNL có nhiều branching khó assert chính xác diemThxt. Test mục tiêu là đảm bảo refactor không phá hủy backward compat — verify pipeline chạy đến cuối là đủ. Test khắt khe hơn sẽ phải mock thêm conversion table cho DGNL.</p>
+</div>
+
+<div class="entry deviation">
+  <span class="tag deviation">DEVIATION</span>
+  <span class="ts">2026-05-20 12:25</span>
+  <strong>Bug 4 — phải fix thêm <code>AdmissionResultServiceImpl</code> + <code>ScoreDetailDialog</code> (ngoài phạm vi spec gốc).</strong>
+  <p>User báo dialog "Chi tiết điểm xét tuyển" hiển thị môn năng khiếu = 0.00 và công thức bước 1 không cộng điểm NK (vd: tổ hợp C14_v2 = [VA, TO, GDC] có VA=6, TO=6, GDC bị 0 → bước 1: <code>6.00 + 6.00 + 0.00</code>). Investigate phát hiện <code>AdmissionResultServiceImpl.getSubjectScore()</code> có logic riêng, độc lập với <code>AspirationScoreServiceImpl.resolveScoreForSlot()</code> mà tôi đã fix ở Bug 4. Service tính điểm thật (saved DB) vẫn đúng nhờ Bug 4, nhưng <strong>service build dialog audit lại tự dispatch theo monCode</strong> → môn năng khiếu rơi vào <code>default → 0</code>.</p>
+  <p>Spec gốc không nhắc <code>AdmissionResultServiceImpl</code>. Đã port logic position-based mapping sang đó:</p>
+  <ul>
+    <li>Thêm <code>STANDARD_SUBJECTS</code>, <code>isTalentSubject()</code>, <code>getSubjectScoreForSlot()</code> đồng nhất với <code>AspirationScoreServiceImpl</code>.</li>
+    <li><code>getScoresForFormula()</code> chuyển sang gọi <code>getSubjectScoreForSlot</code> theo slotIndex (1, 2, 3) thay vì truyền monCode.</li>
+    <li>Mở rộng <code>getSubjectScore()</code> cũ để cũng nhận literal NK1/NK2/NL1 (cho tổ hợp ĐGNL).</li>
+    <li><code>ScoreDetailDialog.createTHPTScorePanel()</code>: thêm hiển thị NK1/NK2. Đổi GridLayout từ <code>(3, 4)</code> sang <code>(0, 4)</code> để auto-grow row khi có thêm môn.</li>
+  </ul>
+  <p><strong>Hệ quả — code duplication:</strong> giờ có 2 chỗ định nghĩa <code>STANDARD_SUBJECTS</code> + <code>isTalentSubject()</code>. Là duplication thật. Lý tưởng nên trích ra utility class chung. Giữ duplicate ngắn hạn vì:</p>
+  <ul>
+    <li>Trích utility là refactor ngoài scope spec — sẽ tăng blast radius PR.</li>
+    <li>Hai service đã có logic độc lập từ trước (getSubjectScore khác getScoreField); fix tại chỗ ít rủi ro hơn.</li>
+  </ul>
+  <p>Future spec nên gộp 2 logic này thành <code>SubjectScoreResolver</code> utility. Đã ghi vào Future Notes của spec chính.</p>
+</div>
+
+<div class="entry">
+  <span class="tag note">NOTE</span>
+  <span class="ts">2026-05-20 12:28</span>
+  <strong>Re-test sau fix bổ sung.</strong>
+  <p>Compile PASS. 8/8 unit tests mới vẫn PASS (TalentTest, AgeValidationTest). Test cũ <code>AspirationScoreServiceImplTest</code> giữ nguyên trạng thái pre-existing failures (không bị fix mới làm hỏng thêm).</p>
+  <p>Cần user smoke test lại dialog "Chi tiết điểm xét tuyển" với 1 NV ngành năng khiếu (vd: tổ hợp C14_v2 trên screenshot) để confirm điểm GDC giờ map vào <code>nk1</code>.</p>
+</div>
+
+<div class="entry deviation">
+  <span class="tag deviation">DEVIATION</span>
+  <span class="ts">2026-05-20 12:36</span>
+  <strong>Bug 4 — phải fix thêm <code>thymeleaf_web/ScoreCalculatorServiceImpl</code> (ngoài phạm vi spec gốc).</strong>
+  <p>User báo trang web calculator (<code>thymeleaf_web</code>) cũng hiển thị môn GDC = "-" và bước 2 = <code>(6.00×1.00 + 6.00×1.00 + 0.00×1.00) / 3.00 × 3 = 22.00</code>. Spec chỉ đề cập swing-app. Kiểm tra phát hiện <code>ScoreCalculatorServiceImpl.subjectScoreFromForm()</code> cũng có switch hardcoded — môn năng khiếu rơi <code>default → null</code>.</p>
+  <p>Đã port logic mapping theo vị trí sang đó:</p>
+  <ul>
+    <li>Thêm <code>STANDARD_SUBJECTS</code>, <code>isTalentSubject()</code>, <code>subjectScoreForSlot(form, subjects[], slotIndex)</code>.</li>
+    <li>Loop tính điểm trong <code>buildRow</code> chuyển từ <code>subjectScoreFromForm(form, subjects[i])</code> sang <code>subjectScoreForSlot(form, subjects, i)</code>.</li>
+    <li>VSAT path qua <code>VSAT_SUBJECTS</code> không dùng tổ hợp ngành nên không cần fix.</li>
+  </ul>
+</div>
+
+<div class="entry tradeoff">
+  <span class="tag tradeoff">TRADEOFF</span>
+  <span class="ts">2026-05-20 12:36</span>
+  <strong>Code duplication tăng lên 3 chỗ.</strong>
+  <p>Hiện <code>STANDARD_SUBJECTS</code> + <code>isTalentSubject()</code> được copy ở: <code>swing-app/AspirationScoreServiceImpl</code>, <code>swing-app/AdmissionResultServiceImpl</code>, <code>thymeleaf_web/ScoreCalculatorServiceImpl</code>. Đây là duplication xuyên module — không thể trích ra utility class chung trong 1 module. Lựa chọn:</p>
+  <ul>
+    <li>Tạo module shared (vd <code>commons</code>) cho cả 2 — refactor lớn, ngoài scope.</li>
+    <li>Giữ duplicate có chú thích cross-reference (chọn).</li>
+  </ul>
+  <p>Đã thêm comment trong cả 3 chỗ: <em>"Đồng bộ với AspirationScoreServiceImpl.STANDARD_SUBJECTS"</em>. Mỗi khi thêm môn chuẩn mới, phải update cả 3.</p>
+</div>
+
+<div class="entry">
+  <span class="tag note">NOTE</span>
+  <span class="ts">2026-05-20 12:36</span>
+  <strong>Verify thymeleaf_web compile.</strong>
+  <p><code>./mvnw -q compile</code>: PASS — không lỗi. User smoke test trang calculator để confirm môn GDC giờ hiển thị "Năng khiếu (slot N)" hoặc tương tự, và công thức step 2 = <code>6.00 + 6.00 + &lt;nk1&gt;</code>.</p>
+</div>
+
+<div class="entry deviation">
+  <span class="tag deviation">DEVIATION</span>
+  <span class="ts">2026-05-20 12:53</span>
+  <strong>Bug 4 — phải fix thêm <code>thymeleaf_web/ScoreLookupServiceImpl</code>.</strong>
+  <p>User báo trang tra cứu (lookup) thấy bảng "Quy đổi điểm" hiển thị môn GDC = "-" trong khi bảng "Cách tính điểm" đã đúng. Nguyên do: trang tra cứu dùng service riêng <code>ScoreLookupServiceImpl</code> (khác với <code>ScoreCalculatorServiceImpl</code> đã fix lần trước). Cũng có method <code>getSubjectScore(diemThi, code)</code> rơi <code>default → null</code> cho môn năng khiếu.</p>
+  <p>Fix:</p>
+  <ul>
+    <li>Thêm <code>STANDARD_SUBJECTS</code>, <code>isTalentSubject()</code>, <code>getSubjectScoreForSlot(diemThi, subjects[], slotIndex)</code> đồng nhất với 3 service kia.</li>
+    <li>Loop tính điểm trong <code>buildCalculationDetail</code> chuyển từ <code>getSubjectScore(diemThi, subjects[i])</code> sang <code>getSubjectScoreForSlot(diemThi, subjects, i)</code>.</li>
+  </ul>
+</div>
+
+<div class="entry tradeoff">
+  <span class="tag tradeoff">TRADEOFF</span>
+  <span class="ts">2026-05-20 12:53</span>
+  <strong>Code duplication tăng lên 4 chỗ.</strong>
+  <p>Hiện <code>STANDARD_SUBJECTS</code> + helpers được copy ở:</p>
+  <ol>
+    <li><code>swing-app/AspirationScoreServiceImpl</code> (logic tính điểm chính)</li>
+    <li><code>swing-app/AdmissionResultServiceImpl</code> (audit dialog)</li>
+    <li><code>thymeleaf_web/ScoreCalculatorServiceImpl</code> (calculator công khai)</li>
+    <li><code>thymeleaf_web/ScoreLookupServiceImpl</code> (tra cứu theo CCCD)</li>
+  </ol>
+  <p>4 chỗ duplicate là vấn đề thật. Khi nào team thêm môn chuẩn mới hoặc đổi cách map NK, phải sync 4 chỗ. Nên trích thành module shared (vd <code>commons-subject-resolver</code>) — nhưng đó là refactor đáng kể, ngoài scope multi-bug-fixes spec. Đã thêm vào Future Notes.</p>
+</div>
+
+<div class="entry">
+  <span class="tag note">NOTE</span>
+  <span class="ts">2026-05-20 12:53</span>
+  <strong>Verify cuối cùng.</strong>
+  <p><code>./mvnw -q compile</code> cho cả thymeleaf_web: PASS. Smoke test thực tế: refresh trang tra cứu sau khi server restart — bảng "Quy đổi điểm" với GDC giờ phải hiển thị giá trị nk1 của thí sinh thay vì "-". Nếu thí sinh chưa nhập nk1 (= null trong DB) thì vẫn "-" — đó là data thiếu, không phải bug.</p>
+</div>
+
+</body>
+</html>
